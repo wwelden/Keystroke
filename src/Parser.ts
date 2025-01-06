@@ -1,6 +1,8 @@
 import { Lexer } from "./lexer";
 import { Token, TokenType } from "./Token";
-class Parser {
+import { HeaderNode, Header1Node, Header2Node, Header3Node, Header4Node, Header5Node, Header6Node, ParagraphNode, ListNode, ListItemNode, ChecklistNode, ChecklistCheckedNode, BlockquoteNode, HorizontalRuleNode, LinkNode, LinkTextNode, LinkUrlNode, LinkUrlEndNode, BoldNode, ItalicNode, StrikethroughNode, InlineCodeNode, CodeBlockNode, IllegalNode, EOFNode, NewlineNode } from "./Ast";
+
+export class Parser {
     private lexer: Lexer;
     private currentToken: Token;
     private peekToken: Token;
@@ -43,84 +45,190 @@ class Parser {
         }
     }
 
-    private parseHeader(): void {
-        this.expectPeek(TokenType.HEADER1);
+    private parseHeader(): HeaderNode {
+        switch (this.currentToken.type) {
+            case TokenType.HEADER1:
+                const header = new Header1Node(this.currentToken);
+                this.nextToken();
+                header.children.push(this.parseText());
+                return header;
+            case TokenType.HEADER2:
+                const header2 = new Header2Node(this.currentToken);
+                this.nextToken();
+                header2.children.push(this.parseText());
+                return header2;
+            case TokenType.HEADER3:
+                const header3 = new Header3Node(this.currentToken);
+                this.nextToken();
+                header3.children.push(this.parseText());
+                return header3;
+            case TokenType.HEADER4:
+                const header4 = new Header4Node(this.currentToken);
+                this.nextToken();
+                header4.children.push(this.parseText());
+                return header4;
+            case TokenType.HEADER5:
+                const header5 = new Header5Node(this.currentToken);
+                this.nextToken();
+                header5.children.push(this.parseText());
+                return header5;
+            case TokenType.HEADER6:
+                const header6 = new Header6Node(this.currentToken);
+                this.nextToken();
+                header6.children.push(this.parseText());
+                return header6;
+            default:
+                this.addError(`expected header, got ${this.currentToken.type}`);
+                return new Header1Node(this.currentToken);
+        }
     }
 
-    private parseList(): void {
+    private parseList(): ListNode {
         this.expectPeek(TokenType.UNORDERED_LIST);
+        const list = new ListNode(this.currentToken, this.currentToken.type === TokenType.UNORDERED_LIST);
+        this.nextToken();
+        return list;
     }
 
-    private parseText(): void {
+    private parseText(): ParagraphNode {
         this.expectPeek(TokenType.TEXT);
+        const paragraph = new ParagraphNode(this.currentToken, this.currentToken.literal);
+        this.nextToken();
+        return paragraph;
     }
 
-    private parseBlockquote(): void {
+    private parseBlockquote(): BlockquoteNode {
         this.expectPeek(TokenType.BLOCKQUOTE);
+        let text = '';
+        while (this.peekTokenIs(TokenType.TEXT)) {
+            text += this.parseText().text;
+            this.nextToken();
+        }
+        const blockquote = new BlockquoteNode(this.currentToken, text);
+        this.nextToken();
+        return blockquote;
     }
 
-    private parseHorizontalRule(): void {
+    private parseHorizontalRule(): HorizontalRuleNode {
         this.expectPeek(TokenType.HORIZONTAL_RULE);
+        const horizontalRule = new HorizontalRuleNode(this.currentToken);
+        this.nextToken();
+        return horizontalRule;
     }
 
-    private parseLink(): void {
-        this.expectPeek(TokenType.LINK);
+    private parseLink(): LinkNode {
+        this.expectPeek(TokenType.LINK_TEXT_START);
+        let text = '';
+        while (!this.peekTokenIs(TokenType.LINK_TEXT_END)) {
+            text += this.parseText().text;
+            this.nextToken();
+        }
+        this.expectPeek(TokenType.LINK_URL_START);
+        const link = new LinkNode(this.currentToken, text, this.currentToken.literal);
+        this.nextToken();
+        return link;
     }
 
-    // private parseImage(): void {
-    //     this.expectPeek(TokenType.IMAGE);
-    // }
-
-    private parseLinkText(): void {
-        this.expectPeek(TokenType.LINK_TEXT);
+    private parseLinkUrl(): LinkUrlNode {
+        this.expectPeek(TokenType.LINK_URL_START);
+        let url = '';
+        while (!this.peekTokenIs(TokenType.LINK_URL_END)) {
+            url += this.parseText().text;
+            this.nextToken();
+        }
+        const linkUrl = new LinkUrlNode(this.currentToken, this.currentToken.literal, url);
+        this.nextToken();
+        return linkUrl;
     }
 
-    private parseLinkUrl(): void {
-        this.expectPeek(TokenType.LINK_URL);
-    }
 
-    private parseLinkUrlEnd(): void {
-        this.expectPeek(TokenType.LINK_URL_END);
-    }
-
-    private parseBold(): void {
+    private parseBold(): BoldNode {
         this.expectPeek(TokenType.BOLD);
+        //might have to make sure this doesn't loop once it hits bold at the end
+        let text = '';
+        while (!this.peekTokenIs(TokenType.BOLD)) {
+            text += this.parseText().text;
+            this.nextToken();
+        }
+        const bold = new BoldNode(this.currentToken, text);
+        this.nextToken();
+        return bold;
     }
 
-    private parseItalic(): void {
+    private parseItalic(): ItalicNode {
         this.expectPeek(TokenType.ITALIC);
+        let text = '';
+        while (!this.peekTokenIs(TokenType.ITALIC)) {
+            text += this.parseText().text;
+            this.nextToken();
+        }
+        const italic = new ItalicNode(this.currentToken, text);
+        this.nextToken();
+        return italic;
     }
 
-    private parseStrikethrough(): void {
+    private parseStrikethrough(): StrikethroughNode {
         this.expectPeek(TokenType.STRIKETHROUGH);
+        let text = '';
+        while (!this.peekTokenIs(TokenType.STRIKETHROUGH)) {
+            text += this.parseText().text;
+            this.nextToken();
+        }
+        const strikethrough = new StrikethroughNode(this.currentToken, text);
+        this.nextToken();
+        return strikethrough;
     }
 
-    private parseCode(): void {
-        this.expectPeek(TokenType.CODE);
+    private parseCode(): InlineCodeNode {
+        this.expectPeek(TokenType.INLINE_CODE);
+        let text = '';
+        while (!this.peekTokenIs(TokenType.INLINE_CODE)) {
+            text += this.parseText().text;
+            this.nextToken();
+        }
+        const code = new InlineCodeNode(this.currentToken, text);
+        this.nextToken();
+        return code;
     }
 
-    private parseCodeBlock(): void {
+    private parseCodeBlock(): CodeBlockNode {
         this.expectPeek(TokenType.CODE_BLOCK);
+        let text = '';
+        while (!this.peekTokenIs(TokenType.CODE_BLOCK)) {
+            text += this.parseText().text;
+            this.nextToken();
+        }
+        const codeBlock = new CodeBlockNode(this.currentToken, text);
+        this.nextToken();
+        return codeBlock;
     }
 
-    private parseCodeBlockLanguage(): void {
-        this.expectPeek(TokenType.CODE_BLOCK_LANGUAGE);
-    }
 
-    private parseCodeBlockLanguageEnd(): void {
-        this.expectPeek(TokenType.CODE_BLOCK_LANGUAGE_END);
-    }
-
-    private parseCodeBlockEnd(): void {
-        this.expectPeek(TokenType.CODE_BLOCK_END);
-    }
-
-    private parseCheckbox(): void {
+    private parseCheckbox(): ChecklistNode {
         this.expectPeek(TokenType.CHECKLIST);
+        let text = '';
+        while (!this.peekTokenIs(TokenType.NEWLINE)) {
+            text += this.parseText().text;
+            this.nextToken();
+        }
+        const checklist = new ChecklistNode(this.currentToken, text);
+        this.nextToken();
+        return checklist;
     }
 
-    private parseCheckboxChecked(): void {
+    private parseCheckboxChecked(): ChecklistCheckedNode {
         this.expectPeek(TokenType.CHECKLIST_CHECKED);
+        let text = '';
+        while (!this.peekTokenIs(TokenType.NEWLINE)) {
+            text += this.parseText().text;
+            this.nextToken();
+        }
+        const checklistChecked = new ChecklistCheckedNode(this.currentToken, text);
+        this.nextToken();
+        return checklistChecked;
     }
 
+    public parse(): void {
+        //TODO
+    }
 }

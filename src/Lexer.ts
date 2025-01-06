@@ -155,13 +155,13 @@ export class Lexer {
                 token = new Token(TokenType.INLINE_CODE, '`'.repeat(backtickCount));
                 break;
             case '[':
-                token = new Token(TokenType.LINK, this.ch);
+                token = new Token(TokenType.LINK_TEXT_START, this.ch);
                 break;
             case ']':
-                token = new Token(TokenType.LINK_TEXT, this.ch);
+                token = new Token(TokenType.LINK_TEXT_END, this.ch);
                 break;
             case '(':
-                token = new Token(TokenType.LINK_URL, this.ch);
+                token = new Token(TokenType.LINK_URL_START, this.ch);
                 break;
             case ')':
                 token = new Token(TokenType.LINK_URL_END, this.ch);
@@ -199,6 +199,9 @@ export class Lexer {
                     }
                     token = new Token(TokenType.LIST_ITEM, this.ch);
                 }
+                break;
+            case '\n':
+                token = new Token(TokenType.NEWLINE, this.ch);
                 break;
             default:
                 if (this.ch === '\0') {

@@ -23,15 +23,11 @@ export enum TokenType {
     // Code
     INLINE_CODE = 'INLINE_CODE',
     CODE_BLOCK = 'CODE_BLOCK',
-    CODE_BLOCK_END = 'CODE_BLOCK_END',
-    CODE_BLOCK_LANGUAGE = 'CODE_BLOCK_LANGUAGE',
-    CODE_BLOCK_LANGUAGE_END = 'CODE_BLOCK_LANGUAGE_END',
-    CODE = 'CODE',
 
     // Links and images
-    LINK = 'LINK',
-    LINK_TEXT = 'LINK_TEXT',
-    LINK_URL = 'LINK_URL',
+    LINK_TEXT_START = 'LINK_TEXT_START',
+    LINK_TEXT_END = 'LINK_TEXT_END',
+    LINK_URL_START = 'LINK_URL_START',
     LINK_URL_END = 'LINK_URL_END',
     // IMAGE = 'IMAGE',
 
@@ -40,6 +36,7 @@ export enum TokenType {
     HORIZONTAL_RULE = 'HORIZONTAL_RULE',
     TEXT = 'TEXT',           // Regular text
     EOF = 'EOF',            // End of file
+    NEWLINE = 'NEWLINE',    // Newline
     ILLEGAL = 'ILLEGAL'     // Unknown token
 }
 
@@ -72,9 +69,9 @@ export const keywords: { [key: string]: TokenType } = {
     '`': TokenType.INLINE_CODE,
     '```': TokenType.CODE_BLOCK,
 
-    '[': TokenType.LINK,
-    ']': TokenType.LINK_TEXT,
-    '(': TokenType.LINK_URL,
+    '[': TokenType.LINK_TEXT_START,
+    ']': TokenType.LINK_TEXT_END,
+    '(': TokenType.LINK_URL_START,
     ')': TokenType.LINK_URL_END,
     // '![': TokenType.IMAGE,
 
