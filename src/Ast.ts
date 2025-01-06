@@ -1,11 +1,30 @@
 import { Token, TokenType } from "./Token";
 
+// export abstract class MarkdownNode {
+//     constructor(
+//         public type: TokenType,
+//         public value: string,
+//         public children: MarkdownNode[] = []
+//     ) {}
+// }
+
 export abstract class MarkdownNode {
-    constructor(
-        public type: TokenType,
-        public value: string,
-        public children: MarkdownNode[] = []
-    ) {}
+    constructor(public type: TokenType, public value: string) { }
+    children: MarkdownNode[] = [];
+
+    render(): string {
+        switch (this.type) {
+            case TokenType.HEADER1:
+                return `<h1>${this.children.map(child => child.render()).join("")}</h1>`;
+            case TokenType.BOLD:
+                return `<strong>${this.children.map(child => child.render()).join("")}</strong>`;
+            case TokenType.PARAGRAPH:
+                return `<p>${this.children.map(child => child.render()).join("")}</p>`;
+            // Add cases for other node types
+            default:
+                return this.value;
+        }
+    }
 }
 
 export abstract class HeaderNode extends MarkdownNode {
@@ -14,9 +33,10 @@ export abstract class HeaderNode extends MarkdownNode {
         public value: string,
         public level: number,
         public text: string = '',
-        children: MarkdownNode[] = []
-    ) {
-        super(type, value, children);
+            children: MarkdownNode[] = []
+        ) {
+            super(type, value);
+            this.children = children;
     }
 }
 
@@ -66,9 +86,10 @@ export class ListNode extends MarkdownNode {
     constructor(
         token: Token,
         public ordered: boolean,
-        public children: ListItemNode[] = []
+        public items: ListItemNode[] = []
     ) {
-        super(token.type as TokenType.UNORDERED_LIST | TokenType.ORDERED_LIST, token.literal, children);
+        super(token.type as TokenType.UNORDERED_LIST | TokenType.ORDERED_LIST, token.literal);
+        this.children = items;
     }
 }
 
@@ -214,3 +235,17 @@ export class NewlineNode extends MarkdownNode {
         super(TokenType.NEWLINE, token.literal);
     }
 }
+
+export class DocumentNode extends MarkdownNode {
+    children: MarkdownNode[];
+
+    constructor(children: MarkdownNode[] = []) {
+        super(TokenType.DOCUMENT, "document");
+        this.children = children;
+    }
+
+    render(): string {
+        return this.children.map(child => child.render()).join("\n");
+    }
+}
+

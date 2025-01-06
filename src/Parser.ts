@@ -1,6 +1,6 @@
 import { Lexer } from "./Lexer";
 import { Token, TokenType } from "./Token";
-import { HeaderNode, Header1Node, Header2Node, Header3Node, Header4Node, Header5Node, Header6Node, ParagraphNode, ListNode, ListItemNode, ChecklistNode, ChecklistCheckedNode, BlockquoteNode, HorizontalRuleNode, LinkNode, LinkTextNode, LinkUrlNode, LinkUrlEndNode, BoldNode, ItalicNode, StrikethroughNode, InlineCodeNode, CodeBlockNode, IllegalNode, EOFNode, NewlineNode } from "./Ast";
+import { MarkdownNode, HeaderNode, Header1Node, Header2Node, Header3Node, Header4Node, Header5Node, Header6Node, ParagraphNode, ListNode, ListItemNode, ChecklistNode, ChecklistCheckedNode, BlockquoteNode, HorizontalRuleNode, LinkNode, LinkTextNode, LinkUrlNode, LinkUrlEndNode, BoldNode, ItalicNode, StrikethroughNode, InlineCodeNode, CodeBlockNode, IllegalNode, EOFNode, NewlineNode, DocumentNode } from "./Ast";
 
 export class Parser {
     private lexer: Lexer;
@@ -84,10 +84,62 @@ export class Parser {
     }
 
     private parseList(): ListNode {
-        this.expectPeek(TokenType.UNORDERED_LIST);
-        const list = new ListNode(this.currentToken, this.currentToken.type === TokenType.UNORDERED_LIST);
-        this.nextToken();
-        return list;
+        const listNode = new ListNode(this.currentToken, this.currentToken.type === TokenType.UNORDERED_LIST);
+
+        while (this.currentToken.type === TokenType.LIST_ITEM || this.currentToken.type === TokenType.UNORDERED_LIST) {
+            const listItem = new ListItemNode(this.currentToken, '');
+            this.nextToken(); // Consume the list item marker
+
+            let text = '';
+            // Add any inline content to the list item
+            while (!this.peekTokenIs(TokenType.NEWLINE) &&
+                   !this.peekTokenIs(TokenType.LIST_ITEM) &&
+                   !this.peekTokenIs(TokenType.UNORDERED_LIST)) {
+                text += this.currentToken.literal + ' ';
+                this.nextToken();
+            }
+            listItem.text = text.trim();
+            listNode.items.push(listItem);
+
+            if (this.peekTokenIs(TokenType.NEWLINE)) {
+                this.nextToken(); // Consume newline
+            }
+        }
+
+        return listNode;
+    }
+
+    private parseInlineContent(): MarkdownNode[] {
+        const children: MarkdownNode[] = [];
+
+        while (this.isInlineToken(this.currentToken.type)) {
+            switch (this.currentToken.type) {
+                case TokenType.BOLD:
+                    children.push(this.parseBold());
+                    break;
+                case TokenType.ITALIC:
+                    children.push(this.parseItalic());
+                    break;
+                case TokenType.STRIKETHROUGH:
+                    children.push(this.parseStrikethrough());
+                    break;
+                default:
+                    children.push(this.parseText());
+                    break;
+            }
+            this.nextToken();
+        }
+
+        return children;
+    }
+
+    private isInlineToken(type: TokenType): boolean {
+        return [
+            TokenType.BOLD,
+            TokenType.ITALIC,
+            TokenType.STRIKETHROUGH,
+            TokenType.TEXT,
+        ].includes(type);
     }
 
     private parseText(): ParagraphNode {
@@ -228,7 +280,51 @@ export class Parser {
         return checklistChecked;
     }
 
-    public parse(): void {
-        //TODO
+
+    public parse(): DocumentNode {
+        const documentNode = new DocumentNode();
+
+        while (this.currentToken.type !== TokenType.EOF) {
+            let node: MarkdownNode | null = null;
+
+            switch (this.currentToken.type) {
+                case TokenType.HEADER1:
+                case TokenType.HEADER2:
+                case TokenType.HEADER3:
+                case TokenType.HEADER4:
+                case TokenType.HEADER5:
+                case TokenType.HEADER6:
+                    node = this.parseHeader();
+                    break;
+                case TokenType.UNORDERED_LIST:
+                case TokenType.LIST_ITEM:
+                    node = this.parseList();
+                    break;
+                case TokenType.BLOCKQUOTE:
+                    node = this.parseBlockquote();
+                    break;
+                case TokenType.HORIZONTAL_RULE:
+                    node = this.parseHorizontalRule();
+                    break;
+                case TokenType.TEXT:
+                    node = this.parseText();
+                    break;
+                case TokenType.NEWLINE:
+                    this.nextToken(); // Skip newlines
+                    continue;
+                default:
+                    node = new IllegalNode(this.currentToken);
+                    break;
+            }
+
+            if (node) {
+                documentNode.children.push(node);
+            }
+
+            this.nextToken(); // Advance to the next token
+        }
+
+        return documentNode;
     }
+
 }

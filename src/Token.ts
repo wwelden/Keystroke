@@ -37,7 +37,9 @@ export enum TokenType {
     TEXT = 'TEXT',           // Regular text
     EOF = 'EOF',            // End of file
     NEWLINE = 'NEWLINE',    // Newline
-    ILLEGAL = 'ILLEGAL'     // Unknown token
+    ILLEGAL = 'ILLEGAL',     // Unknown token
+    DOCUMENT = 'DOCUMENT',   // Root node
+    PARAGRAPH = 'PARAGRAPH'   // Paragraph
 }
 
 export class Token {

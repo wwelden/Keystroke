@@ -62,49 +62,55 @@ describe('Token', () => {
     });
 
     describe('Keywords Map', () => {
-        it('should map header symbols correctly', () => {
-            expect(keywords['#']).toBe(TokenType.HEADER1);
-            expect(keywords['##']).toBe(TokenType.HEADER2);
-            expect(keywords['###']).toBe(TokenType.HEADER3);
-            expect(keywords['####']).toBe(TokenType.HEADER4);
-            expect(keywords['#####']).toBe(TokenType.HEADER5);
-            expect(keywords['######']).toBe(TokenType.HEADER6);
-        });
+        const testCases = {
+            headers: [
+                { input: '#', expected: TokenType.HEADER1 },
+                { input: '##', expected: TokenType.HEADER2 },
+                { input: '###', expected: TokenType.HEADER3 },
+                { input: '####', expected: TokenType.HEADER4 },
+                { input: '#####', expected: TokenType.HEADER5 },
+                { input: '######', expected: TokenType.HEADER6 }
+            ],
+            lists: [
+                { input: '*', expected: TokenType.UNORDERED_LIST },
+                { input: '1.', expected: TokenType.ORDERED_LIST },
+                { input: '-', expected: TokenType.LIST_ITEM },
+                { input: '- [ ]', expected: TokenType.CHECKLIST },
+                { input: '- [x]', expected: TokenType.CHECKLIST_CHECKED }
+            ],
+            textFormatting: [
+                { input: '**', expected: TokenType.BOLD },
+                { input: '_', expected: TokenType.ITALIC },
+                { input: '~~', expected: TokenType.STRIKETHROUGH }
+            ],
+            code: [
+                { input: '`', expected: TokenType.INLINE_CODE },
+                { input: '```', expected: TokenType.CODE_BLOCK }
+            ],
+            links: [
+                { input: '[', expected: TokenType.LINK_TEXT_START },
+                { input: ']', expected: TokenType.LINK_TEXT_END },
+                { input: '(', expected: TokenType.LINK_URL_START },
+                { input: ')', expected: TokenType.LINK_URL_END }
+            ],
+            other: [
+                { input: '>', expected: TokenType.BLOCKQUOTE },
+                { input: '---', expected: TokenType.HORIZONTAL_RULE }
+            ],
+            invalid: [
+                { input: 'undefined_symbol', expected: undefined },
+                { input: '!', expected: undefined }
+            ]
+        };
 
-        it('should map list symbols correctly', () => {
-            expect(keywords['*']).toBe(TokenType.UNORDERED_LIST);
-            expect(keywords['1.']).toBe(TokenType.ORDERED_LIST);
-            expect(keywords['-']).toBe(TokenType.LIST_ITEM);
-            expect(keywords['- [ ]']).toBe(TokenType.CHECKLIST);
-            expect(keywords['- [x]']).toBe(TokenType.CHECKLIST_CHECKED);
-        });
-
-        it('should map text formatting symbols correctly', () => {
-            expect(keywords['**']).toBe(TokenType.BOLD);
-            expect(keywords['_']).toBe(TokenType.ITALIC);
-            expect(keywords['~~']).toBe(TokenType.STRIKETHROUGH);
-        });
-
-        it('should map code symbols correctly', () => {
-            expect(keywords['`']).toBe(TokenType.INLINE_CODE);
-            expect(keywords['```']).toBe(TokenType.CODE_BLOCK);
-        });
-
-        it('should map link symbols correctly', () => {
-            expect(keywords['[']).toBe(TokenType.LINK_TEXT_START);
-            expect(keywords[']']).toBe(TokenType.LINK_TEXT_END);
-            expect(keywords['(']).toBe(TokenType.LINK_URL_START);
-            expect(keywords[')']).toBe(TokenType.LINK_URL_END);
-        });
-
-        it('should map other symbols correctly', () => {
-            expect(keywords['>']).toBe(TokenType.BLOCKQUOTE);
-            expect(keywords['---']).toBe(TokenType.HORIZONTAL_RULE);
-        });
-
-        it('should not map undefined symbols', () => {
-            expect(keywords['undefined_symbol']).toBeUndefined();
-            expect(keywords['!']).toBeUndefined();
+        Object.entries(testCases).forEach(([category, cases]) => {
+            describe(category, () => {
+                cases.forEach(({ input, expected }) => {
+                    it(`should map ${input} to ${expected}`, () => {
+                        expect(keywords[input]).toBe(expected);
+                    });
+                });
+            });
         });
     });
 });

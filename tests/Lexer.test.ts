@@ -1,8 +1,21 @@
 import { Lexer } from '../src/Lexer';
-import { TokenType } from '../src/Token';
+import { Token, TokenType } from '../src/Token';
 
 describe('Lexer', () => {
-  // Test constructor
+  // Helper function to verify token matches expected type and literal
+  function expectToken(actual: Token, expected: { type: TokenType; literal: string }) {
+    expect(actual.type).toBe(expected.type);
+    expect(actual.literal).toBe(expected.literal);
+  }
+
+  // Helper function to verify sequence of tokens
+  function expectTokens(lexer: Lexer, expectedTokens: Array<{ type: TokenType; literal: string }>) {
+    expectedTokens.forEach(expected => {
+      const token = lexer.nextToken();
+      expectToken(token, expected);
+    });
+  }
+
   describe('constructor', () => {
     it('should initialize with empty input', () => {
       const lexer = new Lexer('');
@@ -15,13 +28,12 @@ describe('Lexer', () => {
     });
   });
 
-  // Test nextToken
   describe('nextToken', () => {
     it('should tokenize headers', () => {
       const input = '# Header1\n## Header2\n### Header3\n#### Header4\n##### Header5\n###### Header6';
       const lexer = new Lexer(input);
 
-      const expectedTokens = [
+      expectTokens(lexer, [
         { type: TokenType.HEADER1, literal: '#' },
         { type: TokenType.TEXT, literal: 'Header1' },
         { type: TokenType.NEWLINE, literal: '\n' },
@@ -40,20 +52,14 @@ describe('Lexer', () => {
         { type: TokenType.HEADER6, literal: '######' },
         { type: TokenType.TEXT, literal: 'Header6' },
         { type: TokenType.EOF, literal: '' }
-      ];
-
-      expectedTokens.forEach(expected => {
-        const token = lexer.nextToken();
-        expect(token.type).toBe(expected.type);
-        expect(token.literal).toBe(expected.literal);
-      });
+      ]);
     });
 
     it('should tokenize text formatting', () => {
       const input = '**bold** _italic_ ~~strikethrough~~ `code`';
       const lexer = new Lexer(input);
 
-      const expectedTokens = [
+      expectTokens(lexer, [
         { type: TokenType.BOLD, literal: '**' },
         { type: TokenType.TEXT, literal: 'bold' },
         { type: TokenType.BOLD, literal: '**' },
@@ -70,20 +76,14 @@ describe('Lexer', () => {
         { type: TokenType.TEXT, literal: 'code' },
         { type: TokenType.INLINE_CODE, literal: '`' },
         { type: TokenType.EOF, literal: '' }
-      ];
-
-      expectedTokens.forEach(expected => {
-        const token = lexer.nextToken();
-        expect(token.type).toBe(expected.type);
-        expect(token.literal).toBe(expected.literal);
-      });
+      ]);
     });
 
     it('should tokenize lists', () => {
       const input = '* Item 1\n- Item 2\n- [ ] Todo\n- [x] Done';
       const lexer = new Lexer(input);
 
-      const expectedTokens = [
+      expectTokens(lexer, [
         { type: TokenType.UNORDERED_LIST, literal: '*' },
         { type: TokenType.TEXT, literal: 'Item' },
         { type: TokenType.TEXT, literal: '1' },
@@ -98,20 +98,14 @@ describe('Lexer', () => {
         { type: TokenType.CHECKLIST_CHECKED, literal: '- [x]' },
         { type: TokenType.TEXT, literal: 'Done' },
         { type: TokenType.EOF, literal: '' }
-      ];
-
-      expectedTokens.forEach(expected => {
-        const token = lexer.nextToken();
-        expect(token.type).toBe(expected.type);
-        expect(token.literal).toBe(expected.literal);
-      });
+      ]);
     });
 
     it('should tokenize links', () => {
       const input = '[Link text](https://example.com)';
       const lexer = new Lexer(input);
 
-      const expectedTokens = [
+      expectTokens(lexer, [
         { type: TokenType.LINK_TEXT_START, literal: '[' },
         { type: TokenType.TEXT, literal: 'Link' },
         { type: TokenType.TEXT, literal: 'text' },
@@ -120,56 +114,38 @@ describe('Lexer', () => {
         { type: TokenType.TEXT, literal: 'https://example.com' },
         { type: TokenType.LINK_URL_END, literal: ')' },
         { type: TokenType.EOF, literal: '' }
-      ];
-
-      expectedTokens.forEach(expected => {
-        const token = lexer.nextToken();
-        expect(token.type).toBe(expected.type);
-        expect(token.literal).toBe(expected.literal);
-      });
+      ]);
     });
 
     it('should tokenize blockquotes and horizontal rules', () => {
       const input = '> Blockquote\n---';
       const lexer = new Lexer(input);
 
-      const expectedTokens = [
+      expectTokens(lexer, [
         { type: TokenType.BLOCKQUOTE, literal: '>' },
         { type: TokenType.TEXT, literal: 'Blockquote' },
         { type: TokenType.NEWLINE, literal: '\n' },
         { type: TokenType.HORIZONTAL_RULE, literal: '---' },
         { type: TokenType.EOF, literal: '' }
-      ];
-
-      expectedTokens.forEach(expected => {
-        const token = lexer.nextToken();
-        expect(token.type).toBe(expected.type);
-        expect(token.literal).toBe(expected.literal);
-      });
+      ]);
     });
   });
 
-  // Test readText (through nextToken since readText is private)
   describe('readText', () => {
     it('should handle mixed text content', () => {
       const input = 'Hello, World! 123';
       const lexer = new Lexer(input);
 
-      const token = lexer.nextToken();
-      expect(token.type).toBe(TokenType.TEXT);
-      expect(token.literal).toBe('Hello,');
+      expectToken(lexer.nextToken(), { type: TokenType.TEXT, literal: 'Hello,' });
     });
   });
 
-  // Test skipWhitespace (through nextToken since skipWhitespace is private)
   describe('skipWhitespace', () => {
     it('should skip various whitespace characters', () => {
       const input = '   \t\n\r  text';
       const lexer = new Lexer(input);
 
-      const token = lexer.nextToken();
-      expect(token.type).toBe(TokenType.TEXT);
-      expect(token.literal).toBe('text');
+      expectToken(lexer.nextToken(), { type: TokenType.TEXT, literal: 'text' });
     });
   });
 });
