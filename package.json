@@ -1,0 +1,24 @@
+{
+  "name": "keystroke",
+  "version": "1.0.0",
+  "description": "A markdown parser and compiler written in typescript",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wwelden/Keystroke.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wwelden/Keystroke/issues"
+  },
+  "homepage": "https://github.com/wwelden/Keystroke#readme",
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.2"
+  }
+}
