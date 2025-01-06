@@ -1,4 +1,4 @@
-import { Lexer } from "./lexer";
+import { Lexer } from "./Lexer";
 import { Token, TokenType } from "./Token";
 import { HeaderNode, Header1Node, Header2Node, Header3Node, Header4Node, Header5Node, Header6Node, ParagraphNode, ListNode, ListItemNode, ChecklistNode, ChecklistCheckedNode, BlockquoteNode, HorizontalRuleNode, LinkNode, LinkTextNode, LinkUrlNode, LinkUrlEndNode, BoldNode, ItalicNode, StrikethroughNode, InlineCodeNode, CodeBlockNode, IllegalNode, EOFNode, NewlineNode } from "./Ast";
 
