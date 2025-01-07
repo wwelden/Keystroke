@@ -93,7 +93,6 @@ export class Lexer {
     public nextToken(): Token {
         let token = new Token(TokenType.ILLEGAL, this.ch);
 
-        this.skipWhitespace();
         switch (this.ch) {
             case '#':
                 let hashCount = 1;
@@ -202,6 +201,12 @@ export class Lexer {
                 break;
             case '\n':
                 token = new Token(TokenType.NEWLINE, this.ch);
+                break;
+            case ' ':
+                token = new Token(TokenType.SPACE, this.ch);
+                break;
+            case '\t':
+                token = new Token(TokenType.TAB, this.ch);
                 break;
             default:
                 if (this.ch === '\0') {

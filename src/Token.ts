@@ -36,10 +36,15 @@ export enum TokenType {
     HORIZONTAL_RULE = 'HORIZONTAL_RULE',
     TEXT = 'TEXT',           // Regular text
     EOF = 'EOF',            // End of file
-    NEWLINE = 'NEWLINE',    // Newline
     ILLEGAL = 'ILLEGAL',     // Unknown token
     DOCUMENT = 'DOCUMENT',   // Root node
-    PARAGRAPH = 'PARAGRAPH'   // Paragraph
+    PARAGRAPH = 'PARAGRAPH',   // Paragraph
+
+    //whitespace
+    SPACE = 'SPACE',
+    TAB = 'TAB',
+    NEWLINE = 'NEWLINE',
+
 }
 
 export class Token {

@@ -124,6 +124,14 @@ export class ChecklistCheckedNode extends ListRelatedNode {
 export class BlockquoteNode extends MarkdownNode {
     constructor(token: Token, public text: string) {
         super(TokenType.BLOCKQUOTE, token.literal);
+        this.children = [new TextNode(token, text)];
+    }
+}
+
+export class TextNode extends MarkdownNode {
+    constructor(token: Token, text: string) {
+        super(TokenType.TEXT, token.literal);
+        this.value = text;
     }
 }
 
@@ -178,6 +186,34 @@ export abstract class TextFormattingNode extends MarkdownNode {
     }
 }
 
+export abstract class WhitespaceNode extends MarkdownNode {
+    constructor(
+        public type: TokenType.SPACE | TokenType.TAB | TokenType.NEWLINE,
+        public value: string,
+        public text: string
+    ) {
+        super(type, value);
+    }
+}
+
+export class TabNode extends WhitespaceNode {
+    constructor(token: Token) {
+        super(TokenType.TAB, token.literal, '');
+    }
+}
+
+export class SpaceNode extends WhitespaceNode {
+    constructor(token: Token) {
+        super(TokenType.SPACE, token.literal, '');
+    }
+}
+
+export class NewlineNode extends WhitespaceNode {
+    constructor(token: Token) {
+        super(TokenType.NEWLINE, token.literal, '');
+    }
+}
+
 export class BoldNode extends TextFormattingNode {
     constructor(token: Token, text: string) {
         super(TokenType.BOLD, token.literal, text);
@@ -227,12 +263,6 @@ export class IllegalNode extends MarkdownNode {
 export class EOFNode extends MarkdownNode {
     constructor(token: Token) {
         super(TokenType.EOF, token.literal);
-    }
-}
-
-export class NewlineNode extends MarkdownNode {
-    constructor(token: Token) {
-        super(TokenType.NEWLINE, token.literal);
     }
 }
 

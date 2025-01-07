@@ -4,8 +4,6 @@ import { TokenType } from './Token';
 export class Renderer {
     render(node: MarkdownNode): string {
         switch (node.type) {
-            case TokenType.DOCUMENT:
-                return node.children.map(child => this.render(child)).join("\n");
             case TokenType.HEADER1:
                 return `<h1>${this.renderChildren(node)}</h1>`;
             case TokenType.BOLD:
@@ -17,11 +15,13 @@ export class Renderer {
             case TokenType.LIST_ITEM:
                 return `<li>${this.renderChildren(node)}</li>`;
             case TokenType.CHECKLIST:
-                return `<li><input type="checkbox" checked>${this.renderChildren(node)}</li>`;
+                return `<li><input type="checkbox">${this.renderChildren(node)}</li>`;
             case TokenType.CHECKLIST_CHECKED:
                 return `<li><input type="checkbox" checked>${this.renderChildren(node)}</li>`;
             case TokenType.BLOCKQUOTE:
-                return `<blockquote>${this.renderChildren(node)}</blockquote>`;
+                let str = this.renderChildren(node);
+                str = str.substring(1);
+                return `<blockquote>${str}</blockquote>`;
             case TokenType.HORIZONTAL_RULE:
                 return `<hr>`;
             case TokenType.TEXT:
@@ -32,22 +32,23 @@ export class Renderer {
                 return "";
             case TokenType.ILLEGAL:
                 return "";
-            case TokenType.DOCUMENT:
-                return node.children.map(child => this.render(child)).join("\n");
-            case TokenType.PARAGRAPH:
-                return `<p>${this.renderChildren(node)}</p>`;
             case TokenType.INLINE_CODE:
                 return `<code>${this.renderChildren(node)}</code>`;
             case TokenType.CODE_BLOCK:
                 return `<pre><code>${this.renderChildren(node)}</code></pre>`;
             case TokenType.LINK_TEXT_START:
-                return `<a href="${this.renderChildren(node)}">`;
+                return "";
+            case TokenType.DOCUMENT:
+                return node.children.map(child => this.render(child)).join("");
             case TokenType.LINK_TEXT_END:
                 return `</a>`;
             case TokenType.LINK_URL_START:
-                return `<a href="${this.renderChildren(node)}">`;
+                const href = this.renderChildren(node);
+                const text = node.children.length > 0 ?
+                    node.children[0].children.map(child => this.render(child)).join("") : "";
+                return `<a href="${href}">${text}`;
             case TokenType.LINK_URL_END:
-                return `</a>`;
+                return "";
             case TokenType.ITALIC:
                 return `<i>${this.renderChildren(node)}</i>`;
             case TokenType.STRIKETHROUGH:
@@ -66,12 +67,21 @@ export class Renderer {
                 return `<h6>${this.renderChildren(node)}</h6>`;
             case TokenType.ORDERED_LIST:
                 return `<ol>${this.renderChildren(node)}</ol>`;
+            case TokenType.NEWLINE:
+                return "<br>";
+            case TokenType.SPACE:
+                return " ";
+            case TokenType.TAB:
+                return "    ";
             default:
-                return node.value || "";
+                return `<span>${node.value || ""}</span>`;
         }
     }
 
+
+
+
     private renderChildren(node: MarkdownNode): string {
-        return node.children.map(child => this.render(child)).join("");
+        return node.children.map(child => this.render(child)).join(" ");
     }
 }
