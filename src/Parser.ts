@@ -319,23 +319,23 @@ export class Parser {
     private parseItalic(): ItalicNode {
         this.expectPeek(TokenType.ITALIC);
         const italic = new ItalicNode(this.currentToken, '');
+
+        // Consume the opening **
         this.nextToken();
 
-        while (!this.currentTokenIs(TokenType.ITALIC) && !this.currentTokenIs(TokenType.EOF)&& !this.currentTokenIs(TokenType.NEWLINE)) {
-            if (this.isInlineToken(this.currentToken.type)) {
-                italic.children.push(...this.parseInlineContent());
-            } else {
-                italic.children.push(this.parseText());
-            }
-            this.nextToken();
+        while (!this.currentTokenIs(TokenType.ITALIC) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+            italic.children.push(this.parseText());
+            this.nextToken(); // Ensure token advancement
         }
 
         if (this.currentTokenIs(TokenType.ITALIC)) {
-            this.nextToken(); // Consume the closing _
+            this.nextToken(); // Consume the closing **
         } else {
+            // Handle unclosed bold token
             this.addError("Unmatched _ for italic text");
         }
         this.nextToken();
+
         return italic;
     }
 
@@ -491,9 +491,9 @@ export class Parser {
                 case TokenType.BOLD:
                     node = this.parseBold();
                     break;
-                // case TokenType.ITALIC:
-                //     node = this.parseItalic();
-                //     break;
+                case TokenType.ITALIC:
+                    node = this.parseItalic();
+                    break;
                 case TokenType.STRIKETHROUGH:
                     node = this.parseStrikethrough();
                     break;
