@@ -63,6 +63,8 @@ export class Renderer {
                 return `<span class="math">${this.renderChildren(node)}</span>\n`;
             case TokenType.SUPERSCRIPT:
                 return `<sup>${this.renderChildren(node)}</sup>`;
+            case TokenType.SUBSCRIPT:
+                return `<sub>${this.renderChildren(node)}</sub>`;
             default:
                 return `<span>${node.value || ""}</span>\n`;
         }

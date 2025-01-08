@@ -147,6 +147,8 @@ export class Lexer {
                 if (this.peekChar() === '~') {
                     this.readChar();
                     token = new Token(TokenType.STRIKETHROUGH, '~~');
+                } else {
+                    token = new Token(TokenType.SUBSCRIPT, '~');
                 }
                 break;
             case '`':

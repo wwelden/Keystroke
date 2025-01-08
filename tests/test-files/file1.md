@@ -43,11 +43,18 @@ _This is italic text_
 
 `inline code`
 
-#Math
+# Math
 
 $1+2+3=6 $
 
 
 $1+2+3=6 ^232  $
+
+
+
+# More math
+
+
+$1+2 ~10  $
 
 

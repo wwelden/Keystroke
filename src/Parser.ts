@@ -1,6 +1,6 @@
 import { Lexer } from "./Lexer";
 import { Token, TokenType } from "./Token";
-import { MarkdownNode, HeaderNode, Header1Node, Header2Node, Header3Node, Header4Node, Header5Node, Header6Node, ParagraphNode, ListNode, ListItemNode, ChecklistNode, ChecklistCheckedNode, BlockquoteNode, HorizontalRuleNode, LinkNode, BoldNode, ItalicNode, StrikethroughNode, InlineCodeNode, CodeBlockNode, IllegalNode, EOFNode, NewlineNode, DocumentNode, SpaceNode, WhitespaceNode, TabNode, MathNode, SuperscriptNode } from "./Ast";
+import { MarkdownNode, HeaderNode, Header1Node, Header2Node, Header3Node, Header4Node, Header5Node, Header6Node, ParagraphNode, ListNode, ListItemNode, ChecklistNode, ChecklistCheckedNode, BlockquoteNode, HorizontalRuleNode, LinkNode, BoldNode, ItalicNode, StrikethroughNode, InlineCodeNode, CodeBlockNode, IllegalNode, EOFNode, NewlineNode, DocumentNode, SpaceNode, WhitespaceNode, TabNode, MathNode, SuperscriptNode, SubscriptNode } from "./Ast";
 
 export class Parser {
     private lexer: Lexer;
@@ -321,6 +321,8 @@ export class Parser {
         while (!this.currentTokenIs(TokenType.MATH) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
             if (this.currentTokenIs(TokenType.SUPERSCRIPT)) {
                 math.children.push(this.parseSuperscript());
+            } else if (this.currentTokenIs(TokenType.SUBSCRIPT)) {
+                math.children.push(this.parseSubscript());
             } else if (!this.currentTokenIs(TokenType.MATH)) {
                 math.children.push(this.parseText());
             }
@@ -345,6 +347,20 @@ export class Parser {
         }
         this.nextToken();
         return superscript;
+    }
+    private parseSubscript(): SubscriptNode {
+        this.expectPeek(TokenType.SUBSCRIPT);
+        const subscript = new SubscriptNode(this.currentToken, '');
+        this.nextToken();
+        while (!this.currentTokenIs(TokenType.SUBSCRIPT) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+            subscript.children.push(this.parseText());
+            this.nextToken();
+        }
+        if (this.currentTokenIs(TokenType.SUBSCRIPT) || this.currentTokenIs(TokenType.MATH)) {
+            this.nextToken(); // Move past closing ~~
+        }
+        this.nextToken();
+        return subscript;
     }
 
     private parseCode(): InlineCodeNode {

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/styles.css">
+    <title>Markdown Editor</title>
+</head>
+<body>
+    <div class="editor-container">
+        <div class="toolbar">
+            <button>Open</button>
+            <button>Save As</button>
+            <button>Copy</button>
+            <button>Print</button>
+            <button data-action="format">Format</button>
+        </div>
+        <textarea class="editor" placeholder="# Title"></textarea>
+        <div class="bottom-toolbar">
+            <button data-action="heading">H</button>
+            <button data-action="comment">💬</button>
+            <button data-action="slash">/</button>
+            <button data-action="bold"><b>B</b></button>
+            <button data-action="italic"><i>I</i></button>
+            <button data-action="strike">S</button>
+            <button data-action="link">🔗</button>
+            <button data-action="table">📊</button>
+            <button data-action="image">📷</button>
+            <button data-action="code">&lt;/&gt;</button>
+            <button data-action="clear">🗑️</button>
+        </div>
+    </div>
+    <script type="module" src="/js/main.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const editor = document.querySelector('.editor');
+        const formatButton = document.querySelector('button[data-action="format"]');
+
+        formatButton.addEventListener('click', async () => {
+            const markdownText = editor.value;
+
+            try {
+                const response = await fetch('/api/format', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ markdown: markdownText }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Format request failed');
+                }
+
+                const { html } = await response.json();
+
+                // Create a new window with the formatted content
+                const newWindow = window.open('', '_blank');
+                newWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Formatted Markdown</title>
+                        <link rel="stylesheet" href="/css/styles.css">
+                    </head>
+                    <body>
+                        <div class="preview">
+                            ${html}
+                        </div>
+                    </body>
+                    </html>
+                `);
+                newWindow.document.close();
+            } catch (error) {
+                console.error('Error formatting markdown:', error);
+                alert('Error formatting markdown. Please try again.');
+            }
+        });
+    });
+    </script>
+</body>
+</html>

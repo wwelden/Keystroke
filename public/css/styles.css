@@ -1,0 +1,105 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #1e1e1e;
+    color: #ccc;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    /* Adds space between the body content and window bounds */
+    box-sizing: border-box;
+}
+
+.editor-container {
+    width: 100%;
+    /* Full width of the container */
+    height: 100%;
+    /* Full height of the container */
+    max-width: calc(100% - 30px);
+    /* 15px padding on left and right */
+    max-height: calc(100% - 30px);
+    /* 15px padding on top and bottom */
+    background-color: #2d2d2d;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.toolbar,
+.bottom-toolbar {
+    display: flex;
+    padding: 10px;
+    background-color: #3a3a3a;
+    border-bottom: 1px solid #444;
+    gap: 10px;
+}
+
+.bottom-toolbar {
+    border-top: 1px solid #444;
+    border-bottom: none;
+    justify-content: center;
+}
+
+.toolbar button,
+.bottom-toolbar button {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.toolbar button:hover,
+.bottom-toolbar button:hover {
+    background-color: #555;
+}
+
+.editor {
+    flex: 1;
+    background-color: #1e1e1e;
+    border: none;
+    padding: 20px;
+    font-size: 1.2rem;
+    color: #ccc;
+    resize: none;
+    font-family: Consolas, monospace;
+}
+
+.editor:focus {
+    outline: none;
+}
+
+.preview {
+    flex: 1;
+    background-color: #1e1e1e;
+    border: none;
+    padding: 20px;
+    font-size: 1.2rem;
+    color: #ccc;
+    font-family: Arial, sans-serif;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+.preview h1, .preview h2, .preview h3, .preview h4, .preview h5, .preview h6 {
+    color: #fff;
+    margin-top: 0;
+}
+
+.preview code {
+    background-color: #2d2d2d;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.preview blockquote {
+    border-left: 3px solid #555;
+    margin: 0;
+    padding-left: 1em;
+    color: #888;
+}
