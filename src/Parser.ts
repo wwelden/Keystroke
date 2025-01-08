@@ -140,8 +140,10 @@ export class Parser {
 
     private parseListItem(): ListItemNode {
         const listItem = new ListItemNode(this.currentToken, '');
-        listItem.children.push(this.parseText());
-        this.nextToken();
+        while (!this.currentTokenIs(TokenType.NEWLINE) && !this.currentTokenIs(TokenType.EOF)) {
+            listItem.children.push(this.parseText());
+            this.nextToken();
+        }
         return listItem;
     }
     private parseUnorderedList(): ListNode {
@@ -311,7 +313,7 @@ export class Parser {
             // Handle unclosed bold token
             this.addError("Unmatched ** for bold text");
         }
-        this.nextToken();
+        // this.nextToken();
 
         return bold;
     }
@@ -334,7 +336,7 @@ export class Parser {
             // Handle unclosed bold token
             this.addError("Unmatched _ for italic text");
         }
-        this.nextToken();
+        // this.nextToken();
 
         return italic;
     }

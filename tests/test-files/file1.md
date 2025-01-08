@@ -17,12 +17,15 @@ _This is italic text_
 ## Lists
 
 - Item 1
+
 - Item 2
+
   - Subitem 2.1
+
   - Subitem 2.2
 
-## Checklist
 
+## Checklist
 
 - [ ] Todo item
 - [x] Completed item
