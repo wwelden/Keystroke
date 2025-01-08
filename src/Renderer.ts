@@ -59,6 +59,10 @@ export class Renderer {
                 return " ";
             case TokenType.TAB:
                 return "&emsp;";
+            case TokenType.MATH:
+                return `<span class="math">${this.renderChildren(node)}</span>\n`;
+            case TokenType.SUPERSCRIPT:
+                return `<sup>${this.renderChildren(node)}</sup>`;
             default:
                 return `<span>${node.value || ""}</span>\n`;
         }

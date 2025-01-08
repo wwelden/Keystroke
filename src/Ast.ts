@@ -143,6 +143,18 @@ export class LinkNode extends MarkdownNode {
     }
 }
 
+export class MathNode extends MarkdownNode {
+    constructor(token: Token, public text: string) {
+        super(TokenType.MATH, token.literal);
+    }
+}
+
+export class SuperscriptNode extends MarkdownNode {
+    constructor(token: Token, public text: string) {
+        super(TokenType.SUPERSCRIPT, token.literal);
+    }
+}
+
 // export abstract class LinkRelatedNode extends MarkdownNode {
 //     constructor(
 //         public type: TokenType.LINK_TEXT_START | TokenType.LINK_TEXT_END | TokenType.LINK_URL_START | TokenType.LINK_URL_END,

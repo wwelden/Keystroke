@@ -19,6 +19,13 @@ export enum TokenType {
     BOLD = 'BOLD',
     ITALIC = 'ITALIC',
     STRIKETHROUGH = 'STRIKETHROUGH',
+    UNDERLINE = 'UNDERLINE',
+
+    SUPERSCRIPT = 'SUPERSCRIPT',
+    SUBSCRIPT = 'SUBSCRIPT',
+    // HIGHLIGHT = 'HIGHLIGHT',
+    // COLOR = 'COLOR',
+    MATH = 'MATH',
 
     // Code
     INLINE_CODE = 'INLINE_CODE',

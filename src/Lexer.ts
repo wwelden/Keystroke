@@ -172,6 +172,12 @@ export class Lexer {
             case '>':
                 token = new Token(TokenType.BLOCKQUOTE, this.ch);
                 break;
+            case '$':
+                token = new Token(TokenType.MATH, this.ch);
+                break;
+            case '^':
+                token = new Token(TokenType.SUPERSCRIPT, this.ch);
+                break;
             case '-':
                 let dashCount = 1;
                 while (this.peekChar() === '-' && dashCount < 3) {

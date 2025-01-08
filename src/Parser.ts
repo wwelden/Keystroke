@@ -1,6 +1,6 @@
 import { Lexer } from "./Lexer";
 import { Token, TokenType } from "./Token";
-import { MarkdownNode, HeaderNode, Header1Node, Header2Node, Header3Node, Header4Node, Header5Node, Header6Node, ParagraphNode, ListNode, ListItemNode, ChecklistNode, ChecklistCheckedNode, BlockquoteNode, HorizontalRuleNode, LinkNode, BoldNode, ItalicNode, StrikethroughNode, InlineCodeNode, CodeBlockNode, IllegalNode, EOFNode, NewlineNode, DocumentNode, SpaceNode, WhitespaceNode, TabNode } from "./Ast";
+import { MarkdownNode, HeaderNode, Header1Node, Header2Node, Header3Node, Header4Node, Header5Node, Header6Node, ParagraphNode, ListNode, ListItemNode, ChecklistNode, ChecklistCheckedNode, BlockquoteNode, HorizontalRuleNode, LinkNode, BoldNode, ItalicNode, StrikethroughNode, InlineCodeNode, CodeBlockNode, IllegalNode, EOFNode, NewlineNode, DocumentNode, SpaceNode, WhitespaceNode, TabNode, MathNode, SuperscriptNode } from "./Ast";
 
 export class Parser {
     private lexer: Lexer;
@@ -110,33 +110,6 @@ export class Parser {
                 return new Header1Node(this.currentToken);
         }
     }
-
-    // private parseList(): ListNode {
-    //     const listNode = new ListNode(this.currentToken, this.currentToken.type === TokenType.UNORDERED_LIST);
-
-    //     while (this.currentToken.type === TokenType.LIST_ITEM || this.currentToken.type === TokenType.UNORDERED_LIST) {
-    //         const listItem = new ListItemNode(this.currentToken, '');
-    //         this.nextToken(); // Consume the list item marker
-
-    //         let text = '';
-    //         // Add any inline content to the list item
-    //         while (!this.peekTokenIs(TokenType.NEWLINE) &&
-    //                !this.peekTokenIs(TokenType.LIST_ITEM) &&
-    //                !this.peekTokenIs(TokenType.UNORDERED_LIST)) {
-    //             // text += this.currentToken.literal + ' ';
-    //             listItem.children.push(this.parseText());
-    //             this.nextToken();
-    //         }
-    //         // listItem.text = text.trim();
-    //         listNode.items.push(listItem);
-
-    //         if (this.peekTokenIs(TokenType.NEWLINE)) {
-    //             this.nextToken(); // Consume newline
-    //         }
-    //     }
-
-    //     return listNode;
-    // }
 
     private parseListItem(): ListItemNode {
         const listItem = new ListItemNode(this.currentToken, '');
@@ -280,21 +253,6 @@ export class Parser {
         return newline;
     }
 
-    // private parseBold(): BoldNode {
-    //     this.expectPeek(TokenType.BOLD);
-    //     let text = '';
-    //     const bold = new BoldNode(this.currentToken, text);
-    //     this.nextToken(); // Move past opening **
-    //     while (!this.currentTokenIs(TokenType.BOLD) && !this.currentTokenIs(TokenType.EOF)) {
-    //         bold.children.push(this.parseText());
-    //         this.nextToken();
-    //     }
-    //     if (this.currentTokenIs(TokenType.BOLD)) {
-    //         this.nextToken(); // Move past closing **
-    //     }
-    //     return bold;
-    // }
-
     private parseBold(): BoldNode {
         this.expectPeek(TokenType.BOLD);
         const bold = new BoldNode(this.currentToken, '');
@@ -355,6 +313,39 @@ export class Parser {
         }
         return strikethrough;
     }
+    private parseMath(): MathNode {
+        this.expectPeek(TokenType.MATH);
+        let text = '';
+        const math = new MathNode(this.currentToken, text);
+        this.nextToken(); // Move past opening ~~
+        while (!this.currentTokenIs(TokenType.MATH) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+            if (this.currentTokenIs(TokenType.SUPERSCRIPT)) {
+                math.children.push(this.parseSuperscript());
+            } else if (!this.currentTokenIs(TokenType.MATH)) {
+                math.children.push(this.parseText());
+            }
+            this.nextToken();
+        }
+        if (this.currentTokenIs(TokenType.MATH)) {
+            this.nextToken(); // Move past closing ~~
+        }
+        this.nextToken();
+        return math;
+    }
+    private parseSuperscript(): SuperscriptNode {
+        this.expectPeek(TokenType.SUPERSCRIPT);
+        const superscript = new SuperscriptNode(this.currentToken, '');
+        this.nextToken();
+        while (!this.currentTokenIs(TokenType.SUPERSCRIPT) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+            superscript.children.push(this.parseText());
+            this.nextToken();
+        }
+        if (this.currentTokenIs(TokenType.SUPERSCRIPT) || this.currentTokenIs(TokenType.MATH)) {
+            this.nextToken(); // Move past closing ~~
+        }
+        this.nextToken();
+        return superscript;
+    }
 
     private parseCode(): InlineCodeNode {
         this.expectPeek(TokenType.INLINE_CODE);
@@ -401,7 +392,7 @@ export class Parser {
             checklist.children.push(this.parseText());
             this.nextToken();
         }
-        this.nextToken();
+        // this.nextToken();
         return checklist;
     }
 
@@ -414,7 +405,7 @@ export class Parser {
             checklistChecked.children.push(this.parseText());
             this.nextToken();
         }
-        this.nextToken();
+        // this.nextToken();
         return checklistChecked;
     }
 
@@ -515,6 +506,9 @@ export class Parser {
                     break;
                 case TokenType.INLINE_CODE:
                     node = this.parseCode();
+                    break;
+                case TokenType.MATH:
+                    node = this.parseMath();
                     break;
                 // case TokenType.CODE_BLOCK:
                 //     node = this.parseCodeBlock();

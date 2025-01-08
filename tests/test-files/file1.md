@@ -42,3 +42,12 @@ _This is italic text_
 ## Code
 
 `inline code`
+
+#Math
+
+$1+2+3=6 $
+
+
+$1+2+3=6 ^232  $
+
+
