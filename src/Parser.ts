@@ -123,10 +123,11 @@ export class Parser {
             while (!this.peekTokenIs(TokenType.NEWLINE) &&
                    !this.peekTokenIs(TokenType.LIST_ITEM) &&
                    !this.peekTokenIs(TokenType.UNORDERED_LIST)) {
-                text += this.currentToken.literal + ' ';
+                // text += this.currentToken.literal + ' ';
+                listItem.children.push(this.parseText());
                 this.nextToken();
             }
-            listItem.text = text.trim();
+            // listItem.text = text.trim();
             listNode.items.push(listItem);
 
             if (this.peekTokenIs(TokenType.NEWLINE)) {
@@ -136,6 +137,26 @@ export class Parser {
 
         return listNode;
     }
+
+    private parseListItem(): ListItemNode {
+        const listItem = new ListItemNode(this.currentToken, '');
+        listItem.children.push(this.parseText());
+        this.nextToken();
+        return listItem;
+    }
+    private parseUnorderedList(): ListNode {
+        const unorderedList = new ListNode(this.currentToken, true);
+        unorderedList.items.push(this.parseListItem());
+        this.nextToken();
+        return unorderedList;
+    }
+    private parseOrderedList(): ListNode {
+        const orderedList = new ListNode(this.currentToken, false);
+        orderedList.items.push(this.parseListItem());
+        this.nextToken();
+        return orderedList;
+    }
+
 
     // private parseInlineContent(): MarkdownNode[] {
     //     const children: MarkdownNode[] = [];
@@ -450,10 +471,10 @@ export class Parser {
                 case TokenType.HEADER6:
                     node = this.parseHeader();
                     break;
-                case TokenType.UNORDERED_LIST:
-                case TokenType.LIST_ITEM:
-                    node = this.parseList();
-                    break;
+                // case TokenType.UNORDERED_LIST:
+                // case TokenType.LIST_ITEM:
+                //     node = this.parseList();
+                //     break;
                 case TokenType.BLOCKQUOTE:
                     node = this.parseBlockquote();
                     break;
@@ -462,6 +483,15 @@ export class Parser {
                     break;
                 case TokenType.TEXT:
                     node = this.parseText();
+                    break;
+                case TokenType.UNORDERED_LIST:
+                    node = this.parseUnorderedList();
+                    break;
+                case TokenType.ORDERED_LIST:
+                    node = this.parseOrderedList();
+                    break;
+                case TokenType.LIST_ITEM:
+                    node = this.parseListItem();
                     break;
                     //     node = this.parseNewline();
                     //     break;

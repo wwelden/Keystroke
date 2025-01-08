@@ -45,7 +45,7 @@ const filename = process.argv[2] || 'file1.md';
 const markdownInput = readMarkdownFile(filename);
 
 // Initialize the lexer and parser
-const lexer = new Lexer(markdownTest1);
+const lexer = new Lexer(markdownInput);
 const parser = new Parser(lexer);
 const documentNode = parser.parse();
 

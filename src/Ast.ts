@@ -1,13 +1,5 @@
 import { Token, TokenType } from "./Token";
 
-// export abstract class MarkdownNode {
-//     constructor(
-//         public type: TokenType,
-//         public value: string,
-//         public children: MarkdownNode[] = []
-//     ) {}
-// }
-
 export abstract class MarkdownNode {
     constructor(public type: TokenType, public value: string) { }
     children: MarkdownNode[] = [];
