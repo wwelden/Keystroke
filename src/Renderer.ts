@@ -5,21 +5,21 @@ export class Renderer {
     render(node: MarkdownNode): string {
         switch (node.type) {
             case TokenType.HEADER1:
-                return `<h1>${this.renderChildren(node)}</h1>`;
+                return `<h1>${this.renderChildren(node)}</h1>\n`;
             case TokenType.PARAGRAPH:
-                return `<p>${this.renderChildren(node)}</p>`;
+                return `<p>${this.renderChildren(node)}</p>\n`;
             case TokenType.UNORDERED_LIST:
-                return `<ul>${this.renderChildren(node)}</ul>`;
+                return `<ul>${this.renderChildren(node)}</ul>\n`;
             case TokenType.LIST_ITEM:
-                return `<li>${this.renderChildren(node)}</li>`;
+                return `<li>${this.renderChildren(node)}</li>\n`;
             case TokenType.CHECKLIST:
-                return `<li><input type="checkbox">${this.renderChildren(node)}</li>`;
+                return `<li><input type="checkbox">${this.renderChildren(node)}</li>\n`;
             case TokenType.CHECKLIST_CHECKED:
-                return `<li><input type="checkbox" checked>${this.renderChildren(node)}</li>`;
+                return `<li><input type="checkbox" checked>${this.renderChildren(node)}</li>\n`;
             case TokenType.BLOCKQUOTE:
-                return `<blockquote>${this.renderChildren(node)}</blockquote>`;
+                return `<blockquote>${this.renderChildren(node)}</blockquote>\n`;
             case TokenType.HORIZONTAL_RULE:
-                return `<hr>`;
+                return `<hr>\n`;
             case TokenType.TEXT:
                 return node.value || "";
             case TokenType.EOF:
@@ -27,40 +27,40 @@ export class Renderer {
             case TokenType.ILLEGAL:
                 return "";
             case TokenType.INLINE_CODE:
-                return `<code>${this.renderChildren(node)}</code>`;
+                return `<code>${this.renderChildren(node)}</code>\n`;
             case TokenType.CODE_BLOCK:
-                return `<pre><code>${this.renderChildren(node)}</code></pre>`;
+                return `<pre><code>${this.renderChildren(node)}</code></pre>\n`;
             case TokenType.LINK_TEXT_START:
                 const linkNode = node as LinkNode;
-                return `<a href="${linkNode.url}">${linkNode.text}</a>`;
+                return `<a href="${linkNode.url}">${linkNode.text}</a>\n`;
             case TokenType.DOCUMENT:
                 return node.children.map(child => this.render(child)).join("");
             case TokenType.ITALIC:
-                return `<i>${this.renderChildren(node)}</i>`;
+                return `<i>${this.renderChildren(node)}</i>\n`;
             case TokenType.STRIKETHROUGH:
-                return `<s>${this.renderChildren(node)}</s>`;
+                return `<s>${this.renderChildren(node)}</s>\n`;
             case TokenType.BOLD:
-                return `<b>${this.renderChildren(node)}</b>`;
+                return `<b>${this.renderChildren(node)}</b>\n`;
             case TokenType.HEADER2:
-                return `<h2>${this.renderChildren(node)}</h2>`;
+                return `<h2>${this.renderChildren(node)}</h2>\n`;
             case TokenType.HEADER3:
-                return `<h3>${this.renderChildren(node)}</h3>`;
+                return `<h3>${this.renderChildren(node)}</h3>\n`;
             case TokenType.HEADER4:
-                return `<h4>${this.renderChildren(node)}</h4>`;
+                return `<h4>${this.renderChildren(node)}</h4>\n`;
             case TokenType.HEADER5:
-                return `<h5>${this.renderChildren(node)}</h5>`;
+                return `<h5>${this.renderChildren(node)}</h5>\n`;
             case TokenType.HEADER6:
-                return `<h6>${this.renderChildren(node)}</h6>`;
+                return `<h6>${this.renderChildren(node)}</h6>\n`;
             case TokenType.ORDERED_LIST:
-                return `<ol>${this.renderChildren(node)}</ol>`;
+                return `<ol>${this.renderChildren(node)}</ol>\n`;
             case TokenType.NEWLINE:
-                return "<br>";
+                return "<br>\n";
             case TokenType.SPACE:
                 return " ";
             case TokenType.TAB:
                 return "&emsp;";
             default:
-                return `<span>${node.value || ""}</span>`;
+                return `<span>${node.value || ""}</span>\n`;
         }
     }
 

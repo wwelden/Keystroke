@@ -54,4 +54,20 @@ const documentNode = parser.parse();
 
 // Render the parsed document
 const renderer = new Renderer();
-console.log(renderer.render(documentNode));
+const htmlOutput = renderer.render(documentNode);
+
+// Write to HTML file
+const outputPath = path.join(__dirname, '..', 'output', `${path.basename(filename, '.md')}.html`);
+try {
+    // Create output directory if it doesn't exist
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    fs.writeFileSync(outputPath, htmlOutput);
+    console.log(`HTML file generated successfully at: ${outputPath}`);
+} catch (error) {
+    console.error('Error writing HTML file:', error);
+    process.exit(1);
+}

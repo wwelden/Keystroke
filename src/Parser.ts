@@ -356,13 +356,24 @@ export class Parser {
 
     private parseCode(): InlineCodeNode {
         this.expectPeek(TokenType.INLINE_CODE);
-        let text = '';
-        while (!this.peekTokenIs(TokenType.INLINE_CODE)) {
-            text += this.parseText().text;
-            this.nextToken();
-        }
-        const code = new InlineCodeNode(this.currentToken, text);
+        const code = new InlineCodeNode(this.currentToken, '');
+
+        // Consume the opening **
         this.nextToken();
+
+        while (!this.currentTokenIs(TokenType.INLINE_CODE) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+            code.children.push(this.parseText());
+            this.nextToken(); // Ensure token advancement
+        }
+
+        if (this.currentTokenIs(TokenType.ITALIC)) {
+            this.nextToken(); // Consume the closing **
+        } else {
+            // Handle unclosed bold token
+            this.addError("Unmatched _ for italic text");
+        }
+        this.nextToken();
+
         return code;
     }
 
@@ -500,9 +511,9 @@ export class Parser {
                 case TokenType.LINK_TEXT_START:
                     node = this.parseLink();
                     break;
-                // case TokenType.INLINE_CODE:
-                //     node = this.parseCode();
-                //     break;
+                case TokenType.INLINE_CODE:
+                    node = this.parseCode();
+                    break;
                 // case TokenType.CODE_BLOCK:
                 //     node = this.parseCodeBlock();
                 //     break;

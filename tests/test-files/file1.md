@@ -32,8 +32,10 @@ _This is italic text_
 [Example Link](https://example.com)
 
 ## Blockquotes
+
 > This is a blockquote
 > With multiple lines
 
 ## Code
+
 `inline code`
