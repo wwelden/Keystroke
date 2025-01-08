@@ -225,71 +225,24 @@ export class Parser {
         return horizontalRule;
     }
 
-    // private parseLink(): LinkNode {
-    //     this.expectPeek(TokenType.LINK_TEXT_START);
-    //     let text = '';
-    //     const link = new LinkNode(this.currentToken, text, this.parseURL().url);
-    //     while (!this.peekTokenIs(TokenType.LINK_TEXT_END) && !this.peekTokenIs(TokenType.EOF)) {
-    //         // text += this.parseText().text;
-    //         link.children.push(this.parseText());
-    //         this.nextToken();
-    //     }
-    //     this.nextToken();
-    //     return link;
-    // }
-    // private parseURL(): LinkUrlNode {
-    //     this.expectPeek(TokenType.LINK_URL_START);
-    //     let url = '';
-    //     const linkUrl = new LinkUrlNode(this.currentToken, this.currentToken.literal, url);
-    //     while (!this.peekTokenIs(TokenType.LINK_URL_END) && !this.peekTokenIs(TokenType.EOF)) {
-    //         // url += this.parseText().text;
-    //         linkUrl.children.push(this.parseText());
-    //         this.nextToken();
-    //     }
-    //     this.nextToken();
-    //     return linkUrl;
-    // }
-
     private parseLink(): LinkNode {
-        this.expectPeek(TokenType.LINK_TEXT_START); // Ensure '['
-
+        this.expectPeek(TokenType.LINK_TEXT_START);
         let text = '';
         const textToken = this.currentToken;
-        // const link = new LinkNode(textToken, text, '');
-
-        // Parse the text inside [link text]
-        this.nextToken(); // Move past '['
+        this.nextToken();
         while (!this.currentTokenIs(TokenType.LINK_TEXT_END) && !this.currentTokenIs(TokenType.EOF)) {
             text += this.currentToken.literal;
-            // link.children.push(this.parseText());
             this.nextToken();
         }
-
-        if (!this.currentTokenIs(TokenType.LINK_TEXT_END)) {
-            this.addError('Unmatched [ for link text');
-            // return link; // Return partial link
-        }
-
-        this.nextToken(); // Move past ']'
-
-        // Parse the URL inside (URL)
-        this.expectPeek(TokenType.LINK_URL_START); // Ensure '('
+        this.nextToken();
+        this.expectPeek(TokenType.LINK_URL_START);
         let url = '';
-        this.nextToken(); // Move past '('
+        this.nextToken();
         while (!this.currentTokenIs(TokenType.LINK_URL_END) && !this.currentTokenIs(TokenType.EOF)) {
             url += this.currentToken.literal;
-            // link.children.push(this.parseText());
             this.nextToken();
         }
-
-        if (!this.currentTokenIs(TokenType.LINK_URL_END)) {
-            this.addError('Unmatched ( for link URL');
-            // return link; // Return partial link
-        }
-
-        this.nextToken(); // Move past ')'
-
-        // Create the LinkNode
+        this.nextToken();
         const link = new LinkNode(textToken, text, url);
         return link;
     }
@@ -325,21 +278,6 @@ export class Parser {
         return newline;
     }
 
-
-    // private parseLinkUrl(): LinkUrlNode {
-    //     this.expectPeek(TokenType.LINK_URL_START);
-    //     let url = '';
-    //     while (!this.peekTokenIs(TokenType.LINK_URL_END)) {
-    //         url += this.parseText().text;
-    //         this.nextToken();
-    //     }
-    //     const linkUrl = new LinkUrlNode(this.currentToken, this.currentToken.literal, url);
-    //     this.nextToken();
-    //     return linkUrl;
-    // }
-
-
-
     // private parseBold(): BoldNode {
     //     this.expectPeek(TokenType.BOLD);
     //     let text = '';
@@ -363,11 +301,7 @@ export class Parser {
         this.nextToken();
 
         while (!this.currentTokenIs(TokenType.BOLD) && !this.currentTokenIs(TokenType.EOF)) {
-            if (this.isInlineToken(this.currentToken.type)) {
-                bold.children.push(...this.parseInlineContent());
-            } else {
-                bold.children.push(this.parseText());
-            }
+            bold.children.push(this.parseText());
             this.nextToken(); // Ensure token advancement
         }
 
@@ -377,6 +311,7 @@ export class Parser {
             // Handle unclosed bold token
             this.addError("Unmatched ** for bold text");
         }
+        this.nextToken();
 
         return bold;
     }
@@ -517,10 +452,6 @@ export class Parser {
                 case TokenType.HEADER6:
                     node = this.parseHeader();
                     break;
-                // case TokenType.UNORDERED_LIST:
-                // case TokenType.LIST_ITEM:
-                //     node = this.parseList();
-                //     break;
                 case TokenType.BLOCKQUOTE:
                     node = this.parseBlockquote();
                     break;
@@ -539,10 +470,6 @@ export class Parser {
                 case TokenType.LIST_ITEM:
                     node = this.parseListItem();
                     break;
-                    //     node = this.parseNewline();
-                    //     break;
-                    //     node = this.parseSpace();
-                    //     break;
                 case TokenType.NEWLINE:
                 case TokenType.SPACE:
                 case TokenType.TAB:
@@ -566,9 +493,6 @@ export class Parser {
                 case TokenType.LINK_TEXT_START:
                     node = this.parseLink();
                     break;
-                // case TokenType.LINK_URL_START:
-                //     node = this.parseURL();
-                //     break;
                 // case TokenType.INLINE_CODE:
                 //     node = this.parseCode();
                 //     break;

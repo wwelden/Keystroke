@@ -6,8 +6,6 @@ export class Renderer {
         switch (node.type) {
             case TokenType.HEADER1:
                 return `<h1>${this.renderChildren(node)}</h1>`;
-            case TokenType.BOLD:
-                return `<strong>${this.renderChildren(node)}</strong>`;
             case TokenType.PARAGRAPH:
                 return `<p>${this.renderChildren(node)}</p>`;
             case TokenType.UNORDERED_LIST:
@@ -33,25 +31,10 @@ export class Renderer {
             case TokenType.CODE_BLOCK:
                 return `<pre><code>${this.renderChildren(node)}</code></pre>`;
             case TokenType.LINK_TEXT_START:
-                // let href = this.renderChildren(node);
-                // let text = node.children.length > 0 ?
-                //     node.children[0].children.map(child => this.render(child)).join("") : "";
-
                 const linkNode = node as LinkNode;
                 return `<a href="${linkNode.url}">${linkNode.text}</a>`;
-            // case TokenType.LINK_TEXT_START:
-            //     return `<a href="${this.renderChildren(node)}">${this.renderChildren(node)}`;
             case TokenType.DOCUMENT:
                 return node.children.map(child => this.render(child)).join("");
-            case TokenType.LINK_TEXT_END:
-                return `</a>`;
-            case TokenType.LINK_URL_START:
-                // const href = this.renderChildren(node);
-                // const text = node.children.length > 0 ?
-                //     node.children[0].children.map(child => this.render(child)).join("") : "";
-                // return `<a href="${href}">${text}`;
-            case TokenType.LINK_URL_END:
-                return "";
             case TokenType.ITALIC:
                 return `<i>${this.renderChildren(node)}</i>`;
             case TokenType.STRIKETHROUGH:
@@ -85,6 +68,6 @@ export class Renderer {
 
 
     private renderChildren(node: MarkdownNode): string {
-        return node.children.map(child => this.render(child)).join(""); // this is what is giving space in the header. it should be space tokens
+        return node.children.map(child => this.render(child)).join(" "); // this is what is giving space in the header. it should be space tokens
     }
 }
