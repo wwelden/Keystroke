@@ -300,7 +300,7 @@ export class Parser {
         // Consume the opening **
         this.nextToken();
 
-        while (!this.currentTokenIs(TokenType.BOLD) && !this.currentTokenIs(TokenType.EOF)) {
+        while (!this.currentTokenIs(TokenType.BOLD) && !this.currentTokenIs(TokenType.EOF)&& !this.currentTokenIs(TokenType.NEWLINE)) {
             bold.children.push(this.parseText());
             this.nextToken(); // Ensure token advancement
         }
@@ -319,11 +319,9 @@ export class Parser {
     private parseItalic(): ItalicNode {
         this.expectPeek(TokenType.ITALIC);
         const italic = new ItalicNode(this.currentToken, '');
-
-        // Consume the opening _
         this.nextToken();
 
-        while (!this.currentTokenIs(TokenType.ITALIC) && !this.currentTokenIs(TokenType.EOF)) {
+        while (!this.currentTokenIs(TokenType.ITALIC) && !this.currentTokenIs(TokenType.EOF)&& !this.currentTokenIs(TokenType.NEWLINE)) {
             if (this.isInlineToken(this.currentToken.type)) {
                 italic.children.push(...this.parseInlineContent());
             } else {
@@ -337,7 +335,7 @@ export class Parser {
         } else {
             this.addError("Unmatched _ for italic text");
         }
-
+        this.nextToken();
         return italic;
     }
 
@@ -481,15 +479,24 @@ export class Parser {
                 case TokenType.CHECKLIST_CHECKED:
                     node = this.parseCheckboxChecked();
                     break;
-                // case TokenType.BOLD:
-                //     node = this.parseBold();
-                //     break;
+                case TokenType.SPACE:
+                    node = this.parseSpace();
+                    break;
+                case TokenType.TAB:
+                    node = this.parseTab();
+                    break;
+                case TokenType.NEWLINE:
+                    node = this.parseNewline();
+                    break;
+                case TokenType.BOLD:
+                    node = this.parseBold();
+                    break;
                 // case TokenType.ITALIC:
                 //     node = this.parseItalic();
                 //     break;
-                // case TokenType.STRIKETHROUGH:
-                //     node = this.parseStrikethrough();
-                //     break;
+                case TokenType.STRIKETHROUGH:
+                    node = this.parseStrikethrough();
+                    break;
                 case TokenType.LINK_TEXT_START:
                     node = this.parseLink();
                     break;

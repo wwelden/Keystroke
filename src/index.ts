@@ -18,7 +18,10 @@ function readMarkdownFile(filename: string): string {
 const markdownTest1 = `
 # Hello, World!
 
-This is **bold** and _italic_ text.
+This is
+**bold**
+and
+_italic_ text.
 
 - [ ] Task 1
 - [x] Task 2
@@ -45,7 +48,7 @@ const filename = process.argv[2] || 'file1.md';
 const markdownInput = readMarkdownFile(filename);
 
 // Initialize the lexer and parser
-const lexer = new Lexer(markdownTest1);
+const lexer = new Lexer(markdownInput);
 const parser = new Parser(lexer);
 const documentNode = parser.parse();
 

@@ -64,9 +64,6 @@ export class Renderer {
         }
     }
 
-
-
-
     private renderChildren(node: MarkdownNode): string {
         return node.children.map(child => this.render(child)).join(" "); // this is what is giving space in the header. it should be space tokens
     }
