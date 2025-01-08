@@ -25,6 +25,7 @@ This is **bold** and _italic_ text.
 - [ ] Task 3
 
 > This is a blockquote.
+ hello a new line
 
 ---
 
@@ -36,7 +37,7 @@ const a = 1;
 
 [Google](https://www.google.com)
 
-###### This is a header 6
+###### This is a header6
 `;
 
 // Get filename from command line arguments or use default

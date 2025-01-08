@@ -201,6 +201,11 @@ export class TabNode extends WhitespaceNode {
         super(TokenType.TAB, token.literal, '');
     }
 }
+export class BlankNode extends ParagraphNode {
+    constructor(token: Token) {
+        super(token, '');
+    }
+}
 
 export class SpaceNode extends WhitespaceNode {
     constructor(token: Token) {

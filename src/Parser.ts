@@ -42,6 +42,9 @@ export class Parser {
             this.addError(`expected next token to be ${t}, got ${this.peekToken.type} instead`);
         }
     }
+    private isSpaceOrTab(token: Token): boolean {
+        return token.type === TokenType.SPACE || token.type === TokenType.TAB;
+    }
 
     private addError(msg: string): void {
         this.errors.push(msg);
@@ -134,29 +137,32 @@ export class Parser {
         return listNode;
     }
 
-    private parseInlineContent(): MarkdownNode[] {
-        const children: MarkdownNode[] = [];
+    // private parseInlineContent(): MarkdownNode[] {
+    //     const children: MarkdownNode[] = [];
 
-        while (this.isInlineToken(this.currentToken.type)) {
-            switch (this.currentToken.type) {
-                case TokenType.BOLD:
-                    children.push(this.parseBold());
-                    break;
-                case TokenType.ITALIC:
-                    children.push(this.parseItalic());
-                    break;
-                case TokenType.STRIKETHROUGH:
-                    children.push(this.parseStrikethrough());
-                    break;
-                default:
-                    children.push(this.parseText());
-                    break;
-            }
-            this.nextToken();
-        }
+    //     while (this.isInlineToken(this.currentToken.type)) {
+    //         switch (this.currentToken.type) {
+    //             case TokenType.BOLD:
+    //                 children.push(this.parseBold());
+    //                 break;
+    //             case TokenType.ITALIC:
+    //                 children.push(this.parseItalic());
+    //                 break;
+    //             case TokenType.STRIKETHROUGH:
+    //                 children.push(this.parseStrikethrough());
+    //                 break;
+    //             case TokenType.INLINE_CODE:
+    //                 children.push(this.parseCode());
+    //                 break;
+    //             default:
+    //                 children.push(this.parseText());
+    //                 break;
+    //         }
+    //         this.nextToken(); // Ensure token advancement
+    //     }
 
-        return children;
-    }
+    //     return children;
+    // }
 
     private isInlineToken(type: TokenType): boolean {
         return [
@@ -164,6 +170,10 @@ export class Parser {
             TokenType.ITALIC,
             TokenType.STRIKETHROUGH,
             TokenType.TEXT,
+            TokenType.INLINE_CODE,
+            TokenType.SPACE,
+            TokenType.TAB,
+            TokenType.NEWLINE,
         ].includes(type);
     }
 
@@ -177,12 +187,13 @@ export class Parser {
     private parseBlockquote(): BlockquoteNode {
         this.expectPeek(TokenType.BLOCKQUOTE);
         let text = '';
+        this.nextToken();
         const blockquote = new BlockquoteNode(this.currentToken, text);
-        while (!this.peekTokenIs(TokenType.NEWLINE)&&!this.peekNextTokenIs(TokenType.NEWLINE)) {
-            blockquote.children.push(this.parseText());
+        while (!this.peekTokenIs(TokenType.NEWLINE) && !this.peekNextTokenIs(TokenType.NEWLINE)) {
+                blockquote.children.push(this.parseText());
             this.nextToken();
         }
-        this.nextToken();
+        blockquote.children.push(this.parseText());
         return blockquote;
     }
 
@@ -200,15 +211,20 @@ export class Parser {
             text += this.parseText().text;
             this.nextToken();
         }
-        this.expectPeek(TokenType.LINK_URL_START);
-        let url = '';
-            while (!this.peekTokenIs(TokenType.LINK_URL_END)) {
-                url += this.parseText().text;
-                this.nextToken();
-        }
-        const link = new LinkNode(this.currentToken, text, url);
+        const link = new LinkNode(this.currentToken, text, this.parseURL().url);
         this.nextToken();
         return link;
+    }
+    private parseURL(): LinkUrlNode {
+        this.expectPeek(TokenType.LINK_URL_START);
+        let url = '';
+        while (!this.peekTokenIs(TokenType.LINK_URL_END)) {
+            url += this.parseText().text;
+            this.nextToken();
+        }
+        const linkUrl = new LinkUrlNode(this.currentToken, this.currentToken.literal, url);
+        this.nextToken();
+        return linkUrl;
     }
 
     private parseWhitespace(): WhitespaceNode {
@@ -221,6 +237,27 @@ export class Parser {
         }
         return new SpaceNode(this.currentToken);
     }
+    private parseSpace(): SpaceNode {
+        this.expectPeek(TokenType.SPACE);
+        const space = new SpaceNode(this.currentToken);
+        this.nextToken();
+        return space;
+    }
+
+    private parseTab(): TabNode {
+        this.expectPeek(TokenType.TAB);
+        const tab = new TabNode(this.currentToken);
+        this.nextToken();
+        return tab;
+    }
+
+    private parseNewline(): NewlineNode {
+        this.expectPeek(TokenType.NEWLINE);
+        const newline = new NewlineNode(this.currentToken);
+        this.nextToken();
+        return newline;
+    }
+
 
     // private parseLinkUrl(): LinkUrlNode {
     //     this.expectPeek(TokenType.LINK_URL_START);
@@ -236,40 +273,84 @@ export class Parser {
 
 
 
+    // private parseBold(): BoldNode {
+    //     this.expectPeek(TokenType.BOLD);
+    //     let text = '';
+    //     const bold = new BoldNode(this.currentToken, text);
+    //     this.nextToken(); // Move past opening **
+    //     while (!this.currentTokenIs(TokenType.BOLD) && !this.currentTokenIs(TokenType.EOF)) {
+    //         bold.children.push(this.parseText());
+    //         this.nextToken();
+    //     }
+    //     if (this.currentTokenIs(TokenType.BOLD)) {
+    //         this.nextToken(); // Move past closing **
+    //     }
+    //     return bold;
+    // }
+
     private parseBold(): BoldNode {
         this.expectPeek(TokenType.BOLD);
-        //might have to make sure this doesn't loop once it hits bold at the end
-        let text = '';
-        while (!this.peekTokenIs(TokenType.BOLD)) {
-            text += this.parseText().text;
-            this.nextToken();
-        }
-        const bold = new BoldNode(this.currentToken, text);
+        const bold = new BoldNode(this.currentToken, '');
+
+        // Consume the opening **
         this.nextToken();
+
+        while (!this.currentTokenIs(TokenType.BOLD) && !this.currentTokenIs(TokenType.EOF)) {
+            if (this.isInlineToken(this.currentToken.type)) {
+                bold.children.push(...this.parseInlineContent());
+            } else {
+                bold.children.push(this.parseText());
+            }
+            this.nextToken(); // Ensure token advancement
+        }
+
+        if (this.currentTokenIs(TokenType.BOLD)) {
+            this.nextToken(); // Consume the closing **
+        } else {
+            // Handle unclosed bold token
+            this.addError("Unmatched ** for bold text");
+        }
+
         return bold;
     }
 
     private parseItalic(): ItalicNode {
         this.expectPeek(TokenType.ITALIC);
-        let text = '';
-        while (!this.peekTokenIs(TokenType.ITALIC)) {
-            text += this.parseText().text;
+        const italic = new ItalicNode(this.currentToken, '');
+
+        // Consume the opening _
+        this.nextToken();
+
+        while (!this.currentTokenIs(TokenType.ITALIC) && !this.currentTokenIs(TokenType.EOF)) {
+            if (this.isInlineToken(this.currentToken.type)) {
+                italic.children.push(...this.parseInlineContent());
+            } else {
+                italic.children.push(this.parseText());
+            }
             this.nextToken();
         }
-        const italic = new ItalicNode(this.currentToken, text);
-        this.nextToken();
+
+        if (this.currentTokenIs(TokenType.ITALIC)) {
+            this.nextToken(); // Consume the closing _
+        } else {
+            this.addError("Unmatched _ for italic text");
+        }
+
         return italic;
     }
 
     private parseStrikethrough(): StrikethroughNode {
         this.expectPeek(TokenType.STRIKETHROUGH);
         let text = '';
-        while (!this.peekTokenIs(TokenType.STRIKETHROUGH)) {
-            text += this.parseText().text;
+        const strikethrough = new StrikethroughNode(this.currentToken, text);
+        this.nextToken(); // Move past opening ~~
+        while (!this.currentTokenIs(TokenType.STRIKETHROUGH) && !this.currentTokenIs(TokenType.EOF)&& !this.currentTokenIs(TokenType.NEWLINE)) {
+            strikethrough.children.push(this.parseText());
             this.nextToken();
         }
-        const strikethrough = new StrikethroughNode(this.currentToken, text);
-        this.nextToken();
+        if (this.currentTokenIs(TokenType.STRIKETHROUGH)) {
+            this.nextToken(); // Move past closing ~~
+        }
         return strikethrough;
     }
 
@@ -301,11 +382,12 @@ export class Parser {
     private parseCheckbox(): ChecklistNode {
         this.expectPeek(TokenType.CHECKLIST);
         let text = '';
+        this.nextToken();
+        const checklist = new ChecklistNode(this.currentToken, text);
         while (!this.peekTokenIs(TokenType.NEWLINE)) {
-            text += this.parseText().text;
+            checklist.children.push(this.parseText());
             this.nextToken();
         }
-        const checklist = new ChecklistNode(this.currentToken, text);
         this.nextToken();
         return checklist;
     }
@@ -313,13 +395,43 @@ export class Parser {
     private parseCheckboxChecked(): ChecklistCheckedNode {
         this.expectPeek(TokenType.CHECKLIST_CHECKED);
         let text = '';
+        this.nextToken();
+        const checklistChecked = new ChecklistCheckedNode(this.currentToken, text);
         while (!this.peekTokenIs(TokenType.NEWLINE)) {
-            text += this.parseText().text;
+            checklistChecked.children.push(this.parseText());
             this.nextToken();
         }
-        const checklistChecked = new ChecklistCheckedNode(this.currentToken, text);
         this.nextToken();
         return checklistChecked;
+    }
+
+    private parseInlineContent(): MarkdownNode[] {
+        const children: MarkdownNode[] = [];
+
+        while (this.isInlineToken(this.currentToken.type)) {
+            switch (this.currentToken.type) {
+                case TokenType.BOLD:
+                    children.push(this.parseBold());
+                    break;
+                case TokenType.ITALIC:
+                    children.push(this.parseItalic());
+                    break;
+                case TokenType.STRIKETHROUGH:
+                    children.push(this.parseStrikethrough());
+                    break;
+                case TokenType.SPACE:
+                case TokenType.TAB:
+                case TokenType.NEWLINE:
+                    children.push(this.parseWhitespace());
+                    break;
+                default:
+                    children.push(this.parseText());
+                    break;
+            }
+            this.nextToken(); // Ensure token advancement
+        }
+
+        return children;
     }
 
 
@@ -351,9 +463,42 @@ export class Parser {
                 case TokenType.TEXT:
                     node = this.parseText();
                     break;
+                    //     node = this.parseNewline();
+                    //     break;
+                    //     node = this.parseSpace();
+                    //     break;
                 case TokenType.NEWLINE:
-                    this.nextToken(); // Skip newlines
-                    continue;
+                case TokenType.SPACE:
+                case TokenType.TAB:
+                    node = this.parseWhitespace();
+                    break;
+                case TokenType.CHECKLIST:
+                    node = this.parseCheckbox();
+                    break;
+                case TokenType.CHECKLIST_CHECKED:
+                    node = this.parseCheckboxChecked();
+                    break;
+                // case TokenType.BOLD:
+                //     node = this.parseBold();
+                //     break;
+                // case TokenType.ITALIC:
+                //     node = this.parseItalic();
+                //     break;
+                // case TokenType.STRIKETHROUGH:
+                //     node = this.parseStrikethrough();
+                //     break;
+                // case TokenType.LINK_TEXT_START:
+                //     node = this.parseLink();
+                //     break;
+                // case TokenType.LINK_URL_START:
+                //     node = this.parseURL();
+                //     break;
+                // case TokenType.INLINE_CODE:
+                //     node = this.parseCode();
+                //     break;
+                // case TokenType.CODE_BLOCK:
+                //     node = this.parseCodeBlock();
+                //     break;
                 default:
                     node = new IllegalNode(this.currentToken);
                     break;

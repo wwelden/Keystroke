@@ -19,15 +19,11 @@ export class Renderer {
             case TokenType.CHECKLIST_CHECKED:
                 return `<li><input type="checkbox" checked>${this.renderChildren(node)}</li>`;
             case TokenType.BLOCKQUOTE:
-                let str = this.renderChildren(node);
-                str = str.substring(1);
-                return `<blockquote>${str}</blockquote>`;
+                return `<blockquote>${this.renderChildren(node)}</blockquote>`;
             case TokenType.HORIZONTAL_RULE:
                 return `<hr>`;
             case TokenType.TEXT:
                 return node.value || "";
-            case TokenType.NEWLINE:
-                return "<br>";
             case TokenType.EOF:
                 return "";
             case TokenType.ILLEGAL:
@@ -37,16 +33,19 @@ export class Renderer {
             case TokenType.CODE_BLOCK:
                 return `<pre><code>${this.renderChildren(node)}</code></pre>`;
             case TokenType.LINK_TEXT_START:
-                return "";
+                let href = this.renderChildren(node);
+                let text = node.children.length > 0 ?
+                    node.children[0].children.map(child => this.render(child)).join("") : "";
+                return `<a href="${href}">${text}`;
             case TokenType.DOCUMENT:
                 return node.children.map(child => this.render(child)).join("");
             case TokenType.LINK_TEXT_END:
                 return `</a>`;
             case TokenType.LINK_URL_START:
-                const href = this.renderChildren(node);
-                const text = node.children.length > 0 ?
-                    node.children[0].children.map(child => this.render(child)).join("") : "";
-                return `<a href="${href}">${text}`;
+                // const href = this.renderChildren(node);
+                // const text = node.children.length > 0 ?
+                //     node.children[0].children.map(child => this.render(child)).join("") : "";
+                // return `<a href="${href}">${text}`;
             case TokenType.LINK_URL_END:
                 return "";
             case TokenType.ITALIC:
@@ -72,7 +71,7 @@ export class Renderer {
             case TokenType.SPACE:
                 return " ";
             case TokenType.TAB:
-                return "    ";
+                return "&emsp;";
             default:
                 return `<span>${node.value || ""}</span>`;
         }
@@ -82,6 +81,6 @@ export class Renderer {
 
 
     private renderChildren(node: MarkdownNode): string {
-        return node.children.map(child => this.render(child)).join(" ");
+        return node.children.map(child => this.render(child)).join(""); // this is what is giving space in the header. it should be space tokens
     }
 }

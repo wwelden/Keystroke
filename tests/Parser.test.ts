@@ -87,12 +87,10 @@
 //             expect(link.text).toBe('Link text');
 //             expect(link.url).toBe('https://example.com');
 //         });
-//     });
 
-//     describe('parseLinkUrl', () => {
 //         it('should parse link URL', () => {
 //             const parser = createParser('(https://example.com)');
-//             const linkUrl = parser['parseLinkUrl']();
+//             const linkUrl = parser['parseLink']();
 //             expect(linkUrl.type).toBe(TokenType.LINK_URL_START);
 //             expect(linkUrl.url).toBe('https://example.com');
 //         });
