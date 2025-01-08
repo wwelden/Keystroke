@@ -28,6 +28,7 @@ _This is italic text_
 - [x] Completed item
 
 ## Links
+
 [Example Link](https://example.com)
 
 ## Blockquotes

@@ -1,4 +1,4 @@
-import { MarkdownNode } from './Ast';
+import { MarkdownNode, LinkNode } from './Ast';
 import { TokenType } from './Token';
 
 export class Renderer {
@@ -33,10 +33,14 @@ export class Renderer {
             case TokenType.CODE_BLOCK:
                 return `<pre><code>${this.renderChildren(node)}</code></pre>`;
             case TokenType.LINK_TEXT_START:
-                let href = this.renderChildren(node);
-                let text = node.children.length > 0 ?
-                    node.children[0].children.map(child => this.render(child)).join("") : "";
-                return `<a href="${href}">${text}`;
+                // let href = this.renderChildren(node);
+                // let text = node.children.length > 0 ?
+                //     node.children[0].children.map(child => this.render(child)).join("") : "";
+
+                const linkNode = node as LinkNode;
+                return `<a href="${linkNode.url}">${linkNode.text}</a>`;
+            // case TokenType.LINK_TEXT_START:
+            //     return `<a href="${this.renderChildren(node)}">${this.renderChildren(node)}`;
             case TokenType.DOCUMENT:
                 return node.children.map(child => this.render(child)).join("");
             case TokenType.LINK_TEXT_END:

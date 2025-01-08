@@ -133,40 +133,50 @@ export class HorizontalRuleNode extends MarkdownNode {
     }
 }
 
-export abstract class LinkRelatedNode extends MarkdownNode {
+export class LinkNode extends MarkdownNode {
     constructor(
-        public type: TokenType.LINK_TEXT_START | TokenType.LINK_TEXT_END | TokenType.LINK_URL_START | TokenType.LINK_URL_END,
-        public value: string,
+        token: Token,
         public text: string,
         public url: string
     ) {
-        super(type, value);
+        super(token.type as TokenType.LINK_TEXT_START | TokenType.LINK_TEXT_END | TokenType.LINK_URL_START | TokenType.LINK_URL_END, token.literal);
     }
 }
 
-export class LinkNode extends LinkRelatedNode {
-    constructor(token: Token, text: string, url: string) {
-        super(TokenType.LINK_TEXT_START, token.literal, text, url);
-    }
-}
+// export abstract class LinkRelatedNode extends MarkdownNode {
+//     constructor(
+//         public type: TokenType.LINK_TEXT_START | TokenType.LINK_TEXT_END | TokenType.LINK_URL_START | TokenType.LINK_URL_END,
+//         public value: string,
+//         public text: string,
+//         public url: string
+//     ) {
+//         super(type, value);
+//     }
+// }
 
-export class LinkTextNode extends LinkRelatedNode {
-    constructor(token: Token, text: string, url: string) {
-        super(TokenType.LINK_TEXT_START, token.literal, text, url);
-    }
-}
+// export class LinkNode extends LinkRelatedNode {
+//     constructor(token: Token, text: string, url: string) {
+//         super(TokenType.LINK_TEXT_START, token.literal, text, url);
+//     }
+// }
 
-export class LinkUrlNode extends LinkRelatedNode {
-    constructor(token: Token, text: string, url: string) {
-        super(TokenType.LINK_URL_START, token.literal, text, url);
-    }
-}
+// export class LinkTextNode extends LinkRelatedNode {
+//     constructor(token: Token, text: string, url: string) {
+//         super(TokenType.LINK_TEXT_START, token.literal, text, url);
+//     }
+// }
 
-export class LinkUrlEndNode extends LinkRelatedNode {
-    constructor(token: Token, text: string, url: string) {
-        super(TokenType.LINK_URL_END, token.literal, text, url);
-    }
-}
+// export class LinkUrlNode extends LinkRelatedNode {
+//     constructor(token: Token, text: string, url: string) {
+//         super(TokenType.LINK_URL_START, token.literal, text, url);
+//     }
+// }
+
+// export class LinkUrlEndNode extends LinkRelatedNode {
+//     constructor(token: Token, text: string, url: string) {
+//         super(TokenType.LINK_URL_END, token.literal, text, url);
+//     }
+// }
 
 export abstract class TextFormattingNode extends MarkdownNode {
     constructor(

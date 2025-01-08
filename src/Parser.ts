@@ -1,6 +1,6 @@
 import { Lexer } from "./Lexer";
 import { Token, TokenType } from "./Token";
-import { MarkdownNode, HeaderNode, Header1Node, Header2Node, Header3Node, Header4Node, Header5Node, Header6Node, ParagraphNode, ListNode, ListItemNode, ChecklistNode, ChecklistCheckedNode, BlockquoteNode, HorizontalRuleNode, LinkNode, LinkTextNode, LinkUrlNode, LinkUrlEndNode, BoldNode, ItalicNode, StrikethroughNode, InlineCodeNode, CodeBlockNode, IllegalNode, EOFNode, NewlineNode, DocumentNode, SpaceNode, WhitespaceNode, TabNode } from "./Ast";
+import { MarkdownNode, HeaderNode, Header1Node, Header2Node, Header3Node, Header4Node, Header5Node, Header6Node, ParagraphNode, ListNode, ListItemNode, ChecklistNode, ChecklistCheckedNode, BlockquoteNode, HorizontalRuleNode, LinkNode, BoldNode, ItalicNode, StrikethroughNode, InlineCodeNode, CodeBlockNode, IllegalNode, EOFNode, NewlineNode, DocumentNode, SpaceNode, WhitespaceNode, TabNode } from "./Ast";
 
 export class Parser {
     private lexer: Lexer;
@@ -111,32 +111,32 @@ export class Parser {
         }
     }
 
-    private parseList(): ListNode {
-        const listNode = new ListNode(this.currentToken, this.currentToken.type === TokenType.UNORDERED_LIST);
+    // private parseList(): ListNode {
+    //     const listNode = new ListNode(this.currentToken, this.currentToken.type === TokenType.UNORDERED_LIST);
 
-        while (this.currentToken.type === TokenType.LIST_ITEM || this.currentToken.type === TokenType.UNORDERED_LIST) {
-            const listItem = new ListItemNode(this.currentToken, '');
-            this.nextToken(); // Consume the list item marker
+    //     while (this.currentToken.type === TokenType.LIST_ITEM || this.currentToken.type === TokenType.UNORDERED_LIST) {
+    //         const listItem = new ListItemNode(this.currentToken, '');
+    //         this.nextToken(); // Consume the list item marker
 
-            let text = '';
-            // Add any inline content to the list item
-            while (!this.peekTokenIs(TokenType.NEWLINE) &&
-                   !this.peekTokenIs(TokenType.LIST_ITEM) &&
-                   !this.peekTokenIs(TokenType.UNORDERED_LIST)) {
-                // text += this.currentToken.literal + ' ';
-                listItem.children.push(this.parseText());
-                this.nextToken();
-            }
-            // listItem.text = text.trim();
-            listNode.items.push(listItem);
+    //         let text = '';
+    //         // Add any inline content to the list item
+    //         while (!this.peekTokenIs(TokenType.NEWLINE) &&
+    //                !this.peekTokenIs(TokenType.LIST_ITEM) &&
+    //                !this.peekTokenIs(TokenType.UNORDERED_LIST)) {
+    //             // text += this.currentToken.literal + ' ';
+    //             listItem.children.push(this.parseText());
+    //             this.nextToken();
+    //         }
+    //         // listItem.text = text.trim();
+    //         listNode.items.push(listItem);
 
-            if (this.peekTokenIs(TokenType.NEWLINE)) {
-                this.nextToken(); // Consume newline
-            }
-        }
+    //         if (this.peekTokenIs(TokenType.NEWLINE)) {
+    //             this.nextToken(); // Consume newline
+    //         }
+    //     }
 
-        return listNode;
-    }
+    //     return listNode;
+    // }
 
     private parseListItem(): ListItemNode {
         const listItem = new ListItemNode(this.currentToken, '');
@@ -225,27 +225,73 @@ export class Parser {
         return horizontalRule;
     }
 
+    // private parseLink(): LinkNode {
+    //     this.expectPeek(TokenType.LINK_TEXT_START);
+    //     let text = '';
+    //     const link = new LinkNode(this.currentToken, text, this.parseURL().url);
+    //     while (!this.peekTokenIs(TokenType.LINK_TEXT_END) && !this.peekTokenIs(TokenType.EOF)) {
+    //         // text += this.parseText().text;
+    //         link.children.push(this.parseText());
+    //         this.nextToken();
+    //     }
+    //     this.nextToken();
+    //     return link;
+    // }
+    // private parseURL(): LinkUrlNode {
+    //     this.expectPeek(TokenType.LINK_URL_START);
+    //     let url = '';
+    //     const linkUrl = new LinkUrlNode(this.currentToken, this.currentToken.literal, url);
+    //     while (!this.peekTokenIs(TokenType.LINK_URL_END) && !this.peekTokenIs(TokenType.EOF)) {
+    //         // url += this.parseText().text;
+    //         linkUrl.children.push(this.parseText());
+    //         this.nextToken();
+    //     }
+    //     this.nextToken();
+    //     return linkUrl;
+    // }
+
     private parseLink(): LinkNode {
-        this.expectPeek(TokenType.LINK_TEXT_START);
+        this.expectPeek(TokenType.LINK_TEXT_START); // Ensure '['
+
         let text = '';
-        while (!this.peekTokenIs(TokenType.LINK_TEXT_END)) {
-            text += this.parseText().text;
+        const textToken = this.currentToken;
+        // const link = new LinkNode(textToken, text, '');
+
+        // Parse the text inside [link text]
+        this.nextToken(); // Move past '['
+        while (!this.currentTokenIs(TokenType.LINK_TEXT_END) && !this.currentTokenIs(TokenType.EOF)) {
+            text += this.currentToken.literal;
+            // link.children.push(this.parseText());
             this.nextToken();
         }
-        const link = new LinkNode(this.currentToken, text, this.parseURL().url);
-        this.nextToken();
-        return link;
-    }
-    private parseURL(): LinkUrlNode {
-        this.expectPeek(TokenType.LINK_URL_START);
+
+        if (!this.currentTokenIs(TokenType.LINK_TEXT_END)) {
+            this.addError('Unmatched [ for link text');
+            // return link; // Return partial link
+        }
+
+        this.nextToken(); // Move past ']'
+
+        // Parse the URL inside (URL)
+        this.expectPeek(TokenType.LINK_URL_START); // Ensure '('
         let url = '';
-        while (!this.peekTokenIs(TokenType.LINK_URL_END)) {
-            url += this.parseText().text;
+        this.nextToken(); // Move past '('
+        while (!this.currentTokenIs(TokenType.LINK_URL_END) && !this.currentTokenIs(TokenType.EOF)) {
+            url += this.currentToken.literal;
+            // link.children.push(this.parseText());
             this.nextToken();
         }
-        const linkUrl = new LinkUrlNode(this.currentToken, this.currentToken.literal, url);
-        this.nextToken();
-        return linkUrl;
+
+        if (!this.currentTokenIs(TokenType.LINK_URL_END)) {
+            this.addError('Unmatched ( for link URL');
+            // return link; // Return partial link
+        }
+
+        this.nextToken(); // Move past ')'
+
+        // Create the LinkNode
+        const link = new LinkNode(textToken, text, url);
+        return link;
     }
 
     private parseWhitespace(): WhitespaceNode {
@@ -517,9 +563,9 @@ export class Parser {
                 // case TokenType.STRIKETHROUGH:
                 //     node = this.parseStrikethrough();
                 //     break;
-                // case TokenType.LINK_TEXT_START:
-                //     node = this.parseLink();
-                //     break;
+                case TokenType.LINK_TEXT_START:
+                    node = this.parseLink();
+                    break;
                 // case TokenType.LINK_URL_START:
                 //     node = this.parseURL();
                 //     break;

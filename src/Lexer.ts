@@ -85,7 +85,11 @@ export class Lexer {
               this.input[this.position - 3] === '-') &&
             this.ch !== '-'
         ) {
-            this.readChar();
+            if (this.isDigit(this.ch)) {
+                this.readNumber();
+            } else {
+                this.readChar();
+            }
         }
         return this.input.slice(position, this.position);
     }
