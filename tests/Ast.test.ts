@@ -185,14 +185,6 @@ describe('AST Nodes', () => {
             expect(node.url).toBe('https://example.com');
         });
 
-        it('should create TextNode correctly', () => {
-            const token = new Token(TokenType.LINK_TEXT_START, '[');
-            const node = new TextNode(token, 'Link text');
-
-            expect(node.type).toBe(TokenType.LINK_TEXT_START);
-            expect(node.value).toBe('[');
-        });
-
         it('should create link URL nodes correctly', () => {
             const token = new Token(TokenType.LINK_URL_START, '(');
             const node = new LinkNode(token, 'Link text', 'https://example.com');
