@@ -16,9 +16,7 @@ import {
     BlockquoteNode,
     HorizontalRuleNode,
     LinkNode,
-    LinkTextNode,
-    LinkUrlNode,
-    LinkUrlEndNode,
+    TextNode,
     BoldNode,
     ItalicNode,
     StrikethroughNode,
@@ -26,7 +24,10 @@ import {
     CodeBlockNode,
     IllegalNode,
     EOFNode,
-    NewlineNode
+    NewlineNode,
+    MathNode,
+    SuperscriptNode,
+    SubscriptNode
 } from '../src/Ast';
 
 describe('AST Nodes', () => {
@@ -60,6 +61,63 @@ describe('AST Nodes', () => {
                 expect(node.level).toBe(level);
                 expect(node.children).toEqual([]);
             });
+        });
+    });
+
+    // Test Math Nodes
+    describe('Math Nodes', () => {
+        it('should create MathNode correctly', () => {
+            const token = new Token(TokenType.MATH, '$');
+            const node = new MathNode(token, '1+2=3');
+
+            expect(node.type).toBe(TokenType.MATH);
+            expect(node.value).toBe('$');
+            expect(node.text).toBe('1+2=3');
+            expect(node.children).toEqual([]);
+        });
+
+        it('should create SuperscriptNode correctly', () => {
+            const token = new Token(TokenType.SUPERSCRIPT, '^');
+            const node = new SuperscriptNode(token, '2');
+
+            expect(node.type).toBe(TokenType.SUPERSCRIPT);
+            expect(node.value).toBe('^');
+            expect(node.text).toBe('2');
+            expect(node.children).toEqual([]);
+        });
+
+        it('should create SubscriptNode correctly', () => {
+            const token = new Token(TokenType.SUBSCRIPT, '~');
+            const node = new SubscriptNode(token, '2');
+
+            expect(node.type).toBe(TokenType.SUBSCRIPT);
+            expect(node.value).toBe('~');
+            expect(node.text).toBe('2');
+            expect(node.children).toEqual([]);
+        });
+
+        it('should handle math nodes with superscript', () => {
+            const mathToken = new Token(TokenType.MATH, '$');
+            const superToken = new Token(TokenType.SUPERSCRIPT, '^');
+            const mathNode = new MathNode(mathToken, '1+2=3');
+            const superNode = new SuperscriptNode(superToken, '2');
+            mathNode.children.push(superNode);
+
+            expect(mathNode.type).toBe(TokenType.MATH);
+            expect(mathNode.children[0].type).toBe(TokenType.SUPERSCRIPT);
+            expect((mathNode.children[0] as SuperscriptNode).text).toBe('2');
+        });
+
+        it('should handle math nodes with subscript', () => {
+            const mathToken = new Token(TokenType.MATH, '$');
+            const subToken = new Token(TokenType.SUBSCRIPT, '~');
+            const mathNode = new MathNode(mathToken, '1+2=3');
+            const subNode = new SubscriptNode(subToken, '2');
+            mathNode.children.push(subNode);
+
+            expect(mathNode.type).toBe(TokenType.MATH);
+            expect(mathNode.children[0].type).toBe(TokenType.SUBSCRIPT);
+            expect((mathNode.children[0] as SubscriptNode).text).toBe('2');
         });
     });
 
@@ -127,30 +185,21 @@ describe('AST Nodes', () => {
             expect(node.url).toBe('https://example.com');
         });
 
-        it('should create LinkTextNode correctly', () => {
+        it('should create TextNode correctly', () => {
             const token = new Token(TokenType.LINK_TEXT_START, '[');
-            const node = new LinkTextNode(token, 'Link text', 'https://example.com');
+            const node = new TextNode(token, 'Link text');
 
             expect(node.type).toBe(TokenType.LINK_TEXT_START);
             expect(node.value).toBe('[');
-            expect(node.text).toBe('Link text');
-            expect(node.url).toBe('https://example.com');
         });
 
-        it('should create LinkUrlNode and LinkUrlEndNode correctly', () => {
-            const nodes = [
-                { TokenType: TokenType.LINK_URL_START, NodeClass: LinkUrlNode },
-                { TokenType: TokenType.LINK_URL_END, NodeClass: LinkUrlEndNode }
-            ];
+        it('should create link URL nodes correctly', () => {
+            const token = new Token(TokenType.LINK_URL_START, '(');
+            const node = new LinkNode(token, 'Link text', 'https://example.com');
 
-            nodes.forEach(({ TokenType: type, NodeClass }) => {
-                const token = new Token(type, type === TokenType.LINK_URL_START ? '(' : ')');
-                const node = new NodeClass(token, 'Link text', 'https://example.com');
-
-                expect(node.type).toBe(type);
-                expect(node.text).toBe('Link text');
-                expect(node.url).toBe('https://example.com');
-            });
+            expect(node.type).toBe(TokenType.LINK_URL_START);
+            expect(node.text).toBe('Link text');
+            expect(node.url).toBe('https://example.com');
         });
     });
 

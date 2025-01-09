@@ -47,12 +47,10 @@ _This is italic text_
 
 $1+2+3=6 $
 
+# Special math
 
 $1+2+3=6 ^232  $
 
-
-
-# More math
 
 
 $1+2 ~10  $

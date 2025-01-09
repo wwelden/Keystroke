@@ -59,6 +59,12 @@ describe('Token', () => {
             expect(TokenType.NEWLINE).toBe('NEWLINE');
             expect(TokenType.ILLEGAL).toBe('ILLEGAL');
         });
+
+        it('should have all math types defined', () => {
+            expect(TokenType.MATH).toBe('MATH');
+            expect(TokenType.SUPERSCRIPT).toBe('SUPERSCRIPT');
+            expect(TokenType.SUBSCRIPT).toBe('SUBSCRIPT');
+        });
     });
 
     describe('Keywords Map', () => {
@@ -100,6 +106,11 @@ describe('Token', () => {
             invalid: [
                 { input: 'undefined_symbol', expected: undefined },
                 { input: '!', expected: undefined }
+            ],
+            math: [
+                { input: '$', expected: TokenType.MATH },
+                { input: '^', expected: TokenType.SUPERSCRIPT },
+                { input: '~', expected: TokenType.SUBSCRIPT }
             ]
         };
 

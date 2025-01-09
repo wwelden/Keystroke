@@ -170,6 +170,26 @@ describe('Lexer', () => {
         { type: TokenType.EOF, literal: '' }
       ]);
     });
+
+    it('should tokenize math expressions', () => {
+      const input = '$1+2=3$ x^2 y~1';
+      const lexer = new Lexer(input);
+
+      expectTokens(lexer, [
+        { type: TokenType.MATH, literal: '$' },
+        { type: TokenType.TEXT, literal: '1+2=3' },
+        { type: TokenType.MATH, literal: '$' },
+        { type: TokenType.SPACE, literal: ' ' },
+        { type: TokenType.TEXT, literal: 'x' },
+        { type: TokenType.SUPERSCRIPT, literal: '^' },
+        { type: TokenType.TEXT, literal: '2' },
+        { type: TokenType.SPACE, literal: ' ' },
+        { type: TokenType.TEXT, literal: 'y' },
+        { type: TokenType.SUBSCRIPT, literal: '~' },
+        { type: TokenType.TEXT, literal: '1' },
+        { type: TokenType.EOF, literal: '' }
+      ]);
+    });
   });
 
   describe('readText', () => {

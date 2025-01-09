@@ -90,5 +90,8 @@ export const keywords: { [key: string]: TokenType } = {
     // '![': TokenType.IMAGE,
 
     '>': TokenType.BLOCKQUOTE,
-    '---': TokenType.HORIZONTAL_RULE
+    '---': TokenType.HORIZONTAL_RULE,
+    '$': TokenType.MATH,
+    '^': TokenType.SUPERSCRIPT,
+    '~': TokenType.SUBSCRIPT,
 };

@@ -1,6 +1,38 @@
 import { Lexer } from "./Lexer";
 import { Token, TokenType } from "./Token";
-import { MarkdownNode, HeaderNode, Header1Node, Header2Node, Header3Node, Header4Node, Header5Node, Header6Node, ParagraphNode, ListNode, ListItemNode, ChecklistNode, ChecklistCheckedNode, BlockquoteNode, HorizontalRuleNode, LinkNode, BoldNode, ItalicNode, StrikethroughNode, InlineCodeNode, CodeBlockNode, IllegalNode, EOFNode, NewlineNode, DocumentNode, SpaceNode, WhitespaceNode, TabNode, MathNode, SuperscriptNode, SubscriptNode } from "./Ast";
+import {
+    MarkdownNode,
+    HeaderNode,
+    Header1Node,
+    Header2Node,
+    Header3Node,
+    Header4Node,
+    Header5Node,
+    Header6Node,
+    ParagraphNode,
+    ListNode,
+    ListItemNode,
+    ChecklistNode,
+    ChecklistCheckedNode,
+    BlockquoteNode,
+    HorizontalRuleNode,
+    LinkNode,
+    BoldNode,
+    ItalicNode,
+    StrikethroughNode,
+    InlineCodeNode,
+    CodeBlockNode,
+    IllegalNode,
+    EOFNode,
+    NewlineNode,
+    DocumentNode,
+    SpaceNode,
+    WhitespaceNode,
+    TabNode,
+    MathNode,
+    SuperscriptNode,
+    SubscriptNode
+} from "./Ast";
 
 export class Parser {
     private lexer: Lexer;
@@ -9,11 +41,11 @@ export class Parser {
     private peekNextToken: Token;
     private errors: string[];
 
-    constructor(lexer: Lexer) {
+    constructor(lexer: Lexer, currentToken: Token = new Token(TokenType.ILLEGAL, ''), peekToken: Token = new Token(TokenType.ILLEGAL, ''), peekNextToken: Token = new Token(TokenType.ILLEGAL, '')  ) {
         this.lexer = lexer;
-        this.currentToken = new Token(TokenType.ILLEGAL, '');
-        this.peekToken = new Token(TokenType.ILLEGAL, '');
-        this.peekNextToken = new Token(TokenType.ILLEGAL, '');
+        this.currentToken = currentToken;
+        this.peekToken = peekToken;
+        this.peekNextToken = peekNextToken;
         this.errors = [];
     }
 
@@ -331,7 +363,7 @@ export class Parser {
         if (this.currentTokenIs(TokenType.MATH)) {
             this.nextToken(); // Move past closing ~~
         }
-        this.nextToken();
+        // this.nextToken();
         return math;
     }
     private parseSuperscript(): SuperscriptNode {
@@ -345,7 +377,7 @@ export class Parser {
         if (this.currentTokenIs(TokenType.SUPERSCRIPT) || this.currentTokenIs(TokenType.MATH)) {
             this.nextToken(); // Move past closing ~~
         }
-        this.nextToken();
+        // this.nextToken();
         return superscript;
     }
     private parseSubscript(): SubscriptNode {
@@ -359,7 +391,7 @@ export class Parser {
         if (this.currentTokenIs(TokenType.SUBSCRIPT) || this.currentTokenIs(TokenType.MATH)) {
             this.nextToken(); // Move past closing ~~
         }
-        this.nextToken();
+        // this.nextToken();
         return subscript;
     }
 
