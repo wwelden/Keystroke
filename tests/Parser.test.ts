@@ -40,6 +40,8 @@ describe('Parser', () => {
             expect(doc.children[0]).toBeInstanceOf(BoldNode);
             expect(doc.children[0].type).toBe(TokenType.BOLD);
             expect(doc.children[0].children[0].value).toBe('bold');
+            expect(doc.children[0].children[0].type).toBe(TokenType.TEXT);
+            expect(doc.children[0].children[1].value).toBe('text');
         });
 
         it('should parse italic text', () => {
@@ -47,6 +49,8 @@ describe('Parser', () => {
             expect(doc.children[0]).toBeInstanceOf(ItalicNode);
             expect(doc.children[0].type).toBe(TokenType.ITALIC);
             expect(doc.children[0].children[0].value).toBe('italic');
+            expect(doc.children[0].children[0].type).toBe(TokenType.TEXT);
+            expect(doc.children[0].children[1].value).toBe('text');
         });
     });
 
