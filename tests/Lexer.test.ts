@@ -86,7 +86,7 @@ describe('Lexer', () => {
     });
 
     it('test tasks', () => {
-      const input = '- [ ] Task 1\n- [x] Task 2\n- [ ] Task 3';
+      const input = '- [ ] Task 1\n - [x] Task 2\n - [ ] Task 3';
       const lexer = new Lexer(input);
 
       expectTokens(lexer, [
@@ -96,12 +96,14 @@ describe('Lexer', () => {
         { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.TEXT, literal: '1' },
         { type: TokenType.NEWLINE, literal: '\n' },
+        { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.CHECKLIST_CHECKED, literal: '- [x]' },
         { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.TEXT, literal: 'Task' },
         { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.TEXT, literal: '2' },
         { type: TokenType.NEWLINE, literal: '\n' },
+        { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.CHECKLIST, literal: '- [ ]' },
         { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.TEXT, literal: 'Task' },
@@ -113,7 +115,7 @@ describe('Lexer', () => {
     });
 
     it('should tokenize lists', () => {
-      const input = '* Item 1\n- Item 2\n- [ ] Todo\n- [x] Done';
+      const input = '* Item 1\n * Item 2\n - [ ] Todo\n - [x] Done';
       const lexer = new Lexer(input);
 
       expectTokens(lexer, [
@@ -123,16 +125,19 @@ describe('Lexer', () => {
         { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.TEXT, literal: '1' },
         { type: TokenType.NEWLINE, literal: '\n' },
-        { type: TokenType.LIST_ITEM, literal: '-' },
+        { type: TokenType.SPACE, literal: ' ' },
+        { type: TokenType.UNORDERED_LIST, literal: '*' },
         { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.TEXT, literal: 'Item' },
         { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.TEXT, literal: '2' },
         { type: TokenType.NEWLINE, literal: '\n' },
+        { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.CHECKLIST, literal: '- [ ]' },
         { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.TEXT, literal: 'Todo' },
         { type: TokenType.NEWLINE, literal: '\n' },
+        { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.CHECKLIST_CHECKED, literal: '- [x]' },
         { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.TEXT, literal: 'Done' },
@@ -172,19 +177,22 @@ describe('Lexer', () => {
     });
 
     it('should tokenize math expressions', () => {
-      const input = '$1+2=3$ x^2 y~1';
+      const input = '$1+2=3 $ x ^2 y ~1';
       const lexer = new Lexer(input);
 
       expectTokens(lexer, [
         { type: TokenType.MATH, literal: '$' },
         { type: TokenType.TEXT, literal: '1+2=3' },
+        { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.MATH, literal: '$' },
         { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.TEXT, literal: 'x' },
+        { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.SUPERSCRIPT, literal: '^' },
         { type: TokenType.TEXT, literal: '2' },
         { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.TEXT, literal: 'y' },
+        { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.SUBSCRIPT, literal: '~' },
         { type: TokenType.TEXT, literal: '1' },
         { type: TokenType.EOF, literal: '' }

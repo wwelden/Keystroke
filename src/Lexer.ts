@@ -209,8 +209,17 @@ export class Lexer {
                         }
                     }
                     token = new Token(TokenType.LIST_ITEM, this.ch);
+                    break;
                 }
                 break;
+            // case '1':
+            //     if (this.peekChar() === '.') {
+            //         if (this.peekChar() === ' ') {
+            //             this.readChar();
+            //             token = new Token(TokenType.ORDERED_LIST, '1.');
+            //         }
+            //     }
+            //     break;
             case '\n':
                 token = new Token(TokenType.NEWLINE, this.ch);
                 break;

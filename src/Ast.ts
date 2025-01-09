@@ -98,18 +98,21 @@ export abstract class ListRelatedNode extends MarkdownNode {
 export class ListItemNode extends ListRelatedNode {
     constructor(token: Token, text: string) {
         super(TokenType.LIST_ITEM, token.literal, text);
+        this.children.push(new TextNode(token, text));
     }
 }
 
 export class ChecklistNode extends ListRelatedNode {
     constructor(token: Token, text: string) {
         super(TokenType.CHECKLIST, token.literal, text);
+        this.children.push(new TextNode(token, text));
     }
 }
 
 export class ChecklistCheckedNode extends ListRelatedNode {
     constructor(token: Token, text: string) {
         super(TokenType.CHECKLIST_CHECKED, token.literal, text);
+        this.children.push(new TextNode(token, text));
     }
 }
 
@@ -146,6 +149,7 @@ export class LinkNode extends MarkdownNode {
 export class MathNode extends MarkdownNode {
     constructor(token: Token, public text: string) {
         super(TokenType.MATH, token.literal);
+        // this.children.push(new TextNode(token, text));
     }
 }
 

@@ -1,4 +1,4 @@
-import { MarkdownNode, LinkNode } from './Ast';
+import { MarkdownNode, LinkNode, ChecklistCheckedNode } from './Ast';
 import { TokenType } from './Token';
 
 export class Renderer {
@@ -16,6 +16,9 @@ export class Renderer {
                 return `<li><input type="checkbox">${this.renderChildren(node)}</li>\n`;
             case TokenType.CHECKLIST_CHECKED:
                 return `<li><input type="checkbox" checked>${this.renderChildren(node)}</li>\n`;
+            // case TokenType.CHECKLIST_CHECKED:
+            //     const checklistCheckedNode = node as ChecklistCheckedNode;
+            //     return `<li><input type="checkbox" checked>${checklistCheckedNode.text}</li>\n`;
             case TokenType.BLOCKQUOTE:
                 return `<blockquote>${this.renderChildren(node)}</blockquote>\n`;
             case TokenType.HORIZONTAL_RULE:

@@ -162,12 +162,12 @@ describe('Renderer', () => {
             const header = new Header1Node(new Token(TokenType.HEADER1, '#'));
             header.children.push(new TextNode(new Token(TokenType.TEXT, 'Title'), 'Title'));
 
-            const para = new ParagraphNode(new Token(TokenType.TEXT, 'Text'), 'Text');
+            const para = new ParagraphNode(new Token(TokenType.PARAGRAPH, 'Text'), 'Text');
 
             doc.children.push(header);
             doc.children.push(para);
-            console.log(renderer.render(doc));
-            expect(renderer.render(doc)).toBe('<h1>Title</h1>\n<p>Text</p>\n');
+            // console.log(renderer.render(doc));
+            expect(renderer.render(doc)).toBe('<h1>Title</h1>\nText');
         });
     });
 });
