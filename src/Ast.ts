@@ -165,41 +165,6 @@ export class SubscriptNode extends MarkdownNode {
     }
 }
 
-// export abstract class LinkRelatedNode extends MarkdownNode {
-//     constructor(
-//         public type: TokenType.LINK_TEXT_START | TokenType.LINK_TEXT_END | TokenType.LINK_URL_START | TokenType.LINK_URL_END,
-//         public value: string,
-//         public text: string,
-//         public url: string
-//     ) {
-//         super(type, value);
-//     }
-// }
-
-// export class LinkNode extends LinkRelatedNode {
-//     constructor(token: Token, text: string, url: string) {
-//         super(TokenType.LINK_TEXT_START, token.literal, text, url);
-//     }
-// }
-
-// export class LinkTextNode extends LinkRelatedNode {
-//     constructor(token: Token, text: string, url: string) {
-//         super(TokenType.LINK_TEXT_START, token.literal, text, url);
-//     }
-// }
-
-// export class LinkUrlNode extends LinkRelatedNode {
-//     constructor(token: Token, text: string, url: string) {
-//         super(TokenType.LINK_URL_START, token.literal, text, url);
-//     }
-// }
-
-// export class LinkUrlEndNode extends LinkRelatedNode {
-//     constructor(token: Token, text: string, url: string) {
-//         super(TokenType.LINK_URL_END, token.literal, text, url);
-//     }
-// }
-
 export abstract class TextFormattingNode extends MarkdownNode {
     constructor(
         public type: TokenType.BOLD | TokenType.ITALIC | TokenType.STRIKETHROUGH,
