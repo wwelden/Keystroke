@@ -233,19 +233,19 @@ export class Parser {
     }
 
     private parseLink(): LinkNode {
-        this.expectPeek(TokenType.LINK_TEXT_START);
+        this.expectPeek(TokenType.LEFT_BRACKET);
         let text = '';
         const textToken = this.currentToken;
         this.nextToken();
-        while (!this.currentTokenIs(TokenType.LINK_TEXT_END) && !this.currentTokenIs(TokenType.EOF)) {
+        while (!this.currentTokenIs(TokenType.RIGHT_BRACKET) && !this.currentTokenIs(TokenType.EOF)) {
             text += this.currentToken.literal;
             this.nextToken();
         }
         this.nextToken();
-        this.expectPeek(TokenType.LINK_URL_START);
+        this.expectPeek(TokenType.LEFT_PARENTHESIS);
         let url = '';
         this.nextToken();
-        while (!this.currentTokenIs(TokenType.LINK_URL_END) && !this.currentTokenIs(TokenType.EOF)) {
+        while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF)) {
             url += this.currentToken.literal;
             this.nextToken();
         }
@@ -549,7 +549,7 @@ export class Parser {
                 case TokenType.STRIKETHROUGH:
                     node = this.parseStrikethrough();
                     break;
-                case TokenType.LINK_TEXT_START:
+                case TokenType.LEFT_BRACKET:
                     node = this.parseLink();
                     break;
                 case TokenType.INLINE_CODE:

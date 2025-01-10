@@ -142,7 +142,7 @@ export class LinkNode extends MarkdownNode {
         public text: string,
         public url: string
     ) {
-        super(token.type as TokenType.LINK_TEXT_START | TokenType.LINK_TEXT_END | TokenType.LINK_URL_START | TokenType.LINK_URL_END, token.literal);
+        super(token.type as TokenType.LEFT_BRACKET | TokenType.RIGHT_BRACKET | TokenType.LEFT_PARENTHESIS | TokenType.RIGHT_PARENTHESIS, token.literal);
     }
 }
 

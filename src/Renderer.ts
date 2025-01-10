@@ -33,7 +33,7 @@ export class Renderer {
                 return `<code>${this.renderChildren(node)}</code>\n`;
             case TokenType.CODE_BLOCK:
                 return `<pre><code>${this.renderChildren(node)}</code></pre>\n`;
-            case TokenType.LINK_TEXT_START:
+            case TokenType.LEFT_BRACKET:
                 const linkNode = node as LinkNode;
                 return `<a href="${linkNode.url}">${linkNode.text}</a>\n`;
             case TokenType.DOCUMENT:

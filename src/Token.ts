@@ -52,6 +52,13 @@ export enum TokenType {
     TAB = 'TAB',
     NEWLINE = 'NEWLINE',
 
+    // Parentheses
+    LEFT_PARENTHESIS = 'LEFT_PARENTHESIS',
+    RIGHT_PARENTHESIS = 'RIGHT_PARENTHESIS',
+    LEFT_BRACKET = 'LEFT_BRACKET',
+    RIGHT_BRACKET = 'RIGHT_BRACKET',
+    LEFT_BRACE = 'LEFT_BRACE',
+    RIGHT_BRACE = 'RIGHT_BRACE',
 }
 
 export class Token {
@@ -83,10 +90,10 @@ export const keywords: { [key: string]: TokenType } = {
     '`': TokenType.INLINE_CODE,
     '```': TokenType.CODE_BLOCK,
 
-    '[': TokenType.LINK_TEXT_START,
-    ']': TokenType.LINK_TEXT_END,
-    '(': TokenType.LINK_URL_START,
-    ')': TokenType.LINK_URL_END,
+    // '[': TokenType.LINK_TEXT_START,
+    // ']': TokenType.LINK_TEXT_END,
+    // '(': TokenType.LINK_URL_START,
+    // ')': TokenType.LINK_URL_END,
     // '![': TokenType.IMAGE,
 
     '>': TokenType.BLOCKQUOTE,
@@ -94,4 +101,11 @@ export const keywords: { [key: string]: TokenType } = {
     '$': TokenType.MATH,
     '^': TokenType.SUPERSCRIPT,
     '~': TokenType.SUBSCRIPT,
+
+    '(': TokenType.LEFT_PARENTHESIS,
+    ')': TokenType.RIGHT_PARENTHESIS,
+    '[': TokenType.LEFT_BRACKET,
+    ']': TokenType.RIGHT_BRACKET,
+    '{': TokenType.LEFT_BRACE,
+    '}': TokenType.RIGHT_BRACE,
 };

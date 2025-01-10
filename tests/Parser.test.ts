@@ -80,7 +80,7 @@ describe('Parser', () => {
 
     describe('Links', () => {
         it('should parse links', () => {
-            const doc = parse('[Example](https://example.com)', new Token(TokenType.LINK_TEXT_START, '['), new Token(TokenType.TEXT, 'Example'), new Token(TokenType.LINK_TEXT_END, ']'));
+            const doc = parse('[Example](https://example.com)', new Token(TokenType.LEFT_BRACKET, '['), new Token(TokenType.TEXT, 'Example'), new Token(TokenType.RIGHT_BRACKET, ']'));
             expect(doc.children[0]).toBeInstanceOf(LinkNode);
             expect((doc.children[0] as LinkNode).text).toBe('Example');
             expect((doc.children[0] as LinkNode).url).toBe('https://example.com');

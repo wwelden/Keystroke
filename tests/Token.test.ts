@@ -45,10 +45,10 @@ describe('Token', () => {
         });
 
         it('should have all link types defined', () => {
-            expect(TokenType.LINK_TEXT_START).toBe('LINK_TEXT_START');
-            expect(TokenType.LINK_TEXT_END).toBe('LINK_TEXT_END');
-            expect(TokenType.LINK_URL_START).toBe('LINK_URL_START');
-            expect(TokenType.LINK_URL_END).toBe('LINK_URL_END');
+            expect(TokenType.LEFT_BRACKET).toBe('LEFT_BRACKET');
+            expect(TokenType.RIGHT_BRACKET).toBe('RIGHT_BRACKET');
+            expect(TokenType.LEFT_PARENTHESIS).toBe('LEFT_PARENTHESIS');
+            expect(TokenType.RIGHT_PARENTHESIS).toBe('RIGHT_PARENTHESIS');
         });
 
         it('should have all other types defined', () => {
@@ -94,10 +94,10 @@ describe('Token', () => {
                 { input: '```', expected: TokenType.CODE_BLOCK }
             ],
             links: [
-                { input: '[', expected: TokenType.LINK_TEXT_START },
-                { input: ']', expected: TokenType.LINK_TEXT_END },
-                { input: '(', expected: TokenType.LINK_URL_START },
-                { input: ')', expected: TokenType.LINK_URL_END }
+                { input: '[', expected: TokenType.LEFT_BRACKET },
+                { input: ']', expected: TokenType.RIGHT_BRACKET },
+                { input: '(', expected: TokenType.LEFT_PARENTHESIS },
+                { input: ')', expected: TokenType.RIGHT_PARENTHESIS }
             ],
             other: [
                 { input: '>', expected: TokenType.BLOCKQUOTE },

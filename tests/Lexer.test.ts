@@ -150,14 +150,14 @@ describe('Lexer', () => {
       const lexer = new Lexer(input);
 
       expectTokens(lexer, [
-        { type: TokenType.LINK_TEXT_START, literal: '[' },
+        { type: TokenType.LEFT_BRACKET, literal: '[' },
         { type: TokenType.TEXT, literal: 'Link' },
         { type: TokenType.SPACE, literal: ' ' },
         { type: TokenType.TEXT, literal: 'text' },
-        { type: TokenType.LINK_TEXT_END, literal: ']' },
-        { type: TokenType.LINK_URL_START, literal: '(' },
+        { type: TokenType.RIGHT_BRACKET, literal: ']' },
+        { type: TokenType.LEFT_PARENTHESIS, literal: '(' },
         { type: TokenType.TEXT, literal: 'https://example.com' },
-        { type: TokenType.LINK_URL_END, literal: ')' },
+        { type: TokenType.RIGHT_PARENTHESIS, literal: ')' },
         { type: TokenType.EOF, literal: '' }
       ]);
     });
