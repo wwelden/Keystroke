@@ -31,7 +31,8 @@ import {
     TabNode,
     MathNode,
     SuperscriptNode,
-    SubscriptNode
+    SubscriptNode,
+    ParenthesisNode
 } from "./Ast";
 
 export class Parser {
@@ -355,13 +356,15 @@ export class Parser {
                 math.children.push(this.parseSuperscript());
             } else if (this.currentTokenIs(TokenType.SUBSCRIPT)) {
                 math.children.push(this.parseSubscript());
+            } else if (this.currentTokenIs(TokenType.LEFT_PARENTHESIS)) {
+                math.children.push(this.parseParenthesis());
             } else if (!this.currentTokenIs(TokenType.MATH)) {
                 math.children.push(this.parseText());
             }
             this.nextToken();
         }
         if (this.currentTokenIs(TokenType.MATH)) {
-            this.nextToken(); // Move past closing ~~
+            this.nextToken();
         }
         // this.nextToken();
         return math;
@@ -375,7 +378,7 @@ export class Parser {
             this.nextToken();
         }
         if (this.currentTokenIs(TokenType.SUPERSCRIPT) || this.currentTokenIs(TokenType.MATH)) {
-            this.nextToken(); // Move past closing ~~
+            this.nextToken();
         }
         // this.nextToken();
         return superscript;
@@ -389,10 +392,19 @@ export class Parser {
             this.nextToken();
         }
         if (this.currentTokenIs(TokenType.SUBSCRIPT) || this.currentTokenIs(TokenType.MATH)) {
-            this.nextToken(); // Move past closing ~~
+            this.nextToken();
         }
         // this.nextToken();
         return subscript;
+    }
+    private parseParenthesis(): ParenthesisNode {
+        this.expectPeek(TokenType.LEFT_PARENTHESIS);
+        const parenthesis = new ParenthesisNode(this.currentToken, '');
+        while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+            parenthesis.children.push(this.parseText());
+            this.nextToken();
+        }
+        return parenthesis;
     }
 
     private parseCode(): InlineCodeNode {
@@ -410,7 +422,6 @@ export class Parser {
         if (this.currentTokenIs(TokenType.ITALIC)) {
             this.nextToken(); // Consume the closing **
         } else {
-            // Handle unclosed bold token
             this.addError("Unmatched _ for italic text");
         }
         this.nextToken();

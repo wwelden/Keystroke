@@ -165,6 +165,13 @@ export class SubscriptNode extends MarkdownNode {
     }
 }
 
+export class ParenthesisNode extends MarkdownNode {
+    constructor(token: Token, public text: string) {
+        super(TokenType.LEFT_PARENTHESIS, token.literal);
+        this.children.push(new TextNode(token, text));
+    }
+}
+
 export abstract class TextFormattingNode extends MarkdownNode {
     constructor(
         public type: TokenType.BOLD | TokenType.ITALIC | TokenType.STRIKETHROUGH,
