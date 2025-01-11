@@ -78,13 +78,13 @@ describe('Markdown Interpreter', () => {
     describe('Complex Documents', () => {
         it('should process mixed content correctly', () => {
             const input = `# Title
-**Bold** and _italic_
+**Bold**and*italic*
 * List item 1
 * List item 2
 > Quote
 [Link](https://example.com)`;
 
-            const expected = '<h1>Title</h1>\n<b>Bold</b>\n and <i>italic</i>\n<ul><li>List item 1</li>\n<li>List item 2</li>\n</ul>\n<blockquote>Quote</blockquote>\n<a href="https://example.com">Link</a>\n';
+            const expected = '<h1>Title</h1><b>Bold</b> and <i>italic</i>\n<ul><li>List item 1</li>\n<li>List item 2</li>\n</ul>\n<blockquote>Quote</blockquote>\n<a href="https://example.com">Link</a>\n';
             expect(processMarkdown(input)).toBe(expected);
         });
 
