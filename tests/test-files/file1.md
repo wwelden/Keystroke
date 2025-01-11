@@ -14,6 +14,8 @@ _This is italic text_
 
 ~~This is strikethrough text~~
 
+*also italic*
+
 ## Lists
 
 - Item 1

@@ -345,6 +345,19 @@ export class Parser {
         }
         return strikethrough;
     }
+    private parseNested(): MarkdownNode { //probalby needs to be recursive or something
+        switch (this.currentToken.type){
+            case TokenType.BOLD:
+                return this.parseBold();
+            case TokenType.ITALIC:
+                return this.parseItalic();
+            case TokenType.STRIKETHROUGH:
+                return this.parseStrikethrough();
+            default:
+                return this.parseText();
+        }
+
+    }
     private parseMath(): MathNode {
         this.expectPeek(TokenType.MATH);
         let text = '';

@@ -131,7 +131,9 @@ export class Lexer {
                 if (this.peekChar() === '*') {
                     this.readChar();
                     token = new Token(TokenType.BOLD, '**');
-                } else {
+                }else if (this.isLetter(this.peekChar())){
+                    token = new Token(TokenType.ITALIC, this.ch);
+                }else {
                     token = new Token(TokenType.UNORDERED_LIST, this.ch);
                 }
                 break;
