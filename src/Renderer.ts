@@ -33,6 +33,8 @@ export class Renderer {
             case TokenType.LEFT_BRACKET:
                 const linkNode = node as LinkNode;
                 return `<a href="${linkNode.url}">${linkNode.text}</a>\n`;
+            case TokenType.LEFT_PARENTHESIS:
+                return `(${this.renderChildren(node)})`;
             case TokenType.DOCUMENT:
                 return node.children.map(child => this.render(child)).join("");
             case TokenType.ITALIC:

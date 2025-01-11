@@ -165,7 +165,6 @@ export class Parser {
         return orderedList;
     }
 
-
     // private parseInlineContent(): MarkdownNode[] {
     //     const children: MarkdownNode[] = [];
 
@@ -354,6 +353,7 @@ export class Parser {
         while (!this.currentTokenIs(TokenType.MATH) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
             if (this.currentTokenIs(TokenType.SUPERSCRIPT)) {
                 math.children.push(this.parseSuperscript());
+
             } else if (this.currentTokenIs(TokenType.SUBSCRIPT)) {
                 math.children.push(this.parseSubscript());
             } else if (this.currentTokenIs(TokenType.LEFT_PARENTHESIS)) {
@@ -404,6 +404,9 @@ export class Parser {
             parenthesis.children.push(this.parseText());
             this.nextToken();
         }
+        // if (this.currentTokenIs(TokenType.RIGHT_PARENTHESIS)){
+        //     parenthesis.children.push(this.parseText());
+        // }
         return parenthesis;
     }
 
