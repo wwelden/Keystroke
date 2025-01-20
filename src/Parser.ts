@@ -425,11 +425,13 @@ export class Parser {
 
         while (!this.currentTokenIs(TokenType.SUPERSCRIPT) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
             switch (this.currentToken.type) {
-                case TokenType.SUBSCRIPT:
-                    superscript.children.push(this.parseSubscript());
+                case TokenType.SPACE:
+                    superscript.children.push(new SpaceNode(this.currentToken));
+                    this.nextToken();
                     break;
-                case TokenType.LEFT_PARENTHESIS:
-                    superscript.children.push(this.parseParenthesis());
+                case TokenType.LIST_ITEM:
+                    superscript.children.push(new TextNode(this.currentToken, '-'));
+                    this.nextToken();
                     break;
                 case TokenType.TEXT:
                     superscript.children.push(this.parseText());
@@ -453,11 +455,13 @@ export class Parser {
 
         while (!this.currentTokenIs(TokenType.SUBSCRIPT) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
             switch (this.currentToken.type) {
-                case TokenType.SUPERSCRIPT:
-                    subscript.children.push(this.parseSuperscript());
+                case TokenType.SPACE:
+                    subscript.children.push(new SpaceNode(this.currentToken));
+                    this.nextToken();
                     break;
-                case TokenType.LEFT_PARENTHESIS:
-                    subscript.children.push(this.parseParenthesis());
+                case TokenType.LIST_ITEM:
+                    subscript.children.push(new TextNode(this.currentToken, '-'));
+                    this.nextToken();
                     break;
                 case TokenType.TEXT:
                     subscript.children.push(this.parseText());

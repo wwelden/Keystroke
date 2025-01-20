@@ -45,7 +45,7 @@ const a = 1;
 `;
 
 // Get filename from command line arguments or use default
-const filename = process.argv[2] || 'file1.md';
+const filename = process.argv[2] || 'function.md';
 const markdownInput = readMarkdownFile(filename);
 
 // Initialize the lexer and parser
