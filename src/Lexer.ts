@@ -32,7 +32,8 @@ export class Lexer {
         }
     }
     private skipWhitespace(): void {
-        while (this.ch === ' ' || this.ch === '\t' || this.ch === '\n' || this.ch === '\r') {
+        // Only skip newlines and tabs, preserve spaces
+        while (this.ch === '\t' || this.ch === '\n' || this.ch === '\r') {
             this.readChar();
         }
     }
@@ -96,6 +97,13 @@ export class Lexer {
 
     public nextToken(): Token {
         let token = new Token(TokenType.ILLEGAL, this.ch);
+
+        // Handle space before the switch statement
+        if (this.ch === ' ') {
+            token = new Token(TokenType.SPACE, this.ch);
+            this.readChar();
+            return token;
+        }
 
         switch (this.ch) {
             case '#':

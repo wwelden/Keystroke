@@ -289,22 +289,29 @@ export class Parser {
     private parseBold(): BoldNode {
         this.expectPeek(TokenType.BOLD);
         const bold = new BoldNode(this.currentToken, '');
-
-        // Consume the opening **
         this.nextToken();
 
-        while (!this.currentTokenIs(TokenType.BOLD) && !this.currentTokenIs(TokenType.EOF)&& !this.currentTokenIs(TokenType.NEWLINE)) {
-            bold.children.push(this.parseText());
-            this.nextToken(); // Ensure token advancement
+        while (!this.currentTokenIs(TokenType.BOLD) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+            switch (this.currentToken.type) {
+                case TokenType.SPACE:
+                    bold.children.push(new SpaceNode(this.currentToken));
+                    this.nextToken();
+                    break;
+                case TokenType.TEXT:
+                    bold.children.push(this.parseText());
+                    this.nextToken();
+                    break;
+                default:
+                    this.nextToken();
+                    break;
+            }
         }
 
         if (this.currentTokenIs(TokenType.BOLD)) {
-            this.nextToken(); // Consume the closing **
+            this.nextToken();
         } else {
-            // Handle unclosed bold token
             this.addError("Unmatched ** for bold text");
         }
-        // this.nextToken();
 
         return bold;
     }
@@ -312,22 +319,29 @@ export class Parser {
     private parseItalic(): ItalicNode {
         this.expectPeek(TokenType.ITALIC);
         const italic = new ItalicNode(this.currentToken, '');
-
-        // Consume the opening **
         this.nextToken();
 
         while (!this.currentTokenIs(TokenType.ITALIC) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
-            italic.children.push(this.parseText());
-            this.nextToken(); // Ensure token advancement
+            switch (this.currentToken.type) {
+                case TokenType.SPACE:
+                    italic.children.push(new SpaceNode(this.currentToken));
+                    this.nextToken();
+                    break;
+                case TokenType.TEXT:
+                    italic.children.push(this.parseText());
+                    this.nextToken();
+                    break;
+                default:
+                    this.nextToken();
+                    break;
+            }
         }
 
         if (this.currentTokenIs(TokenType.ITALIC)) {
-            this.nextToken(); // Consume the closing **
+            this.nextToken();
         } else {
-            // Handle unclosed bold token
             this.addError("Unmatched _ for italic text");
         }
-        // this.nextToken();
 
         return italic;
     }
@@ -375,14 +389,18 @@ export class Parser {
                 case TokenType.LEFT_PARENTHESIS:
                     math.children.push(this.parseParenthesis());
                     break;
-                case TokenType.LIST_ITEM: // Handle minus sign
+                case TokenType.LIST_ITEM:
                     const minusNode = new TextNode(this.currentToken, '-');
                     math.children.push(minusNode);
                     this.nextToken();
                     break;
-                case TokenType.UNORDERED_LIST: // Handle asterisk
+                case TokenType.UNORDERED_LIST:
                     const asteriskNode = new TextNode(this.currentToken, '*');
                     math.children.push(asteriskNode);
+                    this.nextToken();
+                    break;
+                case TokenType.SPACE:
+                    math.children.push(new SpaceNode(this.currentToken));
                     this.nextToken();
                     break;
                 case TokenType.TEXT:
@@ -395,7 +413,7 @@ export class Parser {
         }
 
         if (this.currentTokenIs(TokenType.MATH)) {
-            this.nextToken(); // Consume closing $
+            this.nextToken();
         }
 
         return math;
@@ -609,25 +627,20 @@ export class Parser {
                 case TokenType.LIST_ITEM:
                     node = this.parseListItem();
                     break;
-                case TokenType.NEWLINE:
                 case TokenType.SPACE:
+                    node = new SpaceNode(this.currentToken);
+                    break;
                 case TokenType.TAB:
-                    node = this.parseWhitespace();
+                    node = new TabNode(this.currentToken);
+                    break;
+                case TokenType.NEWLINE:
+                    node = new NewlineNode(this.currentToken);
                     break;
                 case TokenType.CHECKLIST:
                     node = this.parseCheckbox();
                     break;
                 case TokenType.CHECKLIST_CHECKED:
                     node = this.parseCheckboxChecked();
-                    break;
-                case TokenType.SPACE:
-                    node = this.parseSpace();
-                    break;
-                case TokenType.TAB:
-                    node = this.parseTab();
-                    break;
-                case TokenType.NEWLINE:
-                    node = this.parseNewline();
                     break;
                 case TokenType.BOLD:
                     node = this.parseBold();
@@ -647,9 +660,6 @@ export class Parser {
                 case TokenType.MATH:
                     node = this.parseMath();
                     break;
-                // case TokenType.CODE_BLOCK:
-                //     node = this.parseCodeBlock();
-                //     break;
                 default:
                     node = new IllegalNode(this.currentToken);
                     break;
@@ -659,7 +669,7 @@ export class Parser {
                 documentNode.children.push(node);
             }
 
-            this.nextToken(); // Advance to the next token
+            this.nextToken();
         }
 
         return documentNode;

@@ -73,6 +73,6 @@ export class Renderer {
     }
 
     private renderChildren(node: MarkdownNode): string {
-        return node.children.map(child => this.render(child)).join(" "); // this is what is giving spaces. it should be space tokens
+        return node.children.map(child => this.render(child)).join(" ");
     }
 }
