@@ -32,7 +32,8 @@ import {
     MathNode,
     SuperscriptNode,
     SubscriptNode,
-    ParenthesisNode
+    ParenthesisNode,
+    TextNode
 } from "./Ast";
 
 export class Parser {
@@ -360,66 +361,127 @@ export class Parser {
     }
     private parseMath(): MathNode {
         this.expectPeek(TokenType.MATH);
-        let text = '';
-        const math = new MathNode(this.currentToken, text);
-        this.nextToken(); // Move past opening ~~
-        while (!this.currentTokenIs(TokenType.MATH) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
-            if (this.currentTokenIs(TokenType.SUPERSCRIPT)) {
-                math.children.push(this.parseSuperscript());
+        const math = new MathNode(this.currentToken, '');
+        this.nextToken(); // Move past opening $
 
-            } else if (this.currentTokenIs(TokenType.SUBSCRIPT)) {
-                math.children.push(this.parseSubscript());
-            } else if (this.currentTokenIs(TokenType.LEFT_PARENTHESIS)) {
-                math.children.push(this.parseParenthesis());
-            } else if (!this.currentTokenIs(TokenType.MATH)) {
-                math.children.push(this.parseText());
+        while (!this.currentTokenIs(TokenType.MATH) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+            switch (this.currentToken.type) {
+                case TokenType.SUPERSCRIPT:
+                    math.children.push(this.parseSuperscript());
+                    break;
+                case TokenType.SUBSCRIPT:
+                    math.children.push(this.parseSubscript());
+                    break;
+                case TokenType.LEFT_PARENTHESIS:
+                    math.children.push(this.parseParenthesis());
+                    break;
+                case TokenType.LIST_ITEM: // Handle minus sign
+                    const minusNode = new TextNode(this.currentToken, '-');
+                    math.children.push(minusNode);
+                    this.nextToken();
+                    break;
+                case TokenType.UNORDERED_LIST: // Handle asterisk
+                    const asteriskNode = new TextNode(this.currentToken, '*');
+                    math.children.push(asteriskNode);
+                    this.nextToken();
+                    break;
+                case TokenType.TEXT:
+                    math.children.push(this.parseText());
+                    break;
+                default:
+                    this.nextToken();
+                    break;
             }
-            this.nextToken();
         }
+
         if (this.currentTokenIs(TokenType.MATH)) {
-            this.nextToken();
+            this.nextToken(); // Consume closing $
         }
-        // this.nextToken();
+
         return math;
     }
     private parseSuperscript(): SuperscriptNode {
         this.expectPeek(TokenType.SUPERSCRIPT);
         const superscript = new SuperscriptNode(this.currentToken, '');
         this.nextToken();
+
         while (!this.currentTokenIs(TokenType.SUPERSCRIPT) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
-            superscript.children.push(this.parseText());
+            switch (this.currentToken.type) {
+                case TokenType.SUBSCRIPT:
+                    superscript.children.push(this.parseSubscript());
+                    break;
+                case TokenType.LEFT_PARENTHESIS:
+                    superscript.children.push(this.parseParenthesis());
+                    break;
+                case TokenType.TEXT:
+                    superscript.children.push(this.parseText());
+                    break;
+                default:
+                    this.nextToken();
+                    break;
+            }
+        }
+
+        if (this.currentTokenIs(TokenType.SUPERSCRIPT)) {
             this.nextToken();
         }
-        if (this.currentTokenIs(TokenType.SUPERSCRIPT) || this.currentTokenIs(TokenType.MATH)) {
-            this.nextToken();
-        }
-        // this.nextToken();
+
         return superscript;
     }
     private parseSubscript(): SubscriptNode {
         this.expectPeek(TokenType.SUBSCRIPT);
         const subscript = new SubscriptNode(this.currentToken, '');
         this.nextToken();
+
         while (!this.currentTokenIs(TokenType.SUBSCRIPT) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
-            subscript.children.push(this.parseText());
+            switch (this.currentToken.type) {
+                case TokenType.SUPERSCRIPT:
+                    subscript.children.push(this.parseSuperscript());
+                    break;
+                case TokenType.LEFT_PARENTHESIS:
+                    subscript.children.push(this.parseParenthesis());
+                    break;
+                case TokenType.TEXT:
+                    subscript.children.push(this.parseText());
+                    break;
+                default:
+                    this.nextToken();
+                    break;
+            }
+        }
+
+        if (this.currentTokenIs(TokenType.SUBSCRIPT)) {
             this.nextToken();
         }
-        if (this.currentTokenIs(TokenType.SUBSCRIPT) || this.currentTokenIs(TokenType.MATH)) {
-            this.nextToken();
-        }
-        // this.nextToken();
+
         return subscript;
     }
     private parseParenthesis(): ParenthesisNode {
         this.expectPeek(TokenType.LEFT_PARENTHESIS);
         const parenthesis = new ParenthesisNode(this.currentToken, '');
+        this.nextToken();
+
         while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
-            parenthesis.children.push(this.parseText());
+            switch (this.currentToken.type) {
+                case TokenType.SUPERSCRIPT:
+                    parenthesis.children.push(this.parseSuperscript());
+                    break;
+                case TokenType.SUBSCRIPT:
+                    parenthesis.children.push(this.parseSubscript());
+                    break;
+                case TokenType.TEXT:
+                    parenthesis.children.push(this.parseText());
+                    break;
+                default:
+                    this.nextToken();
+                    break;
+            }
+        }
+
+        if (this.currentTokenIs(TokenType.RIGHT_PARENTHESIS)) {
             this.nextToken();
         }
-        // if (this.currentTokenIs(TokenType.RIGHT_PARENTHESIS)){
-        //     parenthesis.children.push(this.parseText());
-        // }
+
         return parenthesis;
     }
 
