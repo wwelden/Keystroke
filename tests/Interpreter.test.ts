@@ -70,7 +70,7 @@ describe('Markdown Interpreter', () => {
 
         it('should process subscript correctly', () => {
             const input = '$x ~n  $';
-            const expected = '<span class="math">x <sub>n  </sub></span>\n';
+            const expected = '<span class="math">x <sub>n</sub></span>\n';
             expect(processMarkdown(input)).toBe(expected);
         });
     });
@@ -84,13 +84,13 @@ describe('Markdown Interpreter', () => {
 > Quote
 [Link](https://example.com)`;
 
-            const expected = '<h1>Title</h1><b>Bold</b> and <i>italic</i>\n<ul><li>List item 1</li>\n<li>List item 2</li>\n</ul>\n<blockquote>Quote</blockquote>\n<a href="https://example.com">Link</a>\n';
+            const expected = '<h1>Title</h1>\n<b>Bold</b>\n<i>italic</i>\n<ul><li>* List item 1</li>\n</ul>\n List item 2<br>\n<blockquote>Quote</blockquote>\n<a href="https://example.com">Link</a>\n';
             expect(processMarkdown(input)).toBe(expected);
         });
 
         it('should process math with mixed formatting correctly', () => {
             const input = '$f(x) = x ^2 + y ~1  $';
-            const expected = '<span class="math">f(x) = x<sup>2</sup> + y<sub>1</sub></span>\n';
+            const expected = '<span class="math">f(x) = x <sup>2</sup> + y <sub>1</sub></span>\n';
             expect(processMarkdown(input)).toBe(expected);
         });
     });

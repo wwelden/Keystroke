@@ -54,8 +54,10 @@ export class Parser {
         if (this.currentToken.type === TokenType.ILLEGAL && this.currentToken.literal === '' &&
             this.peekToken.type === TokenType.ILLEGAL && this.peekToken.literal === '' &&
             this.peekNextToken.type === TokenType.ILLEGAL && this.peekNextToken.literal === '') {
-            this.nextToken();
-            this.nextToken();
+            // Properly initialize all three tokens from the lexer
+            this.currentToken = this.lexer.nextToken();
+            this.peekToken = this.lexer.nextToken();
+            this.peekNextToken = this.lexer.nextToken();
         }
     }
 

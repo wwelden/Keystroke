@@ -100,6 +100,8 @@ export class Lexer {
     public nextToken(): Token {
         let token = new Token(TokenType.ILLEGAL, this.ch);
 
+
+
         // Handle space before the switch statement
         if (this.ch === ' ') {
             token = new Token(TokenType.SPACE, this.ch);
@@ -142,14 +144,10 @@ export class Lexer {
                     this.readChar();
                     token = new Token(TokenType.BOLD, '**');
                 } else {
-                    // Check if this is likely a list marker or italic marker
-                    // List markers appear at start of line or after whitespace
-                    // Italic markers appear adjacent to text
-                    const prevChar = this.position > 0 ? this.input[this.position - 1] : '';
+                    // Simple heuristic: if followed by space, treat as list marker
+                    // This covers most common cases including indented lists
                     const nextChar = this.peekChar();
-
-                    // If at start of input or after newline, and followed by space, it's likely a list
-                    if ((this.position === 0 || prevChar === '\n') && nextChar === ' ') {
+                    if (nextChar === ' ') {
                         token = new Token(TokenType.UNORDERED_LIST, this.ch);
                     } else {
                         // Otherwise treat as italic

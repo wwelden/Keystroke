@@ -4,5 +4,12 @@ module.exports = {
   testEnvironment: 'node',
   testMatch: ['<rootDir>/tests/**/*.test.ts'],
   moduleFileExtensions: ['ts', 'js'],
-  rootDir: './'
+  rootDir: './',
+  transform: {
+    '^.+\\.ts$': 'ts-jest',
+  },
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.d.ts',
+  ],
 };
