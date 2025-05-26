@@ -123,17 +123,17 @@ describe('AST Nodes', () => {
     // Test Link Nodes
     describe('Link Nodes', () => {
         it('should create LinkNode correctly', () => {
-            const token = new Token_1.Token(Token_1.TokenType.LINK_TEXT_START, '[');
+            const token = new Token_1.Token(Token_1.TokenType.LEFT_BRACKET, '[');
             const node = new Ast_1.LinkNode(token, 'Link text', 'https://example.com');
-            expect(node.type).toBe(Token_1.TokenType.LINK_TEXT_START);
+            expect(node.type).toBe(Token_1.TokenType.LINK);
             expect(node.value).toBe('[');
             expect(node.text).toBe('Link text');
             expect(node.url).toBe('https://example.com');
         });
         it('should create link URL nodes correctly', () => {
-            const token = new Token_1.Token(Token_1.TokenType.LINK_URL_START, '(');
+            const token = new Token_1.Token(Token_1.TokenType.LEFT_PARENTHESIS, '(');
             const node = new Ast_1.LinkNode(token, 'Link text', 'https://example.com');
-            expect(node.type).toBe(Token_1.TokenType.LINK_URL_START);
+            expect(node.type).toBe(Token_1.TokenType.LINK);
             expect(node.text).toBe('Link text');
             expect(node.url).toBe('https://example.com');
         });

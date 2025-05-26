@@ -139,7 +139,7 @@ class HorizontalRuleNode extends MarkdownNode {
 exports.HorizontalRuleNode = HorizontalRuleNode;
 class LinkNode extends MarkdownNode {
     constructor(token, text, url) {
-        super(token.type, token.literal);
+        super(Token_1.TokenType.LINK, token.literal);
         this.text = text;
         this.url = url;
     }

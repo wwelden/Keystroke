@@ -363,44 +363,42 @@ class Parser {
         }
     }
     parseMath() {
-        let mathText = '';
+        const math = new Ast_1.MathNode(this.currentToken, '');
         this.nextToken(); // Move past opening $
         while (!this.currentTokenIs(Token_1.TokenType.MATH) && !this.currentTokenIs(Token_1.TokenType.EOF) && !this.currentTokenIs(Token_1.TokenType.NEWLINE)) {
             switch (this.currentToken.type) {
                 case Token_1.TokenType.SUPERSCRIPT:
-                    const superscript = this.parseSuperscript();
-                    mathText += '^' + superscript.children.map(child => child.value).join('');
+                    math.children.push(this.parseSuperscript());
                     break;
                 case Token_1.TokenType.SUBSCRIPT:
-                    const subscript = this.parseSubscript();
-                    mathText += '~' + subscript.children.map(child => child.value).join('');
+                    math.children.push(this.parseSubscript());
                     break;
                 case Token_1.TokenType.LEFT_PARENTHESIS:
-                    mathText += this.currentToken.literal;
+                    math.children.push(new Ast_1.TextNode(this.currentToken, this.currentToken.literal));
                     this.nextToken();
                     break;
                 case Token_1.TokenType.RIGHT_PARENTHESIS:
-                    mathText += this.currentToken.literal;
+                    math.children.push(new Ast_1.TextNode(this.currentToken, this.currentToken.literal));
                     this.nextToken();
                     break;
                 case Token_1.TokenType.LIST_ITEM:
-                    mathText += '-';
+                    math.children.push(new Ast_1.TextNode(this.currentToken, '-'));
                     this.nextToken();
                     break;
                 case Token_1.TokenType.UNORDERED_LIST:
-                    mathText += '*';
+                    math.children.push(new Ast_1.TextNode(this.currentToken, '*'));
                     this.nextToken();
                     break;
                 case Token_1.TokenType.SPACE:
-                    mathText += ' ';
+                    math.children.push(new Ast_1.SpaceNode(this.currentToken));
                     this.nextToken();
                     break;
                 case Token_1.TokenType.TEXT:
-                    mathText += this.currentToken.literal;
+                    math.children.push(this.parseText());
                     this.nextToken();
                     break;
                 default:
-                    mathText += this.currentToken.literal;
+                    math.children.push(new Ast_1.TextNode(this.currentToken, this.currentToken.literal));
                     this.nextToken();
                     break;
             }
@@ -411,59 +409,36 @@ class Parser {
         else {
             this.addError("Unmatched $ for math expression");
         }
-        const math = new Ast_1.MathNode(this.currentToken, mathText.trim());
         return math;
     }
     parseSuperscript() {
-        const superscript = new Ast_1.SuperscriptNode(this.currentToken, '');
+        let superscriptText = '';
         this.nextToken(); // Move past ^
-        // Parse until we hit a space, newline, EOF, or another formatting token
-        while (!this.currentTokenIs(Token_1.TokenType.SPACE) &&
-            !this.currentTokenIs(Token_1.TokenType.EOF) &&
-            !this.currentTokenIs(Token_1.TokenType.NEWLINE) &&
-            !this.currentTokenIs(Token_1.TokenType.SUBSCRIPT) &&
-            !this.currentTokenIs(Token_1.TokenType.SUPERSCRIPT) &&
-            !this.currentTokenIs(Token_1.TokenType.MATH)) {
-            switch (this.currentToken.type) {
-                case Token_1.TokenType.LIST_ITEM:
-                    superscript.children.push(new Ast_1.TextNode(this.currentToken, '-'));
-                    this.nextToken();
-                    break;
-                case Token_1.TokenType.TEXT:
-                    superscript.children.push(this.parseText());
-                    this.nextToken();
-                    break;
-                default:
-                    this.nextToken();
-                    break;
-            }
+        // Parse the immediate content (usually just one token)
+        if (this.currentTokenIs(Token_1.TokenType.TEXT)) {
+            superscriptText += this.currentToken.literal;
+            this.nextToken();
         }
+        else if (this.currentTokenIs(Token_1.TokenType.LIST_ITEM)) {
+            superscriptText += '-';
+            this.nextToken();
+        }
+        const superscript = new Ast_1.SuperscriptNode(this.currentToken, superscriptText);
         return superscript;
     }
     parseSubscript() {
-        const subscript = new Ast_1.SubscriptNode(this.currentToken, '');
+        let subscriptText = '';
         this.nextToken(); // Move past ~
-        // Parse until we hit a space, newline, EOF, or another formatting token
-        while (!this.currentTokenIs(Token_1.TokenType.SPACE) &&
-            !this.currentTokenIs(Token_1.TokenType.EOF) &&
-            !this.currentTokenIs(Token_1.TokenType.NEWLINE) &&
-            !this.currentTokenIs(Token_1.TokenType.SUBSCRIPT) &&
-            !this.currentTokenIs(Token_1.TokenType.SUPERSCRIPT) &&
-            !this.currentTokenIs(Token_1.TokenType.MATH)) {
-            switch (this.currentToken.type) {
-                case Token_1.TokenType.LIST_ITEM:
-                    subscript.children.push(new Ast_1.TextNode(this.currentToken, '-'));
-                    this.nextToken();
-                    break;
-                case Token_1.TokenType.TEXT:
-                    subscript.children.push(this.parseText());
-                    this.nextToken();
-                    break;
-                default:
-                    this.nextToken();
-                    break;
-            }
+        // Parse the immediate content (usually just one token)
+        if (this.currentTokenIs(Token_1.TokenType.TEXT)) {
+            subscriptText += this.currentToken.literal;
+            this.nextToken();
         }
+        else if (this.currentTokenIs(Token_1.TokenType.LIST_ITEM)) {
+            subscriptText += '-';
+            this.nextToken();
+        }
+        const subscript = new Ast_1.SubscriptNode(this.currentToken, subscriptText);
         return subscript;
     }
     parseParenthesis() {

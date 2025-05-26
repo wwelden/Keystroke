@@ -31,6 +31,7 @@ var TokenType;
     TokenType["INLINE_CODE"] = "INLINE_CODE";
     TokenType["CODE_BLOCK"] = "CODE_BLOCK";
     // Links and images
+    TokenType["LINK"] = "LINK";
     TokenType["LINK_TEXT_START"] = "LINK_TEXT_START";
     TokenType["LINK_TEXT_END"] = "LINK_TEXT_END";
     TokenType["LINK_URL_START"] = "LINK_URL_START";

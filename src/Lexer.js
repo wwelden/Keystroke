@@ -127,11 +127,9 @@ class Lexer {
                     this.readChar();
                     token = new Token_1.Token(Token_1.TokenType.BOLD, '**');
                 }
-                else if (this.isLetter(this.peekChar())) {
-                    token = new Token_1.Token(Token_1.TokenType.ITALIC, this.ch);
-                }
                 else {
-                    token = new Token_1.Token(Token_1.TokenType.UNORDERED_LIST, this.ch);
+                    // For now, always treat single * as italic - the parser can handle the context
+                    token = new Token_1.Token(Token_1.TokenType.ITALIC, this.ch);
                 }
                 break;
             case '_':

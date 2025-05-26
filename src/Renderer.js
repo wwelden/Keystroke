@@ -6,7 +6,7 @@ class Renderer {
     render(node) {
         switch (node.type) {
             case Token_1.TokenType.HEADER1:
-                return `<h1>${this.renderChildren(node)}</h1>\n`;
+                return `<h1>${this.renderChildren(node).trim()}</h1>\n`;
             case Token_1.TokenType.PARAGRAPH:
                 return `${node.value || ""}`;
             case Token_1.TokenType.UNORDERED_LIST:
@@ -31,9 +31,11 @@ class Renderer {
                 return `<code>${this.renderChildren(node)}</code>\n`;
             case Token_1.TokenType.CODE_BLOCK:
                 return `<pre><code>${this.renderChildren(node)}</code></pre>\n`;
-            case Token_1.TokenType.LEFT_BRACKET:
+            case Token_1.TokenType.LINK:
                 const linkNode = node;
                 return `<a href="${linkNode.url}">${linkNode.text}</a>\n`;
+            case Token_1.TokenType.LEFT_BRACKET:
+                return `<span>[</span>`;
             case Token_1.TokenType.LEFT_PARENTHESIS:
                 return `(${this.renderChildren(node)})`;
             case Token_1.TokenType.DOCUMENT:
@@ -45,15 +47,15 @@ class Renderer {
             case Token_1.TokenType.BOLD:
                 return `<b>${this.renderChildren(node)}</b>\n`;
             case Token_1.TokenType.HEADER2:
-                return `<h2>${this.renderChildren(node)}</h2>\n`;
+                return `<h2>${this.renderChildren(node).trim()}</h2>\n`;
             case Token_1.TokenType.HEADER3:
-                return `<h3>${this.renderChildren(node)}</h3>\n`;
+                return `<h3>${this.renderChildren(node).trim()}</h3>\n`;
             case Token_1.TokenType.HEADER4:
-                return `<h4>${this.renderChildren(node)}</h4>\n`;
+                return `<h4>${this.renderChildren(node).trim()}</h4>\n`;
             case Token_1.TokenType.HEADER5:
-                return `<h5>${this.renderChildren(node)}</h5>\n`;
+                return `<h5>${this.renderChildren(node).trim()}</h5>\n`;
             case Token_1.TokenType.HEADER6:
-                return `<h6>${this.renderChildren(node)}</h6>\n`;
+                return `<h6>${this.renderChildren(node).trim()}</h6>\n`;
             case Token_1.TokenType.ORDERED_LIST:
                 return `<ol>${this.renderChildren(node)}</ol>\n`;
             case Token_1.TokenType.NEWLINE:
@@ -63,11 +65,19 @@ class Renderer {
             case Token_1.TokenType.TAB:
                 return "&emsp;";
             case Token_1.TokenType.MATH:
-                return `<span class="math">${this.renderChildren(node)}</span>\n`;
+                const mathNode = node; // MathNode
+                if (mathNode.text && mathNode.text.trim()) {
+                    return `<span class="math">${mathNode.text}</span>\n`;
+                }
+                else {
+                    return `<span class="math">${this.renderChildren(node).trim()}</span>\n`;
+                }
             case Token_1.TokenType.SUPERSCRIPT:
-                return `<sup>${this.renderChildren(node)}</sup>`;
+                const superNode = node; // SuperscriptNode
+                return `<sup>${superNode.text || this.renderChildren(node)}</sup>`;
             case Token_1.TokenType.SUBSCRIPT:
-                return `<sub>${this.renderChildren(node)}</sub>`;
+                const subNode = node; // SubscriptNode
+                return `<sub>${subNode.text || this.renderChildren(node)}</sub>`;
             default:
                 return `<span>${node.value || ""}</span>\n`;
         }
