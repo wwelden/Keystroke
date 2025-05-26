@@ -142,7 +142,7 @@ export class LinkNode extends MarkdownNode {
         public text: string,
         public url: string
     ) {
-        super(token.type as TokenType.LEFT_BRACKET | TokenType.RIGHT_BRACKET | TokenType.LEFT_PARENTHESIS | TokenType.RIGHT_PARENTHESIS, token.literal);
+        super(TokenType.LINK, token.literal);
     }
 }
 
@@ -279,4 +279,3 @@ export class DocumentNode extends MarkdownNode {
         return this.children.map(child => child.render()).join("\n");
     }
 }
-

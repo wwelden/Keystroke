@@ -1,71 +1,62 @@
-import { Token, TokenType } from "./Token";
-
-export class Lexer {
-    private input: string;
-    private position: number;      // current position in input (points to current char)
-    private readPosition: number;  // current reading position in input (after current char)
-    private ch: string;           // current char under examination
-
-    constructor(input: string) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Lexer = void 0;
+const Token_1 = require("./Token");
+class Lexer {
+    constructor(input) {
         this.input = input;
         this.position = 0;
         this.readPosition = 0;
         this.ch = '';
         this.readChar(); // Initialize the first character
     }
-
-    private readChar(): void {
+    readChar() {
         if (this.readPosition >= this.input.length) {
-            this.ch = '\0';  // EOF character
-        } else {
+            this.ch = '\0'; // EOF character
+        }
+        else {
             this.ch = this.input[this.readPosition];
         }
         this.position = this.readPosition;
         this.readPosition++;
     }
-
-    private peekChar(): string {
+    peekChar() {
         if (this.readPosition >= this.input.length) {
             return '\0';
-        } else {
+        }
+        else {
             return this.input[this.readPosition];
         }
     }
-    private skipWhitespace(): void {
+    skipWhitespace() {
         // Only skip newlines and tabs, preserve spaces
         while (this.ch === '\t' || this.ch === '\n' || this.ch === '\r') {
             this.readChar();
         }
     }
-
-    private readIdentifier(): string {
+    readIdentifier() {
         const position = this.position;
         while (this.isLetter(this.ch)) {
             this.readChar();
         }
         return this.input.slice(position, this.position);
     }
-
-    private isLetter(ch: string): boolean {
+    isLetter(ch) {
         return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch === '_';
     }
-
-    private readNumber(): string {
+    readNumber() {
         const position = this.position;
         while (this.isDigit(this.ch)) {
             this.readChar();
         }
         return this.input.slice(position, this.position);
     }
-
-    private isDigit(ch: string): boolean {
+    isDigit(ch) {
         return '0' <= ch && ch <= '9';
     }
-
-    private readText(): string {
+    readText() {
         const position = this.position;
-        while (
-            this.ch !== '\0' &&
+        while (this.ch !== '\0' &&
             this.ch !== '\n' &&
             this.ch !== '\r' &&
             this.ch !== '#' &&
@@ -78,33 +69,30 @@ export class Lexer {
             this.ch !== '(' &&
             this.ch !== ')' &&
             this.ch !== '>' &&
-            this.ch !== ' ' &&  // Count space as a separator
+            this.ch !== ' ' && // Count space as a separator
             !(this.ch === 'x' &&
-              this.position > 2 &&
-              this.input[this.position - 1] === '[' &&
-              this.input[this.position - 2] === ' ' &&
-              this.input[this.position - 3] === '-') &&
-            this.ch !== '-'
-        ) {
+                this.position > 2 &&
+                this.input[this.position - 1] === '[' &&
+                this.input[this.position - 2] === ' ' &&
+                this.input[this.position - 3] === '-') &&
+            this.ch !== '-') {
             if (this.isDigit(this.ch)) {
                 this.readNumber();
-            } else {
+            }
+            else {
                 this.readChar();
             }
         }
         return this.input.slice(position, this.position);
     }
-
-    public nextToken(): Token {
-        let token = new Token(TokenType.ILLEGAL, this.ch);
-
+    nextToken() {
+        let token = new Token_1.Token(Token_1.TokenType.ILLEGAL, this.ch);
         // Handle space before the switch statement
         if (this.ch === ' ') {
-            token = new Token(TokenType.SPACE, this.ch);
+            token = new Token_1.Token(Token_1.TokenType.SPACE, this.ch);
             this.readChar();
             return token;
         }
-
         switch (this.ch) {
             case '#':
                 let hashCount = 1;
@@ -112,53 +100,56 @@ export class Lexer {
                     this.readChar();
                     hashCount++;
                 }
-
                 const headerSymbol = '#'.repeat(hashCount);
                 switch (hashCount) {
                     case 1:
-                        token = new Token(TokenType.HEADER1, headerSymbol);
+                        token = new Token_1.Token(Token_1.TokenType.HEADER1, headerSymbol);
                         break;
                     case 2:
-                        token = new Token(TokenType.HEADER2, headerSymbol);
+                        token = new Token_1.Token(Token_1.TokenType.HEADER2, headerSymbol);
                         break;
                     case 3:
-                        token = new Token(TokenType.HEADER3, headerSymbol);
+                        token = new Token_1.Token(Token_1.TokenType.HEADER3, headerSymbol);
                         break;
                     case 4:
-                        token = new Token(TokenType.HEADER4, headerSymbol);
+                        token = new Token_1.Token(Token_1.TokenType.HEADER4, headerSymbol);
                         break;
                     case 5:
-                        token = new Token(TokenType.HEADER5, headerSymbol);
+                        token = new Token_1.Token(Token_1.TokenType.HEADER5, headerSymbol);
                         break;
                     case 6:
-                        token = new Token(TokenType.HEADER6, headerSymbol);
+                        token = new Token_1.Token(Token_1.TokenType.HEADER6, headerSymbol);
                         break;
                 }
                 break;
             case '*':
                 if (this.peekChar() === '*') {
                     this.readChar();
-                    token = new Token(TokenType.BOLD, '**');
-                }else if (this.isLetter(this.peekChar())){
-                    token = new Token(TokenType.ITALIC, this.ch);
-                }else {
-                    token = new Token(TokenType.UNORDERED_LIST, this.ch);
+                    token = new Token_1.Token(Token_1.TokenType.BOLD, '**');
+                }
+                else if (this.isLetter(this.peekChar())) {
+                    token = new Token_1.Token(Token_1.TokenType.ITALIC, this.ch);
+                }
+                else {
+                    token = new Token_1.Token(Token_1.TokenType.UNORDERED_LIST, this.ch);
                 }
                 break;
             case '_':
                 if (this.peekChar() === '_') {
                     this.readChar();
-                    token = new Token(TokenType.ITALIC, '__');
-                } else {
-                    token = new Token(TokenType.ITALIC, '_');
+                    token = new Token_1.Token(Token_1.TokenType.ITALIC, '__');
+                }
+                else {
+                    token = new Token_1.Token(Token_1.TokenType.ITALIC, '_');
                 }
                 break;
             case '~':
                 if (this.peekChar() === '~') {
                     this.readChar();
-                    token = new Token(TokenType.STRIKETHROUGH, '~~');
-                } else {
-                    token = new Token(TokenType.SUBSCRIPT, '~');
+                    token = new Token_1.Token(Token_1.TokenType.STRIKETHROUGH, '~~');
+                }
+                else {
+                    token = new Token_1.Token(Token_1.TokenType.SUBSCRIPT, '~');
                 }
                 break;
             case '`':
@@ -167,34 +158,34 @@ export class Lexer {
                     this.readChar();
                     backtickCount++;
                 }
-                token = new Token(TokenType.INLINE_CODE, '`'.repeat(backtickCount));
+                token = new Token_1.Token(Token_1.TokenType.INLINE_CODE, '`'.repeat(backtickCount));
                 break;
             case '[':
-                token = new Token(TokenType.LEFT_BRACKET, this.ch);
+                token = new Token_1.Token(Token_1.TokenType.LEFT_BRACKET, this.ch);
                 break;
             case ']':
-                token = new Token(TokenType.RIGHT_BRACKET, this.ch);
+                token = new Token_1.Token(Token_1.TokenType.RIGHT_BRACKET, this.ch);
                 break;
             case '(':
-                token = new Token(TokenType.LEFT_PARENTHESIS, this.ch);
+                token = new Token_1.Token(Token_1.TokenType.LEFT_PARENTHESIS, this.ch);
                 break;
             case ')':
-                token = new Token(TokenType.RIGHT_PARENTHESIS, this.ch);
+                token = new Token_1.Token(Token_1.TokenType.RIGHT_PARENTHESIS, this.ch);
                 break;
             case '{':
-                token = new Token(TokenType.LEFT_BRACE, this.ch);
+                token = new Token_1.Token(Token_1.TokenType.LEFT_BRACE, this.ch);
                 break;
             case '}':
-                token = new Token(TokenType.RIGHT_BRACE, this.ch);
+                token = new Token_1.Token(Token_1.TokenType.RIGHT_BRACE, this.ch);
                 break;
             case '>':
-                token = new Token(TokenType.BLOCKQUOTE, this.ch);
+                token = new Token_1.Token(Token_1.TokenType.BLOCKQUOTE, this.ch);
                 break;
             case '$':
-                token = new Token(TokenType.MATH, this.ch);
+                token = new Token_1.Token(Token_1.TokenType.MATH, this.ch);
                 break;
             case '^':
-                token = new Token(TokenType.SUPERSCRIPT, this.ch);
+                token = new Token_1.Token(Token_1.TokenType.SUPERSCRIPT, this.ch);
                 break;
             case '-':
                 let dashCount = 1;
@@ -203,8 +194,9 @@ export class Lexer {
                     dashCount++;
                 }
                 if (dashCount === 3) {
-                    token = new Token(TokenType.HORIZONTAL_RULE, '---');
-                } else {
+                    token = new Token_1.Token(Token_1.TokenType.HORIZONTAL_RULE, '---');
+                }
+                else {
                     // Check for checkboxes after the dash
                     if (this.peekChar() === ' ') {
                         this.readChar(); // consume space
@@ -215,16 +207,13 @@ export class Lexer {
                                 this.readChar(); // consume space or x
                                 if (this.peekChar() === ']') {
                                     this.readChar(); // consume ]
-                                    token = new Token(
-                                        nextChar === 'x' ? TokenType.CHECKLIST_CHECKED : TokenType.CHECKLIST,
-                                        nextChar === 'x' ? '- [x]' : '- [ ]'
-                                    );
+                                    token = new Token_1.Token(nextChar === 'x' ? Token_1.TokenType.CHECKLIST_CHECKED : Token_1.TokenType.CHECKLIST, nextChar === 'x' ? '- [x]' : '- [ ]');
                                     break;
                                 }
                             }
                         }
                     }
-                    token = new Token(TokenType.LIST_ITEM, this.ch);
+                    token = new Token_1.Token(Token_1.TokenType.LIST_ITEM, this.ch);
                     break;
                 }
                 break;
@@ -237,21 +226,22 @@ export class Lexer {
             //     }
             //     break;
             case '\n':
-                token = new Token(TokenType.NEWLINE, this.ch);
+                token = new Token_1.Token(Token_1.TokenType.NEWLINE, this.ch);
                 break;
             case ' ':
-                token = new Token(TokenType.SPACE, this.ch);
+                token = new Token_1.Token(Token_1.TokenType.SPACE, this.ch);
                 break;
             case '\t':
-                token = new Token(TokenType.TAB, this.ch);
+                token = new Token_1.Token(Token_1.TokenType.TAB, this.ch);
                 break;
             default:
                 if (this.ch === '\0') {
-                    token = new Token(TokenType.EOF, '');
-                } else {
+                    token = new Token_1.Token(Token_1.TokenType.EOF, '');
+                }
+                else {
                     const text = this.readText();
                     if (text) {
-                        return new Token(TokenType.TEXT, text);
+                        return new Token_1.Token(Token_1.TokenType.TEXT, text);
                     }
                 }
                 break;
@@ -260,3 +250,4 @@ export class Lexer {
         return token;
     }
 }
+exports.Lexer = Lexer;

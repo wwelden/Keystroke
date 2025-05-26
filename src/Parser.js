@@ -1,149 +1,100 @@
-import { Lexer } from "./Lexer";
-import { Token, TokenType } from "./Token";
-import {
-    MarkdownNode,
-    HeaderNode,
-    Header1Node,
-    Header2Node,
-    Header3Node,
-    Header4Node,
-    Header5Node,
-    Header6Node,
-    ParagraphNode,
-    ListNode,
-    ListItemNode,
-    ChecklistNode,
-    ChecklistCheckedNode,
-    BlockquoteNode,
-    HorizontalRuleNode,
-    LinkNode,
-    BoldNode,
-    ItalicNode,
-    StrikethroughNode,
-    InlineCodeNode,
-    CodeBlockNode,
-    IllegalNode,
-    EOFNode,
-    NewlineNode,
-    DocumentNode,
-    SpaceNode,
-    WhitespaceNode,
-    TabNode,
-    MathNode,
-    SuperscriptNode,
-    SubscriptNode,
-    ParenthesisNode,
-    TextNode
-} from "./Ast";
-
-export class Parser {
-    private lexer: Lexer;
-    private currentToken: Token;
-    private peekToken: Token;
-    private peekNextToken: Token;
-    private errors: string[];
-
-        constructor(lexer: Lexer, currentToken: Token = new Token(TokenType.ILLEGAL, ''), peekToken: Token = new Token(TokenType.ILLEGAL, ''), peekNextToken: Token = new Token(TokenType.ILLEGAL, '')  ) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Parser = void 0;
+const Token_1 = require("./Token");
+const Ast_1 = require("./Ast");
+class Parser {
+    constructor(lexer, currentToken = new Token_1.Token(Token_1.TokenType.ILLEGAL, ''), peekToken = new Token_1.Token(Token_1.TokenType.ILLEGAL, ''), peekNextToken = new Token_1.Token(Token_1.TokenType.ILLEGAL, '')) {
         this.lexer = lexer;
         this.currentToken = currentToken;
         this.peekToken = peekToken;
         this.peekNextToken = peekNextToken;
         this.errors = [];
-
         // Initialize tokens if they are not provided (when only lexer is passed)
-        if (this.currentToken.type === TokenType.ILLEGAL && this.currentToken.literal === '' &&
-            this.peekToken.type === TokenType.ILLEGAL && this.peekToken.literal === '' &&
-            this.peekNextToken.type === TokenType.ILLEGAL && this.peekNextToken.literal === '') {
+        if (this.currentToken.type === Token_1.TokenType.ILLEGAL && this.currentToken.literal === '' &&
+            this.peekToken.type === Token_1.TokenType.ILLEGAL && this.peekToken.literal === '' &&
+            this.peekNextToken.type === Token_1.TokenType.ILLEGAL && this.peekNextToken.literal === '') {
             this.nextToken();
             this.nextToken();
         }
     }
-
-    private nextToken(): void {
+    nextToken() {
         this.currentToken = this.peekToken;
         this.peekToken = this.peekNextToken;
         this.peekNextToken = this.lexer.nextToken();
     }
-
-    private peekTokenIs(t: TokenType): boolean {
+    peekTokenIs(t) {
         return this.peekToken.type === t;
     }
-
-    private peekNextTokenIs(t: TokenType): boolean {
+    peekNextTokenIs(t) {
         return this.peekNextToken.type === t;
     }
-
-    private currentTokenIs(t: TokenType): boolean {
+    currentTokenIs(t) {
         return this.currentToken.type === t;
     }
-
-    private expectPeek(t: TokenType): void {
+    expectPeek(t) {
         if (this.peekTokenIs(t)) {
             this.nextToken();
-        } else {
+        }
+        else {
             this.addError(`expected next token to be ${t}, got ${this.peekToken.type} instead`);
         }
     }
-    private isSpaceOrTab(token: Token): boolean {
-        return token.type === TokenType.SPACE || token.type === TokenType.TAB;
+    isSpaceOrTab(token) {
+        return token.type === Token_1.TokenType.SPACE || token.type === Token_1.TokenType.TAB;
     }
-
-    private addError(msg: string): void {
+    addError(msg) {
         this.errors.push(msg);
     }
-    private peekError(t: TokenType): void {
+    peekError(t) {
         if (this.peekTokenIs(t)) {
             this.addError(`expected next token to be ${t}, got ${this.peekToken.type} instead`);
         }
     }
-
-    private parseHeader(): HeaderNode {
-        let header: HeaderNode;
-
+    parseHeader() {
+        let header;
         switch (this.currentToken.type) {
-            case TokenType.HEADER1:
-                header = new Header1Node(this.currentToken);
+            case Token_1.TokenType.HEADER1:
+                header = new Ast_1.Header1Node(this.currentToken);
                 break;
-            case TokenType.HEADER2:
-                header = new Header2Node(this.currentToken);
+            case Token_1.TokenType.HEADER2:
+                header = new Ast_1.Header2Node(this.currentToken);
                 break;
-            case TokenType.HEADER3:
-                header = new Header3Node(this.currentToken);
+            case Token_1.TokenType.HEADER3:
+                header = new Ast_1.Header3Node(this.currentToken);
                 break;
-            case TokenType.HEADER4:
-                header = new Header4Node(this.currentToken);
+            case Token_1.TokenType.HEADER4:
+                header = new Ast_1.Header4Node(this.currentToken);
                 break;
-            case TokenType.HEADER5:
-                header = new Header5Node(this.currentToken);
+            case Token_1.TokenType.HEADER5:
+                header = new Ast_1.Header5Node(this.currentToken);
                 break;
-            case TokenType.HEADER6:
-                header = new Header6Node(this.currentToken);
+            case Token_1.TokenType.HEADER6:
+                header = new Ast_1.Header6Node(this.currentToken);
                 break;
             default:
                 this.addError(`expected header, got ${this.currentToken.type}`);
-                header = new Header1Node(this.currentToken);
+                header = new Ast_1.Header1Node(this.currentToken);
                 break;
         }
-
         this.nextToken(); // Move past header token
-
-        while (!this.currentTokenIs(TokenType.NEWLINE) && !this.currentTokenIs(TokenType.EOF)) {
+        while (!this.currentTokenIs(Token_1.TokenType.NEWLINE) && !this.currentTokenIs(Token_1.TokenType.EOF)) {
             switch (this.currentToken.type) {
-                case TokenType.SPACE:
-                    header.children.push(new SpaceNode(this.currentToken));
+                case Token_1.TokenType.SPACE:
+                    header.children.push(new Ast_1.SpaceNode(this.currentToken));
                     this.nextToken();
                     break;
-                case TokenType.TEXT:
+                case Token_1.TokenType.TEXT:
                     header.children.push(this.parseText());
                     this.nextToken();
                     break;
-                case TokenType.BOLD:
+                case Token_1.TokenType.BOLD:
                     header.children.push(this.parseBold());
                     break;
-                case TokenType.ITALIC:
+                case Token_1.TokenType.ITALIC:
                     header.children.push(this.parseItalic());
                     break;
-                case TokenType.STRIKETHROUGH:
+                case Token_1.TokenType.STRIKETHROUGH:
                     header.children.push(this.parseStrikethrough());
                     break;
                 default:
@@ -151,34 +102,30 @@ export class Parser {
                     break;
             }
         }
-
         return header;
     }
-
-    private parseListItem(): ListItemNode {
-        const listItem = new ListItemNode(this.currentToken, '');
-        while (!this.currentTokenIs(TokenType.NEWLINE) && !this.currentTokenIs(TokenType.EOF)) {
+    parseListItem() {
+        const listItem = new Ast_1.ListItemNode(this.currentToken, '');
+        while (!this.currentTokenIs(Token_1.TokenType.NEWLINE) && !this.currentTokenIs(Token_1.TokenType.EOF)) {
             listItem.children.push(this.parseText());
             this.nextToken();
         }
         return listItem;
     }
-    private parseUnorderedList(): ListNode {
-        const unorderedList = new ListNode(this.currentToken, true);
+    parseUnorderedList() {
+        const unorderedList = new Ast_1.ListNode(this.currentToken, true);
         unorderedList.items.push(this.parseListItem());
         this.nextToken();
         return unorderedList;
     }
-    private parseOrderedList(): ListNode {
-        const orderedList = new ListNode(this.currentToken, false);
+    parseOrderedList() {
+        const orderedList = new Ast_1.ListNode(this.currentToken, false);
         orderedList.items.push(this.parseListItem());
         this.nextToken();
         return orderedList;
     }
-
     // private parseInlineContent(): MarkdownNode[] {
     //     const children: MarkdownNode[] = [];
-
     //     while (this.isInlineToken(this.currentToken.type)) {
     //         switch (this.currentToken.type) {
     //             case TokenType.BOLD:
@@ -199,49 +146,44 @@ export class Parser {
     //         }
     //         this.nextToken(); // Ensure token advancement
     //     }
-
     //     return children;
     // }
-
-    private isInlineToken(type: TokenType): boolean {
+    isInlineToken(type) {
         return [
-            TokenType.BOLD,
-            TokenType.ITALIC,
-            TokenType.STRIKETHROUGH,
-            TokenType.TEXT,
-            TokenType.INLINE_CODE,
-            TokenType.SPACE,
-            TokenType.TAB,
-            TokenType.NEWLINE,
+            Token_1.TokenType.BOLD,
+            Token_1.TokenType.ITALIC,
+            Token_1.TokenType.STRIKETHROUGH,
+            Token_1.TokenType.TEXT,
+            Token_1.TokenType.INLINE_CODE,
+            Token_1.TokenType.SPACE,
+            Token_1.TokenType.TAB,
+            Token_1.TokenType.NEWLINE,
         ].includes(type);
     }
-
-    private parseText(): TextNode {
-        const text = new TextNode(this.currentToken, this.currentToken.literal);
+    parseText() {
+        const text = new Ast_1.TextNode(this.currentToken, this.currentToken.literal);
         return text;
     }
-
-    private parseBlockquote(): BlockquoteNode {
-        const blockquote = new BlockquoteNode(this.currentToken, '');
+    parseBlockquote() {
+        const blockquote = new Ast_1.BlockquoteNode(this.currentToken, '');
         this.nextToken(); // Move past >
-
-        while (!this.currentTokenIs(TokenType.NEWLINE) && !this.currentTokenIs(TokenType.EOF)) {
+        while (!this.currentTokenIs(Token_1.TokenType.NEWLINE) && !this.currentTokenIs(Token_1.TokenType.EOF)) {
             switch (this.currentToken.type) {
-                case TokenType.SPACE:
-                    blockquote.children.push(new SpaceNode(this.currentToken));
+                case Token_1.TokenType.SPACE:
+                    blockquote.children.push(new Ast_1.SpaceNode(this.currentToken));
                     this.nextToken();
                     break;
-                case TokenType.TEXT:
+                case Token_1.TokenType.TEXT:
                     blockquote.children.push(this.parseText());
                     this.nextToken();
                     break;
-                case TokenType.BOLD:
+                case Token_1.TokenType.BOLD:
                     blockquote.children.push(this.parseBold());
                     break;
-                case TokenType.ITALIC:
+                case Token_1.TokenType.ITALIC:
                     blockquote.children.push(this.parseItalic());
                     break;
-                case TokenType.STRIKETHROUGH:
+                case Token_1.TokenType.STRIKETHROUGH:
                     blockquote.children.push(this.parseStrikethrough());
                     break;
                 default:
@@ -249,96 +191,86 @@ export class Parser {
                     break;
             }
         }
-
         return blockquote;
     }
-
-    private parseHorizontalRule(): HorizontalRuleNode {
-        this.expectPeek(TokenType.HORIZONTAL_RULE);
-        const horizontalRule = new HorizontalRuleNode(this.currentToken);
+    parseHorizontalRule() {
+        this.expectPeek(Token_1.TokenType.HORIZONTAL_RULE);
+        const horizontalRule = new Ast_1.HorizontalRuleNode(this.currentToken);
         this.nextToken();
         return horizontalRule;
     }
-
-    private parseLink(): LinkNode {
+    parseLink() {
         let text = '';
         const textToken = this.currentToken;
         this.nextToken(); // Move past [
-
-        while (!this.currentTokenIs(TokenType.RIGHT_BRACKET) && !this.currentTokenIs(TokenType.EOF)) {
+        while (!this.currentTokenIs(Token_1.TokenType.RIGHT_BRACKET) && !this.currentTokenIs(Token_1.TokenType.EOF)) {
             text += this.currentToken.literal;
             this.nextToken();
         }
-
-        if (this.currentTokenIs(TokenType.RIGHT_BRACKET)) {
+        if (this.currentTokenIs(Token_1.TokenType.RIGHT_BRACKET)) {
             this.nextToken(); // Move past ]
         }
-
         let url = '';
-        if (this.currentTokenIs(TokenType.LEFT_PARENTHESIS)) {
+        if (this.currentTokenIs(Token_1.TokenType.LEFT_PARENTHESIS)) {
             this.nextToken(); // Move past (
-            while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF)) {
+            while (!this.currentTokenIs(Token_1.TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(Token_1.TokenType.EOF)) {
                 url += this.currentToken.literal;
                 this.nextToken();
             }
-            if (this.currentTokenIs(TokenType.RIGHT_PARENTHESIS)) {
+            if (this.currentTokenIs(Token_1.TokenType.RIGHT_PARENTHESIS)) {
                 this.nextToken(); // Move past )
             }
         }
-
-        const link = new LinkNode(textToken, text, url);
+        const link = new Ast_1.LinkNode(textToken, text, url);
         return link;
     }
-
-    private parseWhitespace(): WhitespaceNode {
-        if (this.currentToken.type === TokenType.SPACE) {
-            return new SpaceNode(this.currentToken);
-        } else if (this.currentToken.type === TokenType.TAB) {
-            return new TabNode(this.currentToken);
-        } else if (this.currentToken.type === TokenType.NEWLINE) {
-            return new NewlineNode(this.currentToken);
+    parseWhitespace() {
+        if (this.currentToken.type === Token_1.TokenType.SPACE) {
+            return new Ast_1.SpaceNode(this.currentToken);
         }
-        return new SpaceNode(this.currentToken);
+        else if (this.currentToken.type === Token_1.TokenType.TAB) {
+            return new Ast_1.TabNode(this.currentToken);
+        }
+        else if (this.currentToken.type === Token_1.TokenType.NEWLINE) {
+            return new Ast_1.NewlineNode(this.currentToken);
+        }
+        return new Ast_1.SpaceNode(this.currentToken);
     }
-    private parseSpace(): SpaceNode {
-        this.expectPeek(TokenType.SPACE);
-        const space = new SpaceNode(this.currentToken);
+    parseSpace() {
+        this.expectPeek(Token_1.TokenType.SPACE);
+        const space = new Ast_1.SpaceNode(this.currentToken);
         this.nextToken();
         return space;
     }
-
-    private parseTab(): TabNode {
-        this.expectPeek(TokenType.TAB);
-        const tab = new TabNode(this.currentToken);
+    parseTab() {
+        this.expectPeek(Token_1.TokenType.TAB);
+        const tab = new Ast_1.TabNode(this.currentToken);
         this.nextToken();
         return tab;
     }
-
-    private parseNewline(): NewlineNode {
-        this.expectPeek(TokenType.NEWLINE);
-        const newline = new NewlineNode(this.currentToken);
+    parseNewline() {
+        this.expectPeek(Token_1.TokenType.NEWLINE);
+        const newline = new Ast_1.NewlineNode(this.currentToken);
         this.nextToken();
         return newline;
     }
-
-    private parseBold(): BoldNode {
-        const bold = new BoldNode(this.currentToken, '');
+    parseBold() {
+        const bold = new Ast_1.BoldNode(this.currentToken, '');
         this.nextToken(); // Move past opening **
-
-        while (!this.currentTokenIs(TokenType.BOLD) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+        while (!this.currentTokenIs(Token_1.TokenType.BOLD) && !this.currentTokenIs(Token_1.TokenType.EOF) && !this.currentTokenIs(Token_1.TokenType.NEWLINE)) {
             switch (this.currentToken.type) {
-                case TokenType.SPACE:
-                    bold.children.push(new SpaceNode(this.currentToken));
+                case Token_1.TokenType.SPACE:
+                    bold.children.push(new Ast_1.SpaceNode(this.currentToken));
                     this.nextToken();
                     break;
-                case TokenType.TEXT:
+                case Token_1.TokenType.TEXT:
                     bold.children.push(this.parseText());
                     this.nextToken();
                     break;
-                case TokenType.ITALIC:
+                case Token_1.TokenType.ITALIC:
                     bold.children.push(this.parseItalic());
                     break;
-                case TokenType.STRIKETHROUGH:
+                case Token_1.TokenType.STRIKETHROUGH:
                     bold.children.push(this.parseStrikethrough());
                     break;
                 default:
@@ -346,34 +278,31 @@ export class Parser {
                     break;
             }
         }
-
-        if (this.currentTokenIs(TokenType.BOLD)) {
+        if (this.currentTokenIs(Token_1.TokenType.BOLD)) {
             this.nextToken(); // Move past closing **
-        } else {
+        }
+        else {
             this.addError("Unmatched ** for bold text");
         }
-
         return bold;
     }
-
-    private parseItalic(): ItalicNode {
-        const italic = new ItalicNode(this.currentToken, '');
+    parseItalic() {
+        const italic = new Ast_1.ItalicNode(this.currentToken, '');
         this.nextToken(); // Move past opening _ or *
-
-        while (!this.currentTokenIs(TokenType.ITALIC) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+        while (!this.currentTokenIs(Token_1.TokenType.ITALIC) && !this.currentTokenIs(Token_1.TokenType.EOF) && !this.currentTokenIs(Token_1.TokenType.NEWLINE)) {
             switch (this.currentToken.type) {
-                case TokenType.SPACE:
-                    italic.children.push(new SpaceNode(this.currentToken));
+                case Token_1.TokenType.SPACE:
+                    italic.children.push(new Ast_1.SpaceNode(this.currentToken));
                     this.nextToken();
                     break;
-                case TokenType.TEXT:
+                case Token_1.TokenType.TEXT:
                     italic.children.push(this.parseText());
                     this.nextToken();
                     break;
-                case TokenType.BOLD:
+                case Token_1.TokenType.BOLD:
                     italic.children.push(this.parseBold());
                     break;
-                case TokenType.STRIKETHROUGH:
+                case Token_1.TokenType.STRIKETHROUGH:
                     italic.children.push(this.parseStrikethrough());
                     break;
                 default:
@@ -381,34 +310,31 @@ export class Parser {
                     break;
             }
         }
-
-        if (this.currentTokenIs(TokenType.ITALIC)) {
+        if (this.currentTokenIs(Token_1.TokenType.ITALIC)) {
             this.nextToken(); // Move past closing _ or *
-        } else {
+        }
+        else {
             this.addError("Unmatched _ for italic text");
         }
-
         return italic;
     }
-
-    private parseStrikethrough(): StrikethroughNode {
-        const strikethrough = new StrikethroughNode(this.currentToken, '');
+    parseStrikethrough() {
+        const strikethrough = new Ast_1.StrikethroughNode(this.currentToken, '');
         this.nextToken(); // Move past opening ~~
-
-        while (!this.currentTokenIs(TokenType.STRIKETHROUGH) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+        while (!this.currentTokenIs(Token_1.TokenType.STRIKETHROUGH) && !this.currentTokenIs(Token_1.TokenType.EOF) && !this.currentTokenIs(Token_1.TokenType.NEWLINE)) {
             switch (this.currentToken.type) {
-                case TokenType.SPACE:
-                    strikethrough.children.push(new SpaceNode(this.currentToken));
+                case Token_1.TokenType.SPACE:
+                    strikethrough.children.push(new Ast_1.SpaceNode(this.currentToken));
                     this.nextToken();
                     break;
-                case TokenType.TEXT:
+                case Token_1.TokenType.TEXT:
                     strikethrough.children.push(this.parseText());
                     this.nextToken();
                     break;
-                case TokenType.BOLD:
+                case Token_1.TokenType.BOLD:
                     strikethrough.children.push(this.parseBold());
                     break;
-                case TokenType.ITALIC:
+                case Token_1.TokenType.ITALIC:
                     strikethrough.children.push(this.parseItalic());
                     break;
                 default:
@@ -416,63 +342,60 @@ export class Parser {
                     break;
             }
         }
-
-        if (this.currentTokenIs(TokenType.STRIKETHROUGH)) {
+        if (this.currentTokenIs(Token_1.TokenType.STRIKETHROUGH)) {
             this.nextToken(); // Move past closing ~~
-        } else {
+        }
+        else {
             this.addError("Unmatched ~~ for strikethrough text");
         }
-
         return strikethrough;
     }
-    private parseNested(): MarkdownNode { //probalby needs to be recursive or something
-        switch (this.currentToken.type){
-            case TokenType.BOLD:
+    parseNested() {
+        switch (this.currentToken.type) {
+            case Token_1.TokenType.BOLD:
                 return this.parseBold();
-            case TokenType.ITALIC:
+            case Token_1.TokenType.ITALIC:
                 return this.parseItalic();
-            case TokenType.STRIKETHROUGH:
+            case Token_1.TokenType.STRIKETHROUGH:
                 return this.parseStrikethrough();
             default:
                 return this.parseText();
         }
-
     }
-    private parseMath(): MathNode {
+    parseMath() {
         let mathText = '';
         this.nextToken(); // Move past opening $
-
-        while (!this.currentTokenIs(TokenType.MATH) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+        while (!this.currentTokenIs(Token_1.TokenType.MATH) && !this.currentTokenIs(Token_1.TokenType.EOF) && !this.currentTokenIs(Token_1.TokenType.NEWLINE)) {
             switch (this.currentToken.type) {
-                case TokenType.SUPERSCRIPT:
+                case Token_1.TokenType.SUPERSCRIPT:
                     const superscript = this.parseSuperscript();
                     mathText += '^' + superscript.children.map(child => child.value).join('');
                     break;
-                case TokenType.SUBSCRIPT:
+                case Token_1.TokenType.SUBSCRIPT:
                     const subscript = this.parseSubscript();
                     mathText += '~' + subscript.children.map(child => child.value).join('');
                     break;
-                case TokenType.LEFT_PARENTHESIS:
+                case Token_1.TokenType.LEFT_PARENTHESIS:
                     mathText += this.currentToken.literal;
                     this.nextToken();
                     break;
-                case TokenType.RIGHT_PARENTHESIS:
+                case Token_1.TokenType.RIGHT_PARENTHESIS:
                     mathText += this.currentToken.literal;
                     this.nextToken();
                     break;
-                case TokenType.LIST_ITEM:
+                case Token_1.TokenType.LIST_ITEM:
                     mathText += '-';
                     this.nextToken();
                     break;
-                case TokenType.UNORDERED_LIST:
+                case Token_1.TokenType.UNORDERED_LIST:
                     mathText += '*';
                     this.nextToken();
                     break;
-                case TokenType.SPACE:
+                case Token_1.TokenType.SPACE:
                     mathText += ' ';
                     this.nextToken();
                     break;
-                case TokenType.TEXT:
+                case Token_1.TokenType.TEXT:
                     mathText += this.currentToken.literal;
                     this.nextToken();
                     break;
@@ -482,33 +405,31 @@ export class Parser {
                     break;
             }
         }
-
-        if (this.currentTokenIs(TokenType.MATH)) {
+        if (this.currentTokenIs(Token_1.TokenType.MATH)) {
             this.nextToken(); // Move past closing $
-        } else {
+        }
+        else {
             this.addError("Unmatched $ for math expression");
         }
-
-        const math = new MathNode(this.currentToken, mathText.trim());
+        const math = new Ast_1.MathNode(this.currentToken, mathText.trim());
         return math;
     }
-    private parseSuperscript(): SuperscriptNode {
-        const superscript = new SuperscriptNode(this.currentToken, '');
+    parseSuperscript() {
+        const superscript = new Ast_1.SuperscriptNode(this.currentToken, '');
         this.nextToken(); // Move past ^
-
         // Parse until we hit a space, newline, EOF, or another formatting token
-        while (!this.currentTokenIs(TokenType.SPACE) &&
-               !this.currentTokenIs(TokenType.EOF) &&
-               !this.currentTokenIs(TokenType.NEWLINE) &&
-               !this.currentTokenIs(TokenType.SUBSCRIPT) &&
-               !this.currentTokenIs(TokenType.SUPERSCRIPT) &&
-               !this.currentTokenIs(TokenType.MATH)) {
+        while (!this.currentTokenIs(Token_1.TokenType.SPACE) &&
+            !this.currentTokenIs(Token_1.TokenType.EOF) &&
+            !this.currentTokenIs(Token_1.TokenType.NEWLINE) &&
+            !this.currentTokenIs(Token_1.TokenType.SUBSCRIPT) &&
+            !this.currentTokenIs(Token_1.TokenType.SUPERSCRIPT) &&
+            !this.currentTokenIs(Token_1.TokenType.MATH)) {
             switch (this.currentToken.type) {
-                case TokenType.LIST_ITEM:
-                    superscript.children.push(new TextNode(this.currentToken, '-'));
+                case Token_1.TokenType.LIST_ITEM:
+                    superscript.children.push(new Ast_1.TextNode(this.currentToken, '-'));
                     this.nextToken();
                     break;
-                case TokenType.TEXT:
+                case Token_1.TokenType.TEXT:
                     superscript.children.push(this.parseText());
                     this.nextToken();
                     break;
@@ -517,26 +438,24 @@ export class Parser {
                     break;
             }
         }
-
         return superscript;
     }
-    private parseSubscript(): SubscriptNode {
-        const subscript = new SubscriptNode(this.currentToken, '');
+    parseSubscript() {
+        const subscript = new Ast_1.SubscriptNode(this.currentToken, '');
         this.nextToken(); // Move past ~
-
         // Parse until we hit a space, newline, EOF, or another formatting token
-        while (!this.currentTokenIs(TokenType.SPACE) &&
-               !this.currentTokenIs(TokenType.EOF) &&
-               !this.currentTokenIs(TokenType.NEWLINE) &&
-               !this.currentTokenIs(TokenType.SUBSCRIPT) &&
-               !this.currentTokenIs(TokenType.SUPERSCRIPT) &&
-               !this.currentTokenIs(TokenType.MATH)) {
+        while (!this.currentTokenIs(Token_1.TokenType.SPACE) &&
+            !this.currentTokenIs(Token_1.TokenType.EOF) &&
+            !this.currentTokenIs(Token_1.TokenType.NEWLINE) &&
+            !this.currentTokenIs(Token_1.TokenType.SUBSCRIPT) &&
+            !this.currentTokenIs(Token_1.TokenType.SUPERSCRIPT) &&
+            !this.currentTokenIs(Token_1.TokenType.MATH)) {
             switch (this.currentToken.type) {
-                case TokenType.LIST_ITEM:
-                    subscript.children.push(new TextNode(this.currentToken, '-'));
+                case Token_1.TokenType.LIST_ITEM:
+                    subscript.children.push(new Ast_1.TextNode(this.currentToken, '-'));
                     this.nextToken();
                     break;
-                case TokenType.TEXT:
+                case Token_1.TokenType.TEXT:
                     subscript.children.push(this.parseText());
                     this.nextToken();
                     break;
@@ -545,23 +464,21 @@ export class Parser {
                     break;
             }
         }
-
         return subscript;
     }
-    private parseParenthesis(): ParenthesisNode {
-        this.expectPeek(TokenType.LEFT_PARENTHESIS);
-        const parenthesis = new ParenthesisNode(this.currentToken, '');
+    parseParenthesis() {
+        this.expectPeek(Token_1.TokenType.LEFT_PARENTHESIS);
+        const parenthesis = new Ast_1.ParenthesisNode(this.currentToken, '');
         this.nextToken();
-
-        while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+        while (!this.currentTokenIs(Token_1.TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(Token_1.TokenType.EOF) && !this.currentTokenIs(Token_1.TokenType.NEWLINE)) {
             switch (this.currentToken.type) {
-                case TokenType.SUPERSCRIPT:
+                case Token_1.TokenType.SUPERSCRIPT:
                     parenthesis.children.push(this.parseSuperscript());
                     break;
-                case TokenType.SUBSCRIPT:
+                case Token_1.TokenType.SUBSCRIPT:
                     parenthesis.children.push(this.parseSubscript());
                     break;
-                case TokenType.TEXT:
+                case Token_1.TokenType.TEXT:
                     parenthesis.children.push(this.parseText());
                     break;
                 default:
@@ -569,70 +486,60 @@ export class Parser {
                     break;
             }
         }
-
-        if (this.currentTokenIs(TokenType.RIGHT_PARENTHESIS)) {
+        if (this.currentTokenIs(Token_1.TokenType.RIGHT_PARENTHESIS)) {
             this.nextToken();
         }
-
         return parenthesis;
     }
-
-    private parseCode(): InlineCodeNode {
-        this.expectPeek(TokenType.INLINE_CODE);
-        const code = new InlineCodeNode(this.currentToken, '');
-
+    parseCode() {
+        this.expectPeek(Token_1.TokenType.INLINE_CODE);
+        const code = new Ast_1.InlineCodeNode(this.currentToken, '');
         // Consume the opening **
         this.nextToken();
-
-        while (!this.currentTokenIs(TokenType.INLINE_CODE) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+        while (!this.currentTokenIs(Token_1.TokenType.INLINE_CODE) && !this.currentTokenIs(Token_1.TokenType.EOF) && !this.currentTokenIs(Token_1.TokenType.NEWLINE)) {
             code.children.push(this.parseText());
             this.nextToken(); // Ensure token advancement
         }
-
-        if (this.currentTokenIs(TokenType.ITALIC)) {
+        if (this.currentTokenIs(Token_1.TokenType.ITALIC)) {
             this.nextToken(); // Consume the closing **
-        } else {
+        }
+        else {
             this.addError("Unmatched _ for italic text");
         }
         this.nextToken();
-
         return code;
     }
-
-    private parseCodeBlock(): CodeBlockNode {
-        this.expectPeek(TokenType.CODE_BLOCK);
+    parseCodeBlock() {
+        this.expectPeek(Token_1.TokenType.CODE_BLOCK);
         let text = '';
-        while (!this.peekTokenIs(TokenType.CODE_BLOCK)) {
+        while (!this.peekTokenIs(Token_1.TokenType.CODE_BLOCK)) {
             text += this.parseText().value;
             this.nextToken();
         }
-        const codeBlock = new CodeBlockNode(this.currentToken, text);
+        const codeBlock = new Ast_1.CodeBlockNode(this.currentToken, text);
         this.nextToken();
         return codeBlock;
     }
-
-
-    private parseCheckbox(): ChecklistNode {
-        const checklist = new ChecklistNode(this.currentToken, '');
+    parseCheckbox() {
+        const checklist = new Ast_1.ChecklistNode(this.currentToken, '');
         this.nextToken(); // Move past checkbox token
-
-        while (!this.currentTokenIs(TokenType.NEWLINE) && !this.currentTokenIs(TokenType.EOF)) {
+        while (!this.currentTokenIs(Token_1.TokenType.NEWLINE) && !this.currentTokenIs(Token_1.TokenType.EOF)) {
             switch (this.currentToken.type) {
-                case TokenType.SPACE:
-                    checklist.children.push(new SpaceNode(this.currentToken));
+                case Token_1.TokenType.SPACE:
+                    checklist.children.push(new Ast_1.SpaceNode(this.currentToken));
                     this.nextToken();
                     break;
-                case TokenType.TEXT:
+                case Token_1.TokenType.TEXT:
                     checklist.children.push(this.parseText());
                     this.nextToken();
                     break;
-                case TokenType.BOLD:
+                case Token_1.TokenType.BOLD:
                     checklist.children.push(this.parseBold());
                     break;
-                case TokenType.ITALIC:
+                case Token_1.TokenType.ITALIC:
                     checklist.children.push(this.parseItalic());
                     break;
-                case TokenType.STRIKETHROUGH:
+                case Token_1.TokenType.STRIKETHROUGH:
                     checklist.children.push(this.parseStrikethrough());
                     break;
                 default:
@@ -640,31 +547,28 @@ export class Parser {
                     break;
             }
         }
-
         return checklist;
     }
-
-    private parseCheckboxChecked(): ChecklistCheckedNode {
-        const checklistChecked = new ChecklistCheckedNode(this.currentToken, '');
+    parseCheckboxChecked() {
+        const checklistChecked = new Ast_1.ChecklistCheckedNode(this.currentToken, '');
         this.nextToken(); // Move past checkbox token
-
-        while (!this.currentTokenIs(TokenType.NEWLINE) && !this.currentTokenIs(TokenType.EOF)) {
+        while (!this.currentTokenIs(Token_1.TokenType.NEWLINE) && !this.currentTokenIs(Token_1.TokenType.EOF)) {
             switch (this.currentToken.type) {
-                case TokenType.SPACE:
-                    checklistChecked.children.push(new SpaceNode(this.currentToken));
+                case Token_1.TokenType.SPACE:
+                    checklistChecked.children.push(new Ast_1.SpaceNode(this.currentToken));
                     this.nextToken();
                     break;
-                case TokenType.TEXT:
+                case Token_1.TokenType.TEXT:
                     checklistChecked.children.push(this.parseText());
                     this.nextToken();
                     break;
-                case TokenType.BOLD:
+                case Token_1.TokenType.BOLD:
                     checklistChecked.children.push(this.parseBold());
                     break;
-                case TokenType.ITALIC:
+                case Token_1.TokenType.ITALIC:
                     checklistChecked.children.push(this.parseItalic());
                     break;
-                case TokenType.STRIKETHROUGH:
+                case Token_1.TokenType.STRIKETHROUGH:
                     checklistChecked.children.push(this.parseStrikethrough());
                     break;
                 default:
@@ -672,27 +576,24 @@ export class Parser {
                     break;
             }
         }
-
         return checklistChecked;
     }
-
-    private parseInlineContent(): MarkdownNode[] {
-        const children: MarkdownNode[] = [];
-
+    parseInlineContent() {
+        const children = [];
         while (this.isInlineToken(this.currentToken.type)) {
             switch (this.currentToken.type) {
-                case TokenType.BOLD:
+                case Token_1.TokenType.BOLD:
                     children.push(this.parseBold());
                     break;
-                case TokenType.ITALIC:
+                case Token_1.TokenType.ITALIC:
                     children.push(this.parseItalic());
                     break;
-                case TokenType.STRIKETHROUGH:
+                case Token_1.TokenType.STRIKETHROUGH:
                     children.push(this.parseStrikethrough());
                     break;
-                case TokenType.SPACE:
-                case TokenType.TAB:
-                case TokenType.NEWLINE:
+                case Token_1.TokenType.SPACE:
+                case Token_1.TokenType.TAB:
+                case Token_1.TokenType.NEWLINE:
                     children.push(this.parseWhitespace());
                     break;
                 default:
@@ -701,96 +602,88 @@ export class Parser {
             }
             this.nextToken(); // Ensure token advancement
         }
-
         return children;
     }
-
-
-    public parse(): DocumentNode {
-        const documentNode = new DocumentNode();
-
-        while (this.currentToken.type !== TokenType.EOF) {
-            let node: MarkdownNode | null = null;
-
+    parse() {
+        const documentNode = new Ast_1.DocumentNode();
+        while (this.currentToken.type !== Token_1.TokenType.EOF) {
+            let node = null;
             switch (this.currentToken.type) {
-                case TokenType.HEADER1:
-                case TokenType.HEADER2:
-                case TokenType.HEADER3:
-                case TokenType.HEADER4:
-                case TokenType.HEADER5:
-                case TokenType.HEADER6:
+                case Token_1.TokenType.HEADER1:
+                case Token_1.TokenType.HEADER2:
+                case Token_1.TokenType.HEADER3:
+                case Token_1.TokenType.HEADER4:
+                case Token_1.TokenType.HEADER5:
+                case Token_1.TokenType.HEADER6:
                     node = this.parseHeader();
                     break;
-                case TokenType.BLOCKQUOTE:
+                case Token_1.TokenType.BLOCKQUOTE:
                     node = this.parseBlockquote();
                     break;
-                case TokenType.HORIZONTAL_RULE:
+                case Token_1.TokenType.HORIZONTAL_RULE:
                     node = this.parseHorizontalRule();
                     break;
-                case TokenType.TEXT:
+                case Token_1.TokenType.TEXT:
                     node = this.parseText();
                     break;
-                case TokenType.UNORDERED_LIST:
+                case Token_1.TokenType.UNORDERED_LIST:
                     node = this.parseUnorderedList();
                     break;
-                case TokenType.ORDERED_LIST:
+                case Token_1.TokenType.ORDERED_LIST:
                     node = this.parseOrderedList();
                     break;
-                case TokenType.LIST_ITEM:
+                case Token_1.TokenType.LIST_ITEM:
                     node = this.parseListItem();
                     break;
-                case TokenType.SPACE:
-                    node = new SpaceNode(this.currentToken);
+                case Token_1.TokenType.SPACE:
+                    node = new Ast_1.SpaceNode(this.currentToken);
                     break;
-                case TokenType.TAB:
-                    node = new TabNode(this.currentToken);
+                case Token_1.TokenType.TAB:
+                    node = new Ast_1.TabNode(this.currentToken);
                     break;
-                case TokenType.NEWLINE:
-                    node = new NewlineNode(this.currentToken);
+                case Token_1.TokenType.NEWLINE:
+                    node = new Ast_1.NewlineNode(this.currentToken);
                     break;
-                case TokenType.CHECKLIST:
+                case Token_1.TokenType.CHECKLIST:
                     node = this.parseCheckbox();
                     break;
-                case TokenType.CHECKLIST_CHECKED:
+                case Token_1.TokenType.CHECKLIST_CHECKED:
                     node = this.parseCheckboxChecked();
                     break;
-                case TokenType.BOLD:
+                case Token_1.TokenType.BOLD:
                     node = this.parseBold();
                     break;
-                case TokenType.ITALIC:
+                case Token_1.TokenType.ITALIC:
                     node = this.parseItalic();
                     break;
-                case TokenType.STRIKETHROUGH:
+                case Token_1.TokenType.STRIKETHROUGH:
                     node = this.parseStrikethrough();
                     break;
-                case TokenType.LEFT_BRACKET:
+                case Token_1.TokenType.LEFT_BRACKET:
                     node = this.parseLink();
                     break;
-                case TokenType.INLINE_CODE:
+                case Token_1.TokenType.INLINE_CODE:
                     node = this.parseCode();
                     break;
-                case TokenType.MATH:
+                case Token_1.TokenType.MATH:
                     node = this.parseMath();
                     break;
-                case TokenType.SUPERSCRIPT:
+                case Token_1.TokenType.SUPERSCRIPT:
                     node = this.parseSuperscript();
                     break;
-                case TokenType.SUBSCRIPT:
+                case Token_1.TokenType.SUBSCRIPT:
                     node = this.parseSubscript();
                     break;
                 default:
-                    node = new IllegalNode(this.currentToken);
+                    node = new Ast_1.IllegalNode(this.currentToken);
                     break;
             }
-
             if (node) {
                 documentNode.children.push(node);
             }
-
             this.nextToken();
         }
-
         return documentNode;
     }
-
 }
+exports.Parser = Parser;

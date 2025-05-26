@@ -32,6 +32,7 @@ export enum TokenType {
     CODE_BLOCK = 'CODE_BLOCK',
 
     // Links and images
+    LINK = 'LINK',
     LINK_TEXT_START = 'LINK_TEXT_START',
     LINK_TEXT_END = 'LINK_TEXT_END',
     LINK_URL_START = 'LINK_URL_START',

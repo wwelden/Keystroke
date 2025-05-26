@@ -5,9 +5,9 @@ export class Renderer {
     render(node: MarkdownNode): string {
         switch (node.type) {
             case TokenType.HEADER1:
-                return `<h1>${this.renderChildren(node)}</h1>\n`;
+                return `<h1>${this.renderChildren(node).trim()}</h1>\n`;
             case TokenType.PARAGRAPH:
-                return `<p>${this.renderChildren(node)}</p>\n`;
+                return `${node.value || ""}`;
             case TokenType.UNORDERED_LIST:
                 return `<ul>${this.renderChildren(node)}</ul>\n`;
             case TokenType.LIST_ITEM:
@@ -30,9 +30,11 @@ export class Renderer {
                 return `<code>${this.renderChildren(node)}</code>\n`;
             case TokenType.CODE_BLOCK:
                 return `<pre><code>${this.renderChildren(node)}</code></pre>\n`;
-            case TokenType.LEFT_BRACKET:
+            case TokenType.LINK:
                 const linkNode = node as LinkNode;
                 return `<a href="${linkNode.url}">${linkNode.text}</a>\n`;
+            case TokenType.LEFT_BRACKET:
+                return `<span>[</span>`;
             case TokenType.LEFT_PARENTHESIS:
                 return `(${this.renderChildren(node)})`;
             case TokenType.DOCUMENT:
@@ -44,15 +46,15 @@ export class Renderer {
             case TokenType.BOLD:
                 return `<b>${this.renderChildren(node)}</b>\n`;
             case TokenType.HEADER2:
-                return `<h2>${this.renderChildren(node)}</h2>\n`;
+                return `<h2>${this.renderChildren(node).trim()}</h2>\n`;
             case TokenType.HEADER3:
-                return `<h3>${this.renderChildren(node)}</h3>\n`;
+                return `<h3>${this.renderChildren(node).trim()}</h3>\n`;
             case TokenType.HEADER4:
-                return `<h4>${this.renderChildren(node)}</h4>\n`;
+                return `<h4>${this.renderChildren(node).trim()}</h4>\n`;
             case TokenType.HEADER5:
-                return `<h5>${this.renderChildren(node)}</h5>\n`;
+                return `<h5>${this.renderChildren(node).trim()}</h5>\n`;
             case TokenType.HEADER6:
-                return `<h6>${this.renderChildren(node)}</h6>\n`;
+                return `<h6>${this.renderChildren(node).trim()}</h6>\n`;
             case TokenType.ORDERED_LIST:
                 return `<ol>${this.renderChildren(node)}</ol>\n`;
             case TokenType.NEWLINE:
@@ -62,7 +64,8 @@ export class Renderer {
             case TokenType.TAB:
                 return "&emsp;";
             case TokenType.MATH:
-                return `<span class="math">${this.renderChildren(node)}</span>\n`;
+                const mathNode = node as any; // MathNode
+                return `<span class="math">${mathNode.text || this.renderChildren(node)}</span>\n`;
             case TokenType.SUPERSCRIPT:
                 return `<sup>${this.renderChildren(node)}</sup>`;
             case TokenType.SUBSCRIPT:
@@ -73,6 +76,7 @@ export class Renderer {
     }
 
     private renderChildren(node: MarkdownNode): string {
-        return node.children.map(child => this.render(child)).join(" ");
+        // Don't join with spaces - let the actual Space nodes handle spacing
+        return node.children.map(child => this.render(child)).join("");
     }
 }
