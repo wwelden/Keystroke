@@ -439,45 +439,43 @@ export class Parser {
 
     }
     private parseMath(): MathNode {
-        let mathText = '';
+        const math = new MathNode(this.currentToken, '');
         this.nextToken(); // Move past opening $
 
         while (!this.currentTokenIs(TokenType.MATH) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
             switch (this.currentToken.type) {
                 case TokenType.SUPERSCRIPT:
-                    const superscript = this.parseSuperscript();
-                    mathText += '^' + superscript.children.map(child => child.value).join('');
+                    math.children.push(this.parseSuperscript());
                     break;
                 case TokenType.SUBSCRIPT:
-                    const subscript = this.parseSubscript();
-                    mathText += '~' + subscript.children.map(child => child.value).join('');
+                    math.children.push(this.parseSubscript());
                     break;
                 case TokenType.LEFT_PARENTHESIS:
-                    mathText += this.currentToken.literal;
+                    math.children.push(new TextNode(this.currentToken, this.currentToken.literal));
                     this.nextToken();
                     break;
                 case TokenType.RIGHT_PARENTHESIS:
-                    mathText += this.currentToken.literal;
+                    math.children.push(new TextNode(this.currentToken, this.currentToken.literal));
                     this.nextToken();
                     break;
                 case TokenType.LIST_ITEM:
-                    mathText += '-';
+                    math.children.push(new TextNode(this.currentToken, '-'));
                     this.nextToken();
                     break;
                 case TokenType.UNORDERED_LIST:
-                    mathText += '*';
+                    math.children.push(new TextNode(this.currentToken, '*'));
                     this.nextToken();
                     break;
                 case TokenType.SPACE:
-                    mathText += ' ';
+                    math.children.push(new SpaceNode(this.currentToken));
                     this.nextToken();
                     break;
                 case TokenType.TEXT:
-                    mathText += this.currentToken.literal;
+                    math.children.push(this.parseText());
                     this.nextToken();
                     break;
                 default:
-                    mathText += this.currentToken.literal;
+                    math.children.push(new TextNode(this.currentToken, this.currentToken.literal));
                     this.nextToken();
                     break;
             }
@@ -489,63 +487,38 @@ export class Parser {
             this.addError("Unmatched $ for math expression");
         }
 
-        const math = new MathNode(this.currentToken, mathText.trim());
         return math;
     }
     private parseSuperscript(): SuperscriptNode {
-        const superscript = new SuperscriptNode(this.currentToken, '');
+        let superscriptText = '';
         this.nextToken(); // Move past ^
 
-        // Parse until we hit a space, newline, EOF, or another formatting token
-        while (!this.currentTokenIs(TokenType.SPACE) &&
-               !this.currentTokenIs(TokenType.EOF) &&
-               !this.currentTokenIs(TokenType.NEWLINE) &&
-               !this.currentTokenIs(TokenType.SUBSCRIPT) &&
-               !this.currentTokenIs(TokenType.SUPERSCRIPT) &&
-               !this.currentTokenIs(TokenType.MATH)) {
-            switch (this.currentToken.type) {
-                case TokenType.LIST_ITEM:
-                    superscript.children.push(new TextNode(this.currentToken, '-'));
-                    this.nextToken();
-                    break;
-                case TokenType.TEXT:
-                    superscript.children.push(this.parseText());
-                    this.nextToken();
-                    break;
-                default:
-                    this.nextToken();
-                    break;
-            }
+        // Parse the immediate content (usually just one token)
+        if (this.currentTokenIs(TokenType.TEXT)) {
+            superscriptText += this.currentToken.literal;
+            this.nextToken();
+        } else if (this.currentTokenIs(TokenType.LIST_ITEM)) {
+            superscriptText += '-';
+            this.nextToken();
         }
 
+        const superscript = new SuperscriptNode(this.currentToken, superscriptText);
         return superscript;
     }
     private parseSubscript(): SubscriptNode {
-        const subscript = new SubscriptNode(this.currentToken, '');
+        let subscriptText = '';
         this.nextToken(); // Move past ~
 
-        // Parse until we hit a space, newline, EOF, or another formatting token
-        while (!this.currentTokenIs(TokenType.SPACE) &&
-               !this.currentTokenIs(TokenType.EOF) &&
-               !this.currentTokenIs(TokenType.NEWLINE) &&
-               !this.currentTokenIs(TokenType.SUBSCRIPT) &&
-               !this.currentTokenIs(TokenType.SUPERSCRIPT) &&
-               !this.currentTokenIs(TokenType.MATH)) {
-            switch (this.currentToken.type) {
-                case TokenType.LIST_ITEM:
-                    subscript.children.push(new TextNode(this.currentToken, '-'));
-                    this.nextToken();
-                    break;
-                case TokenType.TEXT:
-                    subscript.children.push(this.parseText());
-                    this.nextToken();
-                    break;
-                default:
-                    this.nextToken();
-                    break;
-            }
+        // Parse the immediate content (usually just one token)
+        if (this.currentTokenIs(TokenType.TEXT)) {
+            subscriptText += this.currentToken.literal;
+            this.nextToken();
+        } else if (this.currentTokenIs(TokenType.LIST_ITEM)) {
+            subscriptText += '-';
+            this.nextToken();
         }
 
+        const subscript = new SubscriptNode(this.currentToken, subscriptText);
         return subscript;
     }
     private parseParenthesis(): ParenthesisNode {

@@ -65,11 +65,17 @@ export class Renderer {
                 return "&emsp;";
             case TokenType.MATH:
                 const mathNode = node as any; // MathNode
-                return `<span class="math">${mathNode.text || this.renderChildren(node)}</span>\n`;
+                if (mathNode.text && mathNode.text.trim()) {
+                    return `<span class="math">${mathNode.text}</span>\n`;
+                } else {
+                    return `<span class="math">${this.renderChildren(node).trim()}</span>\n`;
+                }
             case TokenType.SUPERSCRIPT:
-                return `<sup>${this.renderChildren(node)}</sup>`;
+                const superNode = node as any; // SuperscriptNode
+                return `<sup>${superNode.text || this.renderChildren(node)}</sup>`;
             case TokenType.SUBSCRIPT:
-                return `<sub>${this.renderChildren(node)}</sub>`;
+                const subNode = node as any; // SubscriptNode
+                return `<sub>${subNode.text || this.renderChildren(node)}</sub>`;
             default:
                 return `<span>${node.value || ""}</span>\n`;
         }
