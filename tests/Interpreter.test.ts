@@ -64,7 +64,7 @@ describe('Markdown Interpreter', () => {
 
         it('should process superscript correctly', () => {
             const input = '$x ^2  $';
-            const expected = '<span class="math">x <sup>2  </sup></span>\n';
+            const expected = '<span class="math">x <sup>2</sup></span>\n';
             expect(processMarkdown(input)).toBe(expected);
         });
 

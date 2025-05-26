@@ -515,13 +515,28 @@ export class Parser {
         let superscriptText = '';
         this.nextToken(); // Move past ^
 
-        // Parse the immediate content (usually just one token)
         if (this.currentTokenIs(TokenType.TEXT)) {
             superscriptText += this.currentToken.literal;
             this.nextToken();
         } else if (this.currentTokenIs(TokenType.LIST_ITEM)) {
             superscriptText += '-';
             this.nextToken();
+        } else if (this.currentTokenIs(TokenType.LEFT_PARENTHESIS)) {
+            // Handle parentheses content like ^(98+13)
+            superscriptText += this.currentToken.literal; // Add opening (
+            this.nextToken();
+
+            // Collect everything until closing parenthesis
+            while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF)) {
+                superscriptText += this.currentToken.literal;
+                this.nextToken();
+            }
+
+            // Add closing parenthesis if found
+            if (this.currentTokenIs(TokenType.RIGHT_PARENTHESIS)) {
+                superscriptText += this.currentToken.literal;
+                this.nextToken();
+            }
         }
 
         const superscript = new SuperscriptNode(this.currentToken, superscriptText);
@@ -531,13 +546,28 @@ export class Parser {
         let subscriptText = '';
         this.nextToken(); // Move past ~
 
-        // Parse the immediate content (usually just one token)
         if (this.currentTokenIs(TokenType.TEXT)) {
             subscriptText += this.currentToken.literal;
             this.nextToken();
         } else if (this.currentTokenIs(TokenType.LIST_ITEM)) {
             subscriptText += '-';
             this.nextToken();
+        } else if (this.currentTokenIs(TokenType.LEFT_PARENTHESIS)) {
+            // Handle parentheses content like ~(abc+def)
+            subscriptText += this.currentToken.literal; // Add opening (
+            this.nextToken();
+
+            // Collect everything until closing parenthesis
+            while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF)) {
+                subscriptText += this.currentToken.literal;
+                this.nextToken();
+            }
+
+            // Add closing parenthesis if found
+            if (this.currentTokenIs(TokenType.RIGHT_PARENTHESIS)) {
+                subscriptText += this.currentToken.literal;
+                this.nextToken();
+            }
         }
 
         const subscript = new SubscriptNode(this.currentToken, subscriptText);

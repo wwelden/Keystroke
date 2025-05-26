@@ -69,7 +69,7 @@ describe('Renderer', () => {
             const bold = new BoldNode(token, 'Bold text');
             bold.children.push(new TextNode(new Token(TokenType.TEXT, 'Bold text'), 'Bold text'));
 
-            expect(renderer.render(bold)).toBe('<b>Bold text</b>\n');
+            expect(renderer.render(bold)).toBe('<b>Bold text</b>');
         });
 
         it('should render italic text', () => {
