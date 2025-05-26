@@ -70,6 +70,8 @@ class Lexer {
             this.ch !== ')' &&
             this.ch !== '>' &&
             this.ch !== ' ' && // Count space as a separator
+            this.ch !== '^' && // Add superscript separator
+            this.ch !== '$' && // Add math separator
             !(this.ch === 'x' &&
                 this.position > 2 &&
                 this.input[this.position - 1] === '[' &&
@@ -128,8 +130,19 @@ class Lexer {
                     token = new Token_1.Token(Token_1.TokenType.BOLD, '**');
                 }
                 else {
-                    // For now, always treat single * as italic - the parser can handle the context
-                    token = new Token_1.Token(Token_1.TokenType.ITALIC, this.ch);
+                    // Check if this is likely a list marker or italic marker
+                    // List markers appear at start of line or after whitespace
+                    // Italic markers appear adjacent to text
+                    const prevChar = this.position > 0 ? this.input[this.position - 1] : '';
+                    const nextChar = this.peekChar();
+                    // If at start of input or after newline, and followed by space, it's likely a list
+                    if ((this.position === 0 || prevChar === '\n') && nextChar === ' ') {
+                        token = new Token_1.Token(Token_1.TokenType.UNORDERED_LIST, this.ch);
+                    }
+                    else {
+                        // Otherwise treat as italic
+                        token = new Token_1.Token(Token_1.TokenType.ITALIC, this.ch);
+                    }
                 }
                 break;
             case '_':

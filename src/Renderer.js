@@ -28,12 +28,12 @@ class Renderer {
             case Token_1.TokenType.ILLEGAL:
                 return "";
             case Token_1.TokenType.INLINE_CODE:
-                return `<code>${this.renderChildren(node)}</code>\n`;
+                return `<code>${this.renderChildren(node)}</code>`;
             case Token_1.TokenType.CODE_BLOCK:
                 return `<pre><code>${this.renderChildren(node)}</code></pre>\n`;
             case Token_1.TokenType.LINK:
                 const linkNode = node;
-                return `<a href="${linkNode.url}">${linkNode.text}</a>\n`;
+                return `<a href="${linkNode.url}">${linkNode.text}</a>`;
             case Token_1.TokenType.LEFT_BRACKET:
                 return `<span>[</span>`;
             case Token_1.TokenType.LEFT_PARENTHESIS:
@@ -41,11 +41,11 @@ class Renderer {
             case Token_1.TokenType.DOCUMENT:
                 return node.children.map(child => this.render(child)).join("");
             case Token_1.TokenType.ITALIC:
-                return `<i>${this.renderChildren(node)}</i>\n`;
+                return `<i>${this.renderChildren(node)}</i>`;
             case Token_1.TokenType.STRIKETHROUGH:
-                return `<s>${this.renderChildren(node)}</s>\n`;
+                return `<s>${this.renderChildren(node)}</s>`;
             case Token_1.TokenType.BOLD:
-                return `<b>${this.renderChildren(node)}</b>\n`;
+                return `<b>${this.renderChildren(node)}</b>`;
             case Token_1.TokenType.HEADER2:
                 return `<h2>${this.renderChildren(node).trim()}</h2>\n`;
             case Token_1.TokenType.HEADER3:
