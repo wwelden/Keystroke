@@ -165,8 +165,25 @@ export class Parser {
     }
     private parseUnorderedList(): ListNode {
         const unorderedList = new ListNode(this.currentToken, true);
+
+        // Parse the first list item
         unorderedList.items.push(this.parseListItem());
         this.nextToken();
+
+        // Look for consecutive list items
+        while (this.currentTokenIs(TokenType.NEWLINE)) {
+            this.nextToken(); // Skip newline
+
+            // Check if the next token is another list marker
+            if (this.currentTokenIs(TokenType.UNORDERED_LIST)) {
+                unorderedList.items.push(this.parseListItem());
+                this.nextToken();
+            } else {
+                // No more list items, break
+                break;
+            }
+        }
+
         return unorderedList;
     }
     private parseOrderedList(): ListNode {
@@ -224,6 +241,11 @@ export class Parser {
     private parseBlockquote(): BlockquoteNode {
         const blockquote = new BlockquoteNode(this.currentToken, '');
         this.nextToken(); // Move past >
+
+        // Skip the first space after > if it exists
+        if (this.currentTokenIs(TokenType.SPACE)) {
+            this.nextToken();
+        }
 
         while (!this.currentTokenIs(TokenType.NEWLINE) && !this.currentTokenIs(TokenType.EOF)) {
             switch (this.currentToken.type) {
