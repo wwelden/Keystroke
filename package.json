@@ -4,7 +4,8 @@
   "description": "A markdown parser and compiler written in typescript",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build:web": "bun build src/web.ts --outfile public/js/keystroke.js --target browser --minify"
   },
   "repository": {
     "type": "git",

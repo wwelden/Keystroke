@@ -1,6 +1,8 @@
 # Keystroke
 A markdown parser and compiler written in TypeScript
 
+**Live demo:** https://keystroke-xi.vercel.app — type Markdown and watch the rendered output, generated HTML, token stream, and AST update as you go.
+
 ## Features
 
 - **Complete Markdown Parser**: Supports headers, bold, italic, strikethrough, lists, blockquotes, links, and more
@@ -26,6 +28,7 @@ A markdown parser and compiler written in TypeScript
 
 - Run tests with `npm test`
 - Run with `ts-node src/index.ts`
+- Build the browser playground with `bun run build:web` (outputs `public/js/keystroke.js`)
 
 ## Testing
 
