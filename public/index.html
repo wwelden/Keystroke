@@ -3,80 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keystroke — a Markdown compiler in TypeScript</title>
+    <meta name="description" content="Live playground for Keystroke, a hand-written Markdown lexer, parser, and HTML renderer written in TypeScript.">
     <link rel="stylesheet" href="/css/styles.css">
-    <title>Markdown Editor</title>
 </head>
 <body>
-    <div class="editor-container">
-        <div class="toolbar">
-            <button>Open</button>
-            <button>Save As</button>
-            <button>Copy</button>
-            <button>Print</button>
-            <button data-action="format">Format</button>
+    <header class="site-header">
+        <div class="brand">
+            <h1>Keystroke</h1>
+            <p>A Markdown compiler written from scratch in TypeScript: lexer → parser → AST → HTML.</p>
         </div>
-        <textarea class="editor" placeholder="# Title"></textarea>
-        <div class="bottom-toolbar">
-            <button data-action="heading">H</button>
-            <button data-action="comment">💬</button>
-            <button data-action="slash">/</button>
-            <button data-action="bold"><b>B</b></button>
-            <button data-action="italic"><i>I</i></button>
-            <button data-action="strike">S</button>
-            <button data-action="link">🔗</button>
-            <button data-action="table">📊</button>
-            <button data-action="image">📷</button>
-            <button data-action="code">&lt;/&gt;</button>
-            <button data-action="clear">🗑️</button>
-        </div>
-    </div>
-    <script type="module" src="/js/main.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const editor = document.querySelector('.editor');
-        const formatButton = document.querySelector('button[data-action="format"]');
+        <nav class="links">
+            <select id="sample" aria-label="Load sample">
+                <option value="">Load sample…</option>
+                <option value="tour">Feature tour</option>
+                <option value="math">Math</option>
+                <option value="lists">Lists &amp; checklists</option>
+            </select>
+            <a href="https://github.com/wwelden/Keystroke" target="_blank" rel="noopener">GitHub ↗</a>
+        </nav>
+    </header>
 
-        formatButton.addEventListener('click', async () => {
-            const markdownText = editor.value;
+    <main class="workspace">
+        <section class="pane">
+            <div class="pane-header">
+                <span>Markdown</span>
+                <span class="stats" id="stats"></span>
+            </div>
+            <textarea id="editor" spellcheck="false" aria-label="Markdown input"></textarea>
+        </section>
 
-            try {
-                const response = await fetch('/api/format', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ markdown: markdownText }),
-                });
+        <section class="pane">
+            <div class="pane-header tabs" role="tablist">
+                <button class="tab active" data-view="preview" role="tab">Preview</button>
+                <button class="tab" data-view="html" role="tab">HTML</button>
+                <button class="tab" data-view="tokens" role="tab">Tokens</button>
+                <button class="tab" data-view="ast" role="tab">AST</button>
+            </div>
+            <div class="view active" data-view="preview">
+                <iframe id="preview" sandbox title="Rendered output"></iframe>
+            </div>
+            <pre class="view code" data-view="html" id="html-out"></pre>
+            <div class="view code" data-view="tokens" id="tokens-out"></div>
+            <pre class="view code" data-view="ast" id="ast-out"></pre>
+        </section>
+    </main>
 
-                if (!response.ok) {
-                    throw new Error('Format request failed');
-                }
+    <footer class="site-footer">
+        Everything runs in your browser — the same <code>Lexer</code>, <code>Parser</code>, and <code>Renderer</code> classes covered by the project's Jest suite.
+    </footer>
 
-                const { html } = await response.json();
-
-                // Create a new window with the formatted content
-                const newWindow = window.open('', '_blank');
-                newWindow.document.write(`
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>Formatted Markdown</title>
-                        <link rel="stylesheet" href="/css/styles.css">
-                    </head>
-                    <body>
-                        <div class="preview">
-                            ${html}
-                        </div>
-                    </body>
-                    </html>
-                `);
-                newWindow.document.close();
-            } catch (error) {
-                console.error('Error formatting markdown:', error);
-                alert('Error formatting markdown. Please try again.');
-            }
-        });
-    });
-    </script>
+    <script src="/js/keystroke.js"></script>
+    <script src="/js/app.js"></script>
 </body>
 </html>
