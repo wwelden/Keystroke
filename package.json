@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "build:web": "bun build src/web.ts --outfile public/js/keystroke.js --target browser --minify"
+    "build:web": "bun build src/web.ts --outfile public/js/keystroke.js --target browser --format iife --minify"
   },
   "repository": {
     "type": "git",
