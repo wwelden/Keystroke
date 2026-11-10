@@ -26,22 +26,33 @@ A markdown parser and compiler written in TypeScript
 
 ## Usage
 
-- Run tests with `npm test`
+- Run tests with `bun run test`
 - Run with `ts-node src/index.ts`
 - Build the browser playground with `bun run build:web` (outputs `public/js/keystroke.js`)
 
 ## Testing
 
-The project includes comprehensive test coverage with 103 tests across all components:
+Tests are written in TypeScript and use Jest with ts-jest. The full suite covers
+the Markdown parser and renderer, HTML-to-LaTeX conversion, and LaTeX-to-HTML
+conversion, including lexers, tokens, AST nodes, parsers, and renderers.
 
-- **Token Tests**: 56 tests covering lexical analysis
-- **AST Tests**: 35 tests for abstract syntax tree nodes
-- **Lexer Tests**: 10 tests for tokenization
-- **Renderer Tests**: 15 tests for HTML output generation
-- **Interpreter Tests**: 9 tests for end-to-end processing
-- **Parser Tests**: 13 tests for syntax parsing
+To reproduce CI locally, use Node.js 24 and Bun 1.3.13:
 
-All tests are written in TypeScript and use Jest as the testing framework.
+```bash
+bun install --frozen-lockfile
+bun run test --ci --runInBand
+```
+
+Bun imports the committed `package-lock.json` for the install. Keep that lockfile
+in sync with `package.json` when changing dependencies (for example, with
+`npm install`). Remove any locally generated `bun.lock` before reinstalling so Bun
+continues to use `package-lock.json`; this project does not maintain `bun.lock`.
+
+The [unit test workflow](.github/workflows/unit-tests.yml) runs on every push and
+pull request. It removes the repository's tracked `node_modules` before installing
+locked dependencies, then runs every `tests/**/*.test.ts` suite through Jest.
+Install errors or failing tests fail the job. `--ci` prevents interactive behavior
+and automatic snapshot updates; `--runInBand` runs suites serially.
 
 ## Architecture
 
@@ -56,10 +67,10 @@ The parser follows a traditional compiler architecture:
 
 ```bash
 # Install dependencies
-npm install
+bun install --frozen-lockfile
 
 # Run tests
-npm test
+bun run test
 
 # Run the parser
 ts-node src/index.ts
