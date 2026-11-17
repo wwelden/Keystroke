@@ -436,9 +436,10 @@ export class Parser {
             }
             spaceAfterCommand = false;
 
-            const takesArgument = this.peekTokenIs(TokenType.LBRACE) ||
-                (tok.type !== TokenType.HREF && this.peekIsOptionalBeforeBrace());
-            if (NESTED_COMMANDS.has(tok.type) && takesArgument) {
+            // Check membership first: the optional-argument lookahead scans ahead
+            const isNestedCommand = NESTED_COMMANDS.has(tok.type) && (this.peekTokenIs(TokenType.LBRACE) ||
+                (tok.type !== TokenType.HREF && this.peekIsOptionalBeforeBrace()));
+            if (isNestedCommand) {
                 const node = (tok.type === TokenType.HREF ? this.parseHref() : this.parseCommand()) as CommandNode;
                 // \textit{ b } spaces itself from its siblings, as appendElement does at top level
                 if (this.braceLeadingSpace && (text !== '' || children.length > 0) && !text.endsWith(' ')) {
