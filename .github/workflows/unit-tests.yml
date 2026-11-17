@@ -29,11 +29,8 @@ jobs:
           bun-version: '1.3.13'
 
       - name: Install locked dependencies
-        run: |
-          # The repository tracks node_modules; install a fresh copy in CI.
-          rm -rf node_modules
-          # Bun imports the committed package-lock.json automatically.
-          bun install --frozen-lockfile
+        # Bun imports the committed package-lock.json automatically.
+        run: bun install --frozen-lockfile
 
       - name: Run all Jest suites
         run: bun run test --ci --runInBand

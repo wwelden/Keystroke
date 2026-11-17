@@ -49,8 +49,8 @@ in sync with `package.json` when changing dependencies (for example, with
 continues to use `package-lock.json`; this project does not maintain `bun.lock`.
 
 The [unit test workflow](.github/workflows/unit-tests.yml) runs on every push and
-pull request. It removes the repository's tracked `node_modules` before installing
-locked dependencies, then runs every `tests/**/*.test.ts` suite through Jest.
+pull request. It installs locked dependencies, then runs every
+`tests/**/*.test.ts` suite through Jest.
 Install errors or failing tests fail the job. `--ci` prevents interactive behavior
 and automatic snapshot updates; `--runInBand` runs suites serially.
 
