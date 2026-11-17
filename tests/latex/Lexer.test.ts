@@ -99,6 +99,21 @@ describe('latex Lexer', () => {
         expect(expected.map(() => l.nextToken().type)).toEqual(expected);
     });
 
+    it('records each token start position, after skipped whitespace', () => {
+        const l = new Lexer('a  \\textbf{b}\\\\ 😀$$');
+        const tokens = Array.from({ length: 8 }, () => l.nextToken());
+        expect(tokens.map((t) => [t.literal, t.position])).toEqual([
+            ['a', 0],
+            ['\\textbf', 3],
+            ['{', 10],
+            ['b', 11],
+            ['}', 12],
+            ['\\\\', 13],
+            ['😀', 16],
+            ['$$', 18],
+        ]);
+    });
+
     it('getCommandType maps command names', () => {
         const l = new Lexer('');
         const cases: Array<[string, TokenType]> = [

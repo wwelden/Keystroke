@@ -5,6 +5,7 @@ import {
     latexToHtmlWithMathJax,
     parseLatex,
     Converter,
+    CommandNode,
     sectionToH1,
     subsectionToH2,
     subsubsectionToH3,
@@ -233,7 +234,7 @@ describe('body output', () => {
         ["\\section{First}\\subsection{Second}", "<h1>First</h1>\n<h2>Second</h2>", []],
         ["\\textbf{bold} and \\textit{italic}", "<strong>bold</strong> and <em>italic</em>", []],
         ["\\textbf[opt]{bold} after", "<strong>bold</strong> after", []],
-        ["\\textbf{a \\textit{b} c}", "<strong>a \\textit{b} c</strong>", []],
+        ["\\textbf{a \\textit{b} c}", "<strong>a <em>b</em> c</strong>", []], // deviation: Go leaves nested commands literal (#35)
         ["\\begin{itemize}\\item First\\item Second\\end{itemize}", "<ul>\n<li>First</li>\n<li>Second</li>\n</ul>", []],
         ["\\begin{enumerate}\n\\item One two\n\\item Three\n\\end{enumerate} after", "<ol>\n<li>One two</li>\n<li>Three</li>\n</ol>\nafter", []],
         ["\\begin{itemize}\\item A \\begin{enumerate}\\item B\\end{enumerate}\\item C\\end{itemize}", "<ul>\n<li>A<ol>\n<li>B</li>\n</ol>\n</li>\n<li>C</li>\n</ul>", []],
@@ -369,5 +370,49 @@ describe('LaTeX to HTML content loss (#25)', () => {
     it('keeps the \\end of a table whose last row has no \\\\', () => {
         expect(latexToHtmlBodyOnly('\\begin{tabular}{l}A & B\\end{tabular} x'))
             .toBe('<table>\n<tr><td>{l}A</td><td>B</td></tr>\n</table>\nx');
+    });
+});
+
+// Issue #35: formatting commands parse their brace content into child nodes,
+// so nested commands render instead of appearing as literal text.
+describe('nested formatting commands', () => {
+    it.each([
+        [String.raw`\textbf{bold \textit{inner}}`, '<strong>bold <em>inner</em></strong>'],
+        [String.raw`\textit{\textbf{x}}`, '<em><strong>x</strong></em>'],
+        [String.raw`\underline{a \sout{b \textsuperscript{c \textsubscript{d}}} e}`, '<u>a <s>b <sup>c <sub>d</sub></sup></s> e</u>'],
+        [String.raw`\textbf{see \texttt{code}}`, '<strong>see <code>code</code></strong>'],
+        [String.raw`\textbf{a {\textit{b}} c}`, '<strong>a {<em>b</em>} c</strong>'],
+        [String.raw`\textbf{go \href{https://x.io/?a=1&b=2}{\textit{here}} now}`, '<strong>go <a href="https://x.io/?a=1&amp;b=2"><em>here</em></a> now</strong>'],
+        [String.raw`\href{https://e.com}{A \textbf{B}}`, '<a href="https://e.com">A <strong>B</strong></a>'],
+    ])('%s', (input, expected) => {
+        expect(latexToHtmlBodyOnly(input)).toBe(expected);
+        expect(parseLatex(input).errors).toEqual([]);
+    });
+
+    it.each([
+        // Plain text and whitespace inside the braces
+        [String.raw`\textbf{bold text}`, '<strong>bold text</strong>'],
+        [String.raw`\textbf{  padded  words  }`, '<strong>padded words</strong>'],
+        [String.raw`\textbf{}`, '<strong></strong>'],
+        [String.raw`\textbf{<b> & "q"}`, '<strong>&lt;b&gt; &amp; &quot;q&quot;</strong>'],
+        ['\\textbf{a\nb}', '<strong>a\nb</strong>'],
+        // \texttt content stays literal
+        [String.raw`\texttt{\textbf{x}}`, '<code>\\textbf{x}</code>'],
+        [String.raw`\textbf{a \texttt{\textit{y}} b}`, '<strong>a <code>\\textit{y}</code> b</strong>'],
+        // Unsupported commands, or supported ones without a brace argument, stay literal
+        [String.raw`\textbf{a \foo{b} c}`, '<strong>a \\foo{b} c</strong>'],
+        [String.raw`\textbf{a \textit b}`, '<strong>a \\textit b</strong>'],
+        [String.raw`\textbf{$x$}`, '<strong>$x$</strong>'],
+    ])('%s keeps text, whitespace and literals', (input, expected) => {
+        expect(latexToHtmlBodyOnly(input)).toBe(expected);
+    });
+
+    it('keeps the source text in CommandNode.value', () => {
+        const doc = parseLatex(String.raw`\textbf{a \textit{b} \href{u}{c}}`).document;
+        expect((doc.children[0] as CommandNode).value).toBe(String.raw`a \textit{b} \href{u}{c}`);
+    });
+
+    it('stops at an unclosed group without consuming past EOF', () => {
+        expect(latexToHtmlBodyOnly(String.raw`\textbf{a \textit{b`)).toBe('<strong>a <em>b</em></strong>');
     });
 });
