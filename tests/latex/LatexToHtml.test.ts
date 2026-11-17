@@ -302,6 +302,19 @@ describe('LaTeX to HTML content loss (#25)', () => {
         expect(latexToHtmlBodyOnly('one\ntwo')).toBe('one two');
     });
 
+    it('keeps whitespace just inside an argument\'s braces', () => {
+        expect(latexToHtmlBodyOnly('\\textbf{one }two')).toBe('<strong>one</strong> two');
+        expect(latexToHtmlBodyOnly('one\\textbf{ two}')).toBe('one <strong>two</strong>');
+        expect(latexToHtmlBodyOnly('a\\textit{ b }c')).toBe('a <em>b</em> c');
+        expect(latexToHtmlBodyOnly('\\href{u}{ link }x')).toBe('<a href="u">link</a> x');
+        expect(latexToHtmlBodyOnly('\\section{ Title } x')).toBe('<h1>Title</h1>\nx');
+    });
+
+    it('uses the lstlisting language when written with spaces around =', () => {
+        expect(latexToHtmlBodyOnly('\\begin{lstlisting}[language = go]\nx\n\\end{lstlisting}'))
+            .toBe('<pre><code class="language-go">x</code></pre>');
+    });
+
     it('does not add spaces where the source had none', () => {
         expect(latexToHtmlBodyOnly('\\textbf{a}b')).toBe('<strong>a</strong>b');
         expect(latexToHtmlBodyOnly('  padded  ')).toBe('padded');

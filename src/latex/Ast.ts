@@ -262,15 +262,8 @@ export function htmlEscape(s: string): string {
         .split("'").join('&#39;');
 }
 
-/** Extracts the language from lstlisting options like "language=go". */
+/** Extracts the language from lstlisting options like "language=go" or "language = go". */
 export function extractLanguage(options: string): string {
-    if (options.includes('language=')) {
-        const parts = options.split('language=');
-        if (parts.length > 1) {
-            let lang = parts[1].split(',')[0];
-            lang = lang.split(']')[0];
-            return lang.trim();
-        }
-    }
-    return '';
+    const match = /(?:^|[\s,])language\s*=\s*([^,\]\s]+)/.exec(options);
+    return match ? match[1] : '';
 }

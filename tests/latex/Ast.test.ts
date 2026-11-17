@@ -240,6 +240,9 @@ describe('latex AST', () => {
         ['language=javascript', 'javascript'],
         ['other=value,language=java', 'java'],
         ['language=cpp,other=value', 'cpp'],
+        ['language = go', 'go'],
+        ['numbers=left, language = python , caption=x', 'python'],
+        ['mylanguage=go', ''],
         ['no language here', ''],
         ['', ''],
     ])('extractLanguage(%j)', (options, expected) => {

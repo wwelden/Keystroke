@@ -22,6 +22,10 @@ export class Parser {
     private curToken: Token;
     private peekToken: Token;
     private errors: string[];
+    // Whitespace just inside the braces of the last argument read by
+    // readBraceContent; it belongs outside an inline command's content.
+    private braceLeadingSpace = false;
+    private braceTrailingSpace = false;
 
     constructor(lexer: Lexer) {
         this.lexer = lexer;
@@ -73,12 +77,14 @@ export class Parser {
         if (node === null) {
             return space || start.type === TokenType.NEWLINE;
         }
+        // \textbf{ a } spaces its content from its neighbours like "\textbf{a}" with spaces outside
+        const isCommand = node instanceof CommandNode;
         const prev = children[children.length - 1];
-        if (space && prev !== undefined && isInline(prev) && isInline(node)) {
+        if ((space || (isCommand && this.braceLeadingSpace)) && prev !== undefined && isInline(prev) && isInline(node)) {
             children.push(new TextNode(' '));
         }
         children.push(node);
-        return false;
+        return isCommand && this.braceTrailingSpace;
     }
 
     /**
@@ -90,6 +96,8 @@ export class Parser {
     }
 
     private parseElement(): Node | null {
+        this.braceLeadingSpace = false;
+        this.braceTrailingSpace = false;
         switch (this.curToken.type) {
             case TokenType.SECTION:
                 return this.parseSection(1);
@@ -363,12 +371,17 @@ export class Parser {
         let braceCount = 1;
 
         this.nextToken(); // Move past opening brace
+        this.braceLeadingSpace = this.curToken.spaceBefore && !this.curTokenIs(TokenType.RBRACE);
+        this.braceTrailingSpace = false;
 
         while (!this.curTokenIs(TokenType.EOF) && braceCount > 0) {
             if (this.curToken.type === TokenType.LBRACE) {
                 braceCount++;
             } else if (this.curToken.type === TokenType.RBRACE) {
                 braceCount--;
+                if (braceCount === 0) {
+                    this.braceTrailingSpace = this.curToken.spaceBefore;
+                }
             }
             if (braceCount > 0) {
                 // Re-insert the whitespace the lexer skipped before this token
