@@ -29,6 +29,7 @@ export class Parser {
     private peekToken: Token;
     private errors: string[];
     private preDepth = 0; // > 0 while inside <pre>, where whitespace is kept
+    private openElements: TokenType[] = []; // types of the elements being parsed, outermost first
 
     constructor(lexer: Lexer) {
         this.lexer = lexer;
@@ -128,10 +129,9 @@ export class Parser {
     // the closing tag if it matches. A mismatched closing tag is left for an
     // enclosing element to close.
     private parseEnclosedContent(): Node[] {
-        const type = this.curToken.type;
-        this.nextToken();
+        const type = this.openElement();
         const content = this.parseContent();
-        this.skipClosingTag(type);
+        this.closeElement(type);
         return content;
     }
 
@@ -156,28 +156,32 @@ export class Parser {
 
     private parseList(ordered: boolean): Node {
         const list = new ListNode(ordered, {});
-        const type = this.curToken.type;
-
-        // Skip opening tag
-        this.nextToken();
+        const type = this.openElement();
 
         while (!this.curTokenIs(TokenType.EOF) && !this.atClosingTag()) {
             if (this.curTokenIs(TokenType.LI)) {
                 const item = this.parseListItem();
                 list.children.push(item);
                 list.items.push(item);
-            } else if (this.isWhitespaceText() || this.isTransparentTag()) {
+            } else if (this.isWhitespaceText() || this.isTransparentTag() || this.isClosingTag()) {
                 this.nextToken();
             } else {
-                // Content outside an <li> (invalid HTML) is kept rather than dropped
+                // Content outside an <li> (invalid HTML) joins the previous item,
+                // or a new one, so it is kept and the list stays valid LaTeX
                 const node = this.parseElement();
                 if (node !== null) {
-                    list.children.push(node);
+                    let item = list.items[list.items.length - 1];
+                    if (item === undefined) {
+                        item = new ListItemNode("", {});
+                        list.children.push(item);
+                        list.items.push(item);
+                    }
+                    item.children.push(node);
                 }
             }
         }
 
-        this.skipClosingTag(type);
+        this.closeElement(type);
         return list;
     }
 
@@ -221,9 +225,7 @@ export class Parser {
 
     private parseTable(): Node {
         const table = new TableNode({});
-
-        // Skip opening table tag
-        this.nextToken();
+        const type = this.openElement();
 
         // Parse table rows; <thead>/<tbody> are transparent
         while (!this.curTokenIs(TokenType.EOF) && !this.atClosingTag()) {
@@ -231,7 +233,7 @@ export class Parser {
                 const row = this.parseTableRow();
                 table.children.push(row);
                 table.rows.push(row);
-            } else if (this.isWhitespaceText() || this.isTransparentTag()) {
+            } else if (this.isWhitespaceText() || this.isTransparentTag() || this.isClosingTag()) {
                 this.nextToken();
             } else {
                 const node = this.parseElement();
@@ -241,22 +243,20 @@ export class Parser {
             }
         }
 
-        this.skipClosingTag(TokenType.TABLE);
+        this.closeElement(type);
         return table;
     }
 
     private parseTableRow(): TableRowNode {
         const row = new TableRowNode({});
-
-        // Skip opening TR tag
-        this.nextToken();
+        const type = this.openElement();
 
         while (!this.curTokenIs(TokenType.EOF) && !this.atClosingTag()) {
             if (this.curTokenIs(TokenType.TD) || this.curTokenIs(TokenType.TH)) {
                 const cell = this.parseTableCell();
                 row.children.push(cell);
                 row.cells.push(cell);
-            } else if (this.isWhitespaceText() || this.isTransparentTag()) {
+            } else if (this.isWhitespaceText() || this.isTransparentTag() || this.isClosingTag()) {
                 this.nextToken();
             } else {
                 const node = this.parseElement();
@@ -266,7 +266,7 @@ export class Parser {
             }
         }
 
-        this.skipClosingTag(TokenType.TR);
+        this.closeElement(type);
         return row;
     }
 
@@ -305,7 +305,7 @@ export class Parser {
         const content: Node[] = [];
 
         while (!this.curTokenIs(TokenType.EOF) && !this.atClosingTag()) {
-            if (this.isTransparentTag()) {
+            if (this.isTransparentTag() || this.isClosingTag()) {
                 this.nextToken();
                 continue;
             }
@@ -358,13 +358,25 @@ export class Parser {
         return this.curToken.literal.startsWith("</");
     }
 
-    // A closing tag that ends the element being parsed (transparent ones don't)
+    // A closing tag for an element being parsed. It ends the current element
+    // (closing any unclosed ones inside it); a stray closing tag is skipped.
     private atClosingTag(): boolean {
-        return this.isClosingTag() && !this.isTransparentTag();
+        return this.isClosingTag() && !this.isTransparentTag() && this.openElements.includes(this.curToken.type);
     }
 
-    private skipClosingTag(t: TokenType): void {
-        if (this.curTokenIs(t) && this.isClosingTag()) {
+    // Records the current opening tag as open and skips it
+    private openElement(): TokenType {
+        const type = this.curToken.type;
+        this.openElements.push(type);
+        this.nextToken();
+        return type;
+    }
+
+    // Skips the element's closing tag if it is next; a closing tag for an outer
+    // element is left for that element to consume.
+    private closeElement(type: TokenType): void {
+        this.openElements.pop();
+        if (this.curTokenIs(type) && this.isClosingTag()) {
             this.nextToken();
         }
     }

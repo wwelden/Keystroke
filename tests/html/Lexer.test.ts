@@ -83,6 +83,18 @@ describe('html Lexer', () => {
         expect(l.nextToken().type).toBe(type);
       }
     });
+
+    it("treats a '<' that does not start a tag as text", () => {
+      const l = new Lexer('1 < 2 <3<b>');
+      expect(l.nextToken()).toMatchObject({ type: TokenType.TEXT, literal: '1 < 2 <3' });
+      expect(l.nextToken().type).toBe(TokenType.B);
+    });
+
+    it("reads a comment up to '-->' even if it contains '>'", () => {
+      const l = new Lexer('<!-- a > b -->x');
+      expect(l.nextToken()).toMatchObject({ type: TokenType.TAG_OPEN, literal: '<!-- a > b -->' });
+      expect(l.nextToken()).toMatchObject({ type: TokenType.TEXT, literal: 'x' });
+    });
   });
 
   describe('getTokenTypeFromTag', () => {
@@ -140,19 +152,19 @@ describe('html Lexer', () => {
 
   describe('readTextContent', () => {
     it.each([
-      ['Hello World<', 'Hello World'],
+      ['Hello World</p>', 'Hello World'],
       ['Test content<p>', 'Test content'],
       ['', ''],
-      ['   Trimmed   <', 'Trimmed'],
+      ['   Trimmed   <p>', 'Trimmed'],
     ])('reads %j as %j', (input, expected) => {
       expect(new Lexer(input).readTextContent()).toBe(expected);
     });
 
     it.each([
-      ['Hello &amp; World<', 'Hello & World'],
-      ['&lt;tag&gt;<', '<tag>'],
-      ['&quot;quoted&quot;<', '"quoted"'],
-      ['&nbsp;space<', 'space'],
+      ['Hello &amp; World<p>', 'Hello & World'],
+      ['&lt;tag&gt;<p>', '<tag>'],
+      ['&quot;quoted&quot;<p>', '"quoted"'],
+      ['&nbsp;space<p>', 'space'],
     ])('decodes entities in %j', (input, expected) => {
       expect(new Lexer(input).readTextContent()).toBe(expected);
     });

@@ -99,7 +99,7 @@ export class Lexer {
             return newToken(TokenType.EOF, '');
         }
 
-        if (this.ch !== '<') {
+        if (!this.atTagStart()) {
             return newToken(TokenType.TEXT, this.readTextRun());
         }
 
@@ -114,8 +114,29 @@ export class Lexer {
         return tok;
     }
 
+    // A '<' only starts a tag when followed by a letter, '/' or '!' (comments,
+    // doctype); otherwise it is literal text, as in "1 < 2".
+    private atTagStart(): boolean {
+        if (this.ch !== '<') {
+            return false;
+        }
+        const next = this.peekChar();
+        return isLetter(next) || next === '/' || next === '!';
+    }
+
     private readOpeningTag(): Token {
         const position = this.position;
+
+        // Comment: runs to "-->" (it may contain '>'); leave the final '>' for nextToken
+        if (this.input.startsWith('<!--', position)) {
+            const end = this.input.indexOf('-->', position + 2);
+            const last = end === -1 ? this.input.length : end + 2;
+            while (this.position < last && this.ch !== EOF_CHAR) {
+                this.readChar();
+            }
+            return newToken(TokenType.TAG_OPEN, this.input.slice(position, this.readPosition));
+        }
+
         this.readChar(); // skip '<'
 
         const tagName = this.readTagName();
@@ -180,7 +201,7 @@ export class Lexer {
     private readTextRun(): string {
         let result = '';
 
-        while (this.ch !== '<' && this.ch !== EOF_CHAR) {
+        while (this.ch !== EOF_CHAR && !this.atTagStart()) {
             if (this.ch === '&') {
                 result += this.readHTMLEntity();
             } else {

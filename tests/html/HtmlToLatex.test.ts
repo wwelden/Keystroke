@@ -123,6 +123,8 @@ describe('htmlToLatexBodyOnly preserves content', () => {
     ['<p>one\n   two\tthree</p>', 'one two three'],
     ['<p>a <span>b</span> c</p>', 'a b c'],
     ['<p>x<!-- note -->y</p>', 'xy'],
+    ['<p>x<!-- a > b -->y</p>', 'xy'],
+    ['<p>1 < 2 and more</p><p>next</p>', '1 < 2 and more\n\n\nnext'],
     ['<p>a&nbsp;b</p>', 'a\u00A0b'],
     ['<p>AT&T rocks</p>', 'AT\\&T rocks'],
   ])('%j -> %j', (input, expected) => {
@@ -154,6 +156,20 @@ describe('htmlToLatexBodyOnly preserves content', () => {
   it('leaves a mismatched closing tag for the enclosing element', () => {
     expect(htmlToLatexBodyOnly('<ul><li>a<b>b</li><li>c</li></ul>')).toBe(
       '\\begin{itemize}\n\\item a\\textbf{b}\n\\item c\n\\end{itemize}',
+    );
+  });
+});
+
+describe('htmlToLatexBodyOnly with malformed HTML', () => {
+  it('skips a stray closing tag instead of closing the enclosing elements', () => {
+    expect(htmlToLatexBodyOnly('<ul><li>a</b> b</li><li>c</li></ul>')).toBe(
+      '\\begin{itemize}\n\\item a b\n\\item c\n\\end{itemize}',
+    );
+  });
+
+  it('puts content outside <li> into a list item', () => {
+    expect(htmlToLatexBodyOnly('<ul>stray<li>a</li></ul>')).toBe(
+      '\\begin{itemize}\n\\item stray\n\\item a\n\\end{itemize}',
     );
   });
 });
