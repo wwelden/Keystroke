@@ -168,7 +168,7 @@ export class EnvironmentNode extends LaTeXNode {
                 if (this.options !== '') {
                     const lang = extractLanguage(this.options);
                     if (lang !== '') {
-                        return '<pre><code class="language-' + lang + '">' + content + '</code></pre>\n';
+                        return '<pre><code class="language-' + htmlEscape(lang) + '">' + content + '</code></pre>\n';
                     }
                 }
                 return '<pre><code>' + content + '</code></pre>\n';

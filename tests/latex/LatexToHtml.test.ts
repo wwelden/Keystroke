@@ -310,6 +310,11 @@ describe('LaTeX to HTML content loss (#25)', () => {
         expect(latexToHtmlBodyOnly('\\section{ Title } x')).toBe('<h1>Title</h1>\nx');
     });
 
+    it('escapes the lstlisting language in the class attribute', () => {
+        expect(latexToHtmlBodyOnly('\\begin{lstlisting}[language="><script>x]\ny\n\\end{lstlisting}'))
+            .toBe('<pre><code class="language-&quot;&gt;&lt;script&gt;x">y</code></pre>');
+    });
+
     it('uses the lstlisting language when written with spaces around =', () => {
         expect(latexToHtmlBodyOnly('\\begin{lstlisting}[language = go]\nx\n\\end{lstlisting}'))
             .toBe('<pre><code class="language-go">x</code></pre>');
