@@ -121,21 +121,79 @@ $e^(i*pi) + 1 = 0$
         pending = requestAnimationFrame(update);
     });
 
+    let tabEscaped = false;
+
     editor.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            tabEscaped = true;
+            return;
+        }
+
         if (e.key === 'Tab') {
+            if (e.shiftKey || tabEscaped) {
+                tabEscaped = false;
+                return;
+            }
             e.preventDefault();
             const { selectionStart: s, selectionEnd: end } = editor;
             editor.setRangeText('    ', s, end, 'end');
             update();
+            return;
         }
+
+        tabEscaped = false;
     });
 
-    tabs.forEach(tab => tab.addEventListener('click', () => {
+    editor.addEventListener('click', () => {
+        tabEscaped = false;
+    });
+
+    editor.addEventListener('blur', () => {
+        tabEscaped = false;
+    });
+
+    function switchTab(tab) {
         activeView = tab.dataset.view;
-        tabs.forEach(t => t.classList.toggle('active', t === tab));
-        views.forEach(v => v.classList.toggle('active', v.dataset.view === activeView));
+        tabs.forEach(t => {
+            const isSelected = t === tab;
+            t.classList.toggle('active', isSelected);
+            t.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+            t.setAttribute('tabindex', isSelected ? '0' : '-1');
+        });
+        views.forEach(v => {
+            const isActive = v.dataset.view === activeView;
+            v.classList.toggle('active', isActive);
+            v.hidden = !isActive;
+        });
         update();
-    }));
+    }
+
+    const tabList = Array.from(tabs);
+    tabList.forEach((tab, index) => {
+        tab.addEventListener('click', () => {
+            switchTab(tab);
+        });
+
+        tab.addEventListener('keydown', e => {
+            let targetIndex = null;
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                targetIndex = (index + 1) % tabList.length;
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                targetIndex = (index - 1 + tabList.length) % tabList.length;
+            } else if (e.key === 'Home') {
+                targetIndex = 0;
+            } else if (e.key === 'End') {
+                targetIndex = tabList.length - 1;
+            }
+
+            if (targetIndex !== null) {
+                e.preventDefault();
+                const targetTab = tabList[targetIndex];
+                switchTab(targetTab);
+                targetTab.focus();
+            }
+        });
+    });
 
     sample.addEventListener('change', () => {
         if (SAMPLES[sample.value]) {
