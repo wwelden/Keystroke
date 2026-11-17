@@ -121,21 +121,52 @@ $e^(i*pi) + 1 = 0$
         pending = requestAnimationFrame(update);
     });
 
+    // Tab inserts spaces, but focus must never be trapped (WCAG 2.1.2):
+    // Shift+Tab always moves focus back, and Esc releases the editor so the
+    // next Tab moves focus forward (the same escape hatch CodeMirror uses).
+    let tabReleased = false;
     editor.addEventListener('keydown', e => {
-        if (e.key === 'Tab') {
+        if (e.isComposing) return;
+        if (e.key === 'Escape') {
+            tabReleased = true;
+            return;
+        }
+        if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && !tabReleased) {
             e.preventDefault();
             const { selectionStart: s, selectionEnd: end } = editor;
             editor.setRangeText('    ', s, end, 'end');
             update();
+            return;
         }
+        tabReleased = false;
     });
+    editor.addEventListener('blur', () => { tabReleased = false; });
 
-    tabs.forEach(tab => tab.addEventListener('click', () => {
+    function selectTab(tab, { focus = false } = {}) {
+        if (focus) tab.focus();
+        if (tab.dataset.view === activeView) return;
         activeView = tab.dataset.view;
-        tabs.forEach(t => t.classList.toggle('active', t === tab));
+        tabs.forEach(t => {
+            const selected = t === tab;
+            t.classList.toggle('active', selected);
+            t.setAttribute('aria-selected', String(selected));
+            t.tabIndex = selected ? 0 : -1;
+        });
         views.forEach(v => v.classList.toggle('active', v.dataset.view === activeView));
         update();
-    }));
+    }
+
+    tabs.forEach((tab, i) => {
+        tab.addEventListener('click', () => selectTab(tab));
+        tab.addEventListener('keydown', e => {
+            if (e.altKey || e.ctrlKey || e.metaKey) return;
+            const last = tabs.length - 1;
+            const next = { ArrowRight: i === last ? 0 : i + 1, ArrowLeft: i === 0 ? last : i - 1, Home: 0, End: last }[e.key];
+            if (next === undefined) return;
+            e.preventDefault();
+            selectTab(tabs[next], { focus: true });
+        });
+    });
 
     sample.addEventListener('change', () => {
         if (SAMPLES[sample.value]) {

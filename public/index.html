@@ -33,22 +33,23 @@
                 <span>Markdown</span>
                 <span class="stats" id="stats"></span>
             </div>
-            <textarea id="editor" spellcheck="false" aria-label="Markdown input"></textarea>
+            <textarea id="editor" spellcheck="false" aria-label="Markdown input" aria-describedby="editor-hint"></textarea>
+            <p class="editor-hint" id="editor-hint">Tab inserts spaces. Press Escape, then Tab, to move focus out of the editor.</p>
         </section>
 
         <section class="pane">
-            <div class="pane-header tabs" role="tablist">
-                <button class="tab active" data-view="preview" role="tab">Preview</button>
-                <button class="tab" data-view="html" role="tab">HTML</button>
-                <button class="tab" data-view="tokens" role="tab">Tokens</button>
-                <button class="tab" data-view="ast" role="tab">AST</button>
+            <div class="pane-header tabs" role="tablist" aria-label="Output view">
+                <button class="tab active" data-view="preview" role="tab" id="tab-preview" aria-selected="true" aria-controls="panel-preview">Preview</button>
+                <button class="tab" data-view="html" role="tab" id="tab-html" aria-selected="false" aria-controls="html-out" tabindex="-1">HTML</button>
+                <button class="tab" data-view="tokens" role="tab" id="tab-tokens" aria-selected="false" aria-controls="tokens-out" tabindex="-1">Tokens</button>
+                <button class="tab" data-view="ast" role="tab" id="tab-ast" aria-selected="false" aria-controls="ast-out" tabindex="-1">AST</button>
             </div>
-            <div class="view active" data-view="preview">
+            <div class="view active" data-view="preview" id="panel-preview" role="tabpanel" aria-labelledby="tab-preview">
                 <iframe id="preview" sandbox title="Rendered output"></iframe>
             </div>
-            <pre class="view code" data-view="html" id="html-out"></pre>
-            <div class="view code" data-view="tokens" id="tokens-out"></div>
-            <pre class="view code" data-view="ast" id="ast-out"></pre>
+            <pre class="view code" data-view="html" id="html-out" role="tabpanel" aria-labelledby="tab-html" tabindex="0"></pre>
+            <div class="view code" data-view="tokens" id="tokens-out" role="tabpanel" aria-labelledby="tab-tokens" tabindex="0"></div>
+            <pre class="view code" data-view="ast" id="ast-out" role="tabpanel" aria-labelledby="tab-ast" tabindex="0"></pre>
         </section>
     </main>
 
