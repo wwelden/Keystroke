@@ -150,9 +150,13 @@ export class Lexer {
         }
 
         // A '>' inside a quoted attribute value is not the end of the tag.
+        // Comments and <!...> declarations have no attributes, so they end at the first '>'.
+        const isDeclaration = this.input[position + 1] === '!';
         let quote = '';
         while (this.ch !== EOF_CHAR) {
-            if (quote !== '') {
+            if (isDeclaration) {
+                if (this.ch === '>') break;
+            } else if (quote !== '') {
                 if (this.ch === quote) quote = '';
             } else if (this.ch === '"' || this.ch === "'") {
                 quote = this.ch;

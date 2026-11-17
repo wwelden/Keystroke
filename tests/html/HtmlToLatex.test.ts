@@ -43,6 +43,10 @@ describe('htmlToLatex', () => {
     expect(htmlToLatexBodyOnly("<a href='https://example.com'>Link</a>")).toContain('\\href{https://example.com}{Link}');
   });
 
+  it.each(["don't edit", 'a 5" screen'])('ends a comment with a quote at the first > (%s)', comment => {
+    expect(htmlToLatexBodyOnly(`<!-- ${comment} --><h1>Title</h1>`)).toContain('\\section{Title}');
+  });
+
   it.each(["'", '"'])('keeps a link after a quoted > attribute (%s)', quote => {
     expect(htmlToLatexBodyOnly(`<a title=${quote}1 > 0${quote} href=${quote}https://example.com${quote}>Link</a>`))
       .toBe('\\href{https://example.com}{Link}');
