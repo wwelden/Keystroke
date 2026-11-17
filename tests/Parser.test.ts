@@ -16,6 +16,8 @@ import {
     SuperscriptNode,
     SubscriptNode,
     CodeBlockNode,
+    InlineCodeNode,
+    TextNode,
 } from '../src/Ast';
 
 describe('Parser', () => {
@@ -282,6 +284,36 @@ describe('Parser', () => {
             const [doc] = parseWithErrors('```\nnever closed');
             expect(doc.children.map(c => c.type)).toEqual([TokenType.CODE_BLOCK]);
             expect((doc.children[0] as CodeBlockNode).code).toBe('never closed\n');
+        });
+    });
+
+    describe('Inline content in containers', () => {
+        it('should parse literal parentheses as text nodes', () => {
+            const doc = parse('hello (world)');
+            const values = doc.children.map(child => child.value);
+            expect(doc.children.every(child => child instanceof TextNode || child.type === TokenType.SPACE)).toBe(true);
+            expect(values.join('')).toBe('hello (world)');
+        });
+
+        it('should keep inline code, link and math nodes inside containers', () => {
+            const header = parse('# Title `code`').children[0];
+            expect(header).toBeInstanceOf(Header1Node);
+            expect(header.children.some(child => child instanceof InlineCodeNode)).toBe(true);
+
+            const bold = parse('**a `b` c**').children[0];
+            expect(bold).toBeInstanceOf(BoldNode);
+            expect(bold.children.some(child => child instanceof InlineCodeNode)).toBe(true);
+
+            const quote = parse('> [link](url)').children[0];
+            expect(quote).toBeInstanceOf(BlockquoteNode);
+            const link = quote.children.find(child => child instanceof LinkNode) as LinkNode;
+            expect(link).toBeDefined();
+            expect(link.text).toBe('link');
+            expect(link.url).toBe('url');
+
+            const checklist = parse('- [ ] solve $x^2$').children[0];
+            expect(checklist).toBeInstanceOf(ChecklistNode);
+            expect(checklist.children.some(child => child instanceof MathNode)).toBe(true);
         });
     });
 });

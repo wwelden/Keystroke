@@ -75,6 +75,60 @@ describe('Markdown Interpreter', () => {
         });
     });
 
+    describe('Parentheses (#33)', () => {
+        it('should keep literal parentheses in prose', () => {
+            expect(processMarkdown('hello (world)')).toBe('hello (world)');
+        });
+
+        it('should keep unbalanced parentheses in prose', () => {
+            expect(processMarkdown('(a b')).toBe('(a b');
+            expect(processMarkdown('a b)')).toBe('a b)');
+        });
+
+        it('should keep parentheses inside headings, emphasis and quotes', () => {
+            expect(processMarkdown('# Heading (draft)')).toBe('<h1>Heading (draft)</h1>\n');
+            expect(processMarkdown('**bold (x)**')).toBe('<b>bold (x)</b>\n');
+            expect(processMarkdown('> quote (x)')).toBe('<blockquote>quote (x)</blockquote>\n');
+        });
+
+        it('should still use parentheses as link destinations and math content', () => {
+            expect(processMarkdown('[Example](https://example.com)')).toBe('<a href="https://example.com">Example</a>\n');
+            expect(processMarkdown('$f(x)$')).toBe('<span class="math">f(x)</span>\n');
+        });
+    });
+
+    describe('Inline content in containers (#34)', () => {
+        it('should keep inline code inside headings', () => {
+            expect(processMarkdown('# Title `code`')).toBe('<h1>Title <code>code</code></h1>\n');
+        });
+
+        it('should keep inline code inside bold, italic and strikethrough', () => {
+            expect(processMarkdown('**a `b` c**')).toBe('<b>a <code>b</code>\n c</b>\n');
+            expect(processMarkdown('_a `b` c_')).toBe('<i>a <code>b</code>\n c</i>\n');
+            expect(processMarkdown('~~a `b` c~~')).toBe('<s>a <code>b</code>\n c</s>\n');
+        });
+
+        it('should keep links inside blockquotes and headings', () => {
+            expect(processMarkdown('> [link](url)')).toBe('<blockquote><a href="url">link</a>\n</blockquote>\n');
+            expect(processMarkdown('## See [docs](https://example.com)')).toBe('<h2>See <a href="https://example.com">docs</a></h2>\n');
+        });
+
+        it('should keep math inside blockquotes and emphasis', () => {
+            expect(processMarkdown('> area $r^2$')).toBe('<blockquote>area <span class="math">r<sup>2</sup></span>\n</blockquote>\n');
+            expect(processMarkdown('**$x^2$**')).toBe('<b><span class="math">x<sup>2</sup></span>\n</b>\n');
+        });
+
+        it('should keep inline code and links inside checklist items', () => {
+            expect(processMarkdown('- [ ] run `test`')).toBe('<li><input type="checkbox"> run <code>test</code>\n</li>\n');
+            expect(processMarkdown('- [x] read [docs](url)')).toBe('<li><input type="checkbox" checked> read <a href="url">docs</a>\n</li>\n');
+        });
+
+        it('should not let unterminated inline code or links swallow the next line', () => {
+            expect(processMarkdown('# a `b\nnext')).toBe('<h1>a <code>b</code></h1>\nnext');
+            expect(processMarkdown('**a [b\nnext')).toBe('<b>a <a href="">b</a>\n</b>\nnext');
+        });
+    });
+
     describe('Complex Documents', () => {
         it('should process mixed content correctly', () => {
             const input = `# Title
