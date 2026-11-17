@@ -228,7 +228,7 @@ export class Parser {
      * not consume. Returns null for tokens with no inline meaning, which are
      * skipped. Callers stop on their own closing delimiter before calling this.
      */
-    private parseInlineNode(): MarkdownNode | null {
+    private parseInlineNode(closer: TokenType = TokenType.NEWLINE): MarkdownNode | null {
         switch (this.currentToken.type) {
             case TokenType.SPACE: {
                 const space = new SpaceNode(this.currentToken);
@@ -257,12 +257,39 @@ export class Parser {
                 return this.parseCode();
             case TokenType.LEFT_BRACKET:
                 return this.parseLink();
-            case TokenType.MATH:
-                return this.parseMath();
+            case TokenType.MATH: {
+                if (this.hasClosingMath(closer)) {
+                    return this.parseMath();
+                }
+                // A lone $ (e.g. a price) is literal and must not swallow the closer
+                const dollar = this.parseText();
+                this.nextToken();
+                return dollar;
+            }
             default:
                 this.nextToken();
                 return null;
         }
+    }
+
+    /**
+     * True when the $ at currentToken has a closing $ before the container's
+     * `closer`, the end of the line or EOF. Rewinds the lexer.
+     */
+    private hasClosingMath(closer: TokenType): boolean {
+        const ends = (tok: Token) =>
+            tok.type === closer || tok.type === TokenType.NEWLINE || tok.type === TokenType.EOF;
+        for (const tok of [this.peekToken, this.peekNextToken]) {
+            if (tok.type === TokenType.MATH) return true;
+            if (ends(tok)) return false;
+        }
+        const state = this.lexer.saveState();
+        let tok = this.lexer.nextToken();
+        while (tok.type !== TokenType.MATH && !ends(tok)) {
+            tok = this.lexer.nextToken();
+        }
+        this.lexer.restoreState(state);
+        return tok.type === TokenType.MATH;
     }
 
     private parseBlockquote(): BlockquoteNode {
@@ -357,7 +384,7 @@ export class Parser {
         this.nextToken(); // Move past opening **
 
         while (!this.currentTokenIs(TokenType.BOLD) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
-            const node = this.parseInlineNode();
+            const node = this.parseInlineNode(TokenType.BOLD);
             if (node) {
                 bold.children.push(node);
             }
@@ -377,7 +404,7 @@ export class Parser {
         this.nextToken(); // Move past opening _ or *
 
         while (!this.currentTokenIs(TokenType.ITALIC) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
-            const node = this.parseInlineNode();
+            const node = this.parseInlineNode(TokenType.ITALIC);
             if (node) {
                 italic.children.push(node);
             }
@@ -397,7 +424,7 @@ export class Parser {
         this.nextToken(); // Move past opening ~~
 
         while (!this.currentTokenIs(TokenType.STRIKETHROUGH) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
-            const node = this.parseInlineNode();
+            const node = this.parseInlineNode(TokenType.STRIKETHROUGH);
             if (node) {
                 strikethrough.children.push(node);
             }
