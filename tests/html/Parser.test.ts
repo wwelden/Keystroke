@@ -260,14 +260,16 @@ describe('html Parser', () => {
   });
 
   it.each([
-    ['</h1>', true],
-    ['</p>', true],
-    ['<h1>', false],
-    ['<p>', false],
-    ['text', false],
-  ])('isClosingTag(%j) is %s', (literal, expected) => {
+    ['</h1>', TokenType.H1, true],
+    ['</p>', TokenType.P, true],
+    ['</section>', TokenType.TAG_CLOSE, true],
+    ['<h1>', TokenType.H1, false],
+    ['<p>', TokenType.P, false],
+    ['text', TokenType.TEXT, false],
+    ['</p> decoded from &lt;/p&gt;', TokenType.TEXT, false],
+  ])('isClosingTag(%j as %s) is %s', (literal, type, expected) => {
     const p = new Parser(new Lexer(''));
-    p['curToken'] = new Token(TokenType.TEXT, literal);
+    p['curToken'] = new Token(type, literal);
     expect(p['isClosingTag']()).toBe(expected);
   });
 

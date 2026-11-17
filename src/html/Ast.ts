@@ -356,14 +356,21 @@ export class TableNode extends HTMLNode {
     }
 
     renderLaTeX(): string {
+        // Content that is not a row or cell (a <caption>, stray text) can't go
+        // inside the tabular, so it goes above it, as browsers render it
+        let result = this.strayContent().map(node => node.renderLaTeX()).join("\n");
+        if (result !== "") {
+            result += "\n";
+        }
+
         if (this.rows.length === 0) {
-            return "";
+            return result;
         }
 
         // One column per cell of the widest row
-        const colCount = Math.max(...this.rows.map(row => row.cells.length));
+        const colCount = this.rows.reduce((max, row) => Math.max(max, row.cells.length), 0);
 
-        let result = "\\begin{tabular}{" + "l".repeat(colCount) + "}\n";
+        result += "\\begin{tabular}{" + "l".repeat(colCount) + "}\n";
         result += "\\toprule\n";
 
         this.rows.forEach((row, i) => {
@@ -376,6 +383,19 @@ export class TableNode extends HTMLNode {
         result += "\\bottomrule\n";
         result += "\\end{tabular}\n";
         return result;
+    }
+
+    // Non-row children of the table and non-cell children of its rows, in order
+    private strayContent(): Node[] {
+        const stray: Node[] = [];
+        for (const child of this.children) {
+            if (child instanceof TableRowNode) {
+                stray.push(...child.children.filter(node => !(node instanceof TableCellNode)));
+            } else {
+                stray.push(child);
+            }
+        }
+        return stray;
     }
 }
 

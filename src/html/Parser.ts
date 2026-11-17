@@ -354,8 +354,9 @@ export class Parser {
         return "";
     }
 
+    // Text is never a tag, even when it decodes to "</..." (e.g. &lt;/p&gt;)
     private isClosingTag(): boolean {
-        return this.curToken.literal.startsWith("</");
+        return !this.curTokenIs(TokenType.TEXT) && this.curToken.literal.startsWith("</");
     }
 
     // A closing tag for an element being parsed. It ends the current element

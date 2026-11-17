@@ -222,7 +222,9 @@ export class Lexer {
         const position = this.position;
         this.readChar(); // skip '&'
 
-        while (this.ch !== ';' && this.ch !== '<' && this.ch !== EOF_CHAR && this.position - position < 10) {
+        // A candidate ends at ';'; '<', '&' or whitespace means this '&' is literal
+        while (this.ch !== ';' && this.ch !== '<' && this.ch !== '&' && !/\s/.test(this.ch) &&
+            this.ch !== EOF_CHAR && this.position - position < 10) {
             this.readChar();
         }
 

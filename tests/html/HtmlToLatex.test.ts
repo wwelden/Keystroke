@@ -127,12 +127,27 @@ describe('htmlToLatexBodyOnly preserves content', () => {
     ['<p>1 < 2 and more</p><p>next</p>', '1 < 2 and more\n\n\nnext'],
     ['<p>a&nbsp;b</p>', 'a\u00A0b'],
     ['<p>AT&T rocks</p>', 'AT\\&T rocks'],
+    ['<p>AT&T &amp; B</p>', 'AT\\&T \\& B'],
+    ['<p>&&amp;</p>', '\\&\\&'],
+    ['<p>&lt;/p&gt; after</p>', '</p> after'],
   ])('%j -> %j', (input, expected) => {
     expect(htmlToLatexBodyOnly(input)).toBe(expected);
   });
 
   it('keeps whitespace inside <pre>', () => {
     expect(htmlToLatexBodyOnly('<pre>a\n  b</pre>')).toBe('\\begin{lstlisting}\na\n  b\n\\end{lstlisting}');
+  });
+
+  it('keeps escaped closing-tag text inside <pre>', () => {
+    expect(htmlToLatexBodyOnly('<pre>&lt;/div&gt;\nnext line</pre>')).toBe(
+      '\\begin{lstlisting}\n</div>\nnext line\n\\end{lstlisting}',
+    );
+  });
+
+  it('renders a caption and stray table text above the tabular', () => {
+    expect(htmlToLatexBodyOnly('<table><caption>Report</caption><tr><td>A</td></tr><tr>loose<td>B</td></tr></table>')).toBe(
+      'Report\nloose\n\\begin{tabular}{l}\n\\toprule\nA \\\\\n\\midrule\nB \\\\\n\\bottomrule\n\\end{tabular}',
+    );
   });
 
   it('keeps nested lists and the items after them', () => {
