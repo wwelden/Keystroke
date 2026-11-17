@@ -416,3 +416,15 @@ describe('nested formatting commands', () => {
         expect(latexToHtmlBodyOnly(String.raw`\textbf{a \textit{b`)).toBe('<strong>a <em>b</em></strong>');
     });
 });
+
+
+describe('LaTeX link destination schemes', () => {
+    it.each(['javascript:alert(1)', 'JaVaScRiPt:alert(1)', 'data:text/html,test', 'vbscript:msgbox(1)', 'java\tscript:alert(1)'])('renders an unsafe link as plain content: %s', url => {
+        expect(latexToHtmlBodyOnly('\\textbf{\\href{' + url + '}{click}}')).toBe('<strong>click</strong>');
+        expect(latexToHtmlBodyOnly('\\href{' + url + '}{click}')).toBe('click');
+    });
+
+    it.each(['https://example.com', 'http://example.com', 'mailto:a@example.com', 'tel:123', '/docs', '#section'])('keeps supported link destinations: %s', url => {
+        expect(latexToHtmlBodyOnly('\\textbf{\\href{' + url + '}{click}}')).toBe('<strong><a href="' + url + '">click</a></strong>');
+    });
+});

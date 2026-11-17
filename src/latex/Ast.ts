@@ -135,7 +135,12 @@ export class CommandNode extends LaTeXNode {
             case TokenType.TEXTSUBSCRIPT: return '<sub>' + content + '</sub>';
             case TokenType.TEXTTT: return '<code>' + content + '</code>';
             case TokenType.HREF:
-                // \href{url}{text}: url is stored in options, text in value
+                // Ignore URL whitespace/control characters when checking schemes,
+                // as browsers do. Relative URLs and fragments remain supported.
+                const scheme = this.options.replace(/[\u0000-\u0020\u007f]/g, '').match(/^([a-z][a-z0-9+.-]*):/i);
+                if (scheme && !/^(https?|mailto|tel)$/i.test(scheme[1])) {
+                    return content;
+                }
                 return '<a href="' + htmlEscape(this.options) + '">' + content + '</a>';
             case TokenType.LINEBREAK: return '<br>\n';
             case TokenType.HRULE: return '<hr>\n';

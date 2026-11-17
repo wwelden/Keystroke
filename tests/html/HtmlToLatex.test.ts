@@ -43,6 +43,11 @@ describe('htmlToLatex', () => {
     expect(htmlToLatexBodyOnly("<a href='https://example.com'>Link</a>")).toContain('\\href{https://example.com}{Link}');
   });
 
+  it.each(["'", '"'])('keeps a link after a quoted > attribute (%s)', quote => {
+    expect(htmlToLatexBodyOnly(`<a title=${quote}1 > 0${quote} href=${quote}https://example.com${quote}>Link</a>`))
+      .toBe('\\href{https://example.com}{Link}');
+  });
+
   it('converts a list', () => {
     const result = htmlToLatexBodyOnly('<ul><li>Item 1</li><li>Item 2</li></ul>');
     expect(result).toContain('\\begin{itemize}');

@@ -486,7 +486,7 @@ export class Parser {
             this.nextToken();
 
             // Collect everything until closing parenthesis
-            while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF)) {
+            while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
                 superscriptText += this.currentToken.literal;
                 this.nextToken();
             }
@@ -522,7 +522,7 @@ export class Parser {
             this.nextToken();
 
             // Collect everything until closing parenthesis
-            while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF)) {
+            while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
                 subscriptText += this.currentToken.literal;
                 this.nextToken();
             }

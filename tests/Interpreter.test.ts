@@ -123,6 +123,13 @@ describe('Markdown Interpreter', () => {
             expect(processMarkdown('- [x] read [docs](url)')).toBe('<li><input type="checkbox" checked> read <a href="url">docs</a>\n</li>\n');
         });
 
+        it.each(['^', '~'])('should stop an unclosed %s math group at the heading boundary', marker => {
+            const tag = marker === '^' ? 'sup' : 'sub';
+            expect(processMarkdown('$x' + marker + '(2)$')).toBe('<span class="math">x<' + tag + '>(2)</' + tag + '></span>\n');
+            const result = processMarkdown('# $x' + marker + '(\nnext');
+            expect(result).toBe('<h1><span class="math">x<' + (marker === '^' ? 'sup' : 'sub') + '>(</' + (marker === '^' ? 'sup' : 'sub') + '></span></h1>\nnext');
+        });
+
         it('should not let unterminated inline code or links swallow the next line', () => {
             expect(processMarkdown('# a `b\nnext')).toBe('<h1>a <code>b</code></h1>\nnext');
             expect(processMarkdown('**a [b\nnext')).toBe('<b>a <a href="">b</a>\n</b>\nnext');
