@@ -233,6 +233,31 @@ describe('latex Lexer', () => {
         expect(new Lexer(input)['readText']()).toBe(expected);
     });
 
+    it('records whether whitespace preceded each token and where it starts', () => {
+        const l = new Lexer('a  b\\c{d}');
+        const toks = [l.nextToken(), l.nextToken(), l.nextToken(), l.nextToken()];
+        expect(toks.map((t) => [t.literal, t.spaceBefore, t.position])).toEqual([
+            ['a', false, 0],
+            ['b', true, 3],
+            ['\\c', false, 4],
+            ['{', false, 6],
+        ]);
+    });
+
+    it('readVerbatim returns raw source and resumes after the terminator', () => {
+        const input = '[x]\n  a  & $b$\n\\end{lstlisting} tail';
+        const l = new Lexer(input);
+        expect(l.readVerbatim(3, '\\end{lstlisting}')).toBe('\n  a  & $b$\n');
+        const tok = l.nextToken();
+        expect([tok.type, tok.literal, tok.spaceBefore]).toEqual([TokenType.TEXT, 'tail', true]);
+    });
+
+    it('readVerbatim reads to EOF when the terminator is missing', () => {
+        const l = new Lexer('code here');
+        expect(l.readVerbatim(0, '\\end{lstlisting}')).toBe('code here');
+        expect(l.nextToken().type).toBe(TokenType.EOF);
+    });
+
     // Not in the Go suite: documents the intentional deviation for non-ASCII
     // input. Go emits one ILLEGAL token per UTF-8 byte and re-encodes each byte
     // as a Latin-1 rune ("é" -> "Ã", "©"); the port keeps the character intact.

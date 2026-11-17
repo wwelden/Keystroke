@@ -100,8 +100,11 @@ export class Token {
         public literal: string,
         public value: string = '',   // For commands, the content inside braces
         public options: string = '', // For commands with optional parameters
-        public position: number = 0, // Position in source (never populated by the lexer, as in Go)
+        public position: number = 0, // Start offset of the token in the source (UTF-16 code units)
     ) {}
+
+    /** True if whitespace separated this token from the previous one. */
+    spaceBefore = false;
 
     /** True if the token is a LaTeX command. */
     isCommand(): boolean {

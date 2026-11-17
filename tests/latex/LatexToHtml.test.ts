@@ -15,6 +15,7 @@ import {
     defaultOptions,
     minimalOptions,
     academicOptions,
+    EnvironmentNode,
 } from '../../src/latex';
 
 describe('latex public API', () => {
@@ -218,64 +219,63 @@ describe('latex public API', () => {
     });
 });
 
-// Not part of the Go suite. Exact body output and parse errors captured from
-// the Go implementation (keystroke/latek) for a spread of inputs, so the port
-// stays byte-for-byte compatible. Several of these encode Go bugs on purpose,
-// e.g. dropped inter-word spaces ("Hello World" -> "HelloWorld"), the second
-// \item rendered outside <li>, \textbf[opt]{x} losing its argument, and
-// lstlisting dropping its first word.
-describe('Go parity (body output)', () => {
+// Not part of the Go suite. Exact body output and parse errors for a spread of
+// inputs. These started as output captured from the Go implementation
+// (keystroke/latek); cases where Go was wrong (dropped inter-word spaces, every
+// \item after the first rendered outside <li>, \textbf[opt]{x} losing its
+// argument, lstlisting losing content) now expect the correct output (#25).
+describe('body output', () => {
     const cases: Array<[string, string, string[]]> = [
         ["", "", []],
-        ["Hello World", "HelloWorld", []],
+        ["Hello World", "Hello World", []],
         ["\\section{Introduction}", "<h1>Introduction</h1>", []],
-        ["\\section{Hello World} text after", "<h1>Hello World</h1>\ntextafter", []],
+        ["\\section{Hello World} text after", "<h1>Hello World</h1>\ntext after", []],
         ["\\section{First}\\subsection{Second}", "<h1>First</h1>\n<h2>Second</h2>", []],
-        ["\\textbf{bold} and \\textit{italic}", "<strong>bold</strong>and<em>italic</em>", []],
-        ["\\textbf[opt]{bold} after", "<strong></strong>}after", ["expected next token to be LBRACE, got RBRACE instead"]],
-        ["\\textbf{a \\textit{b} c}", "<strong>a\\textit{b}c</strong>", []],
-        ["\\begin{itemize}\\item First\\item Second\\end{itemize}", "<ul>\n<li>First</li>\nSecond</ul>", []],
-        ["\\begin{enumerate}\n\\item One two\n\\item Three\n\\end{enumerate} after", "<ol>\n<li>Onetwo</li>\nThree</ol>\nafter", []],
-        ["\\begin{itemize}\\item A \\begin{enumerate}\\item B\\end{enumerate}\\item C\\end{itemize}", "<ul>\n<li>A<ol>\n<li>B</li>\n{enumerate}<li>C</li>\n{itemize}</ol>\n</li>\n</ul>", []],
-        ["\\begin{quote}Quoted text\\end{quote}", "<blockquote>\nQuotedtext</blockquote>", []],
-        ["\\begin{lstlisting}[language=go]\nfunc main() {}\n\\end{lstlisting}", "<pre><code class=\"language-go\">main(){}</code></pre>", []],
-        ["\\begin{lstlisting}\ncode here\n\\end{lstlisting}", "<pre><code>codehere</code></pre>", []],
+        ["\\textbf{bold} and \\textit{italic}", "<strong>bold</strong> and <em>italic</em>", []],
+        ["\\textbf[opt]{bold} after", "<strong>bold</strong> after", []],
+        ["\\textbf{a \\textit{b} c}", "<strong>a \\textit{b} c</strong>", []],
+        ["\\begin{itemize}\\item First\\item Second\\end{itemize}", "<ul>\n<li>First</li>\n<li>Second</li>\n</ul>", []],
+        ["\\begin{enumerate}\n\\item One two\n\\item Three\n\\end{enumerate} after", "<ol>\n<li>One two</li>\n<li>Three</li>\n</ol>\nafter", []],
+        ["\\begin{itemize}\\item A \\begin{enumerate}\\item B\\end{enumerate}\\item C\\end{itemize}", "<ul>\n<li>A<ol>\n<li>B</li>\n</ol>\n</li>\n<li>C</li>\n</ul>", []],
+        ["\\begin{quote}Quoted text\\end{quote}", "<blockquote>\nQuoted text</blockquote>", []],
+        ["\\begin{lstlisting}[language=go]\nfunc main() {}\n\\end{lstlisting}", "<pre><code class=\"language-go\">func main() {}</code></pre>", []],
+        ["\\begin{lstlisting}\ncode here\n\\end{lstlisting}", "<pre><code>code here</code></pre>", []],
         ["\\begin{tabular}{ll}Cell1 & Cell2 \\\\ Cell3 & Cell4 \\\\\\end{tabular}", "<table>\n<tr><td>{ll}Cell1</td><td>Cell2</td></tr>\n<tr><td>Cell3</td><td>Cell4</td></tr>\n</table>", []],
-        ["\\begin{tabular}{|c|c|}\\toprule A & B \\\\ \\midrule 1 & 2 \\\\ \\bottomrule\\end{tabular}", "<table>\n<tr><td>{|c|c|}\\topruleA</td><td>B</td></tr>\n<tr><td>\\midrule1</td><td>2</td></tr>\n<tr><td>\\bottomrule</td></tr>\n<tr><td>{tabular}</td></tr>\n</table>", []],
+        ["\\begin{tabular}{|c|c|}\\toprule A & B \\\\ \\midrule 1 & 2 \\\\ \\bottomrule\\end{tabular}", "<table>\n<tr><td>{|c|c|}\\toprule A</td><td>B</td></tr>\n<tr><td>\\midrule 1</td><td>2</td></tr>\n<tr><td>\\bottomrule</td></tr>\n</table>", []],
         ["\\begin{custom}inside\\end{custom}", "<div class=\"custom\">\ninside</div>", []],
         ["\\begin{foo\"bar}x\\end{foo\"bar}", "<div class=\"foo\"bar\">\nx</div>", []],
         ["\\href{https://example.com}{Link text}", "<a href=\"https://example.com\">Link text</a>", []],
-        ["\\href{https://a.com?x=1&y=2}{A & B}", "<a href=\"https://a.com?x=1&amp;y=2\">A&amp;B</a>", []],
-        ["Line one \\\\ line two", "Lineone<br>\nlinetwo", []],
+        ["\\href{https://a.com?x=1&y=2}{A & B}", "<a href=\"https://a.com?x=1&amp;y=2\">A &amp; B</a>", []],
+        ["Line one \\\\ line two", "Line one<br>\nline two", []],
         ["\\hrule", "<hr>", []],
-        ["$E = mc^2$", "<span class=\"math-inline\"><code>E=mc^2</code></span>", []],
-        ["$$\\sum_{i=1}^{n} i$$", "<div class=\"math-display\"><code>\\sum_{i=1}^{n}i</code></div>", []],
-        ["$E = mc^2$ and $$\\sum_{i=1}^{n} i$$", "<span class=\"math-inline\"><code>E=mc^2</code></span>and<div class=\"math-display\"><code>\\sum_{i=1}^{n}i</code></div>", []],
+        ["$E = mc^2$", "<span class=\"math-inline\"><code>E = mc^2</code></span>", []],
+        ["$$\\sum_{i=1}^{n} i$$", "<div class=\"math-display\"><code>\\sum_{i=1}^{n} i</code></div>", []],
+        ["$E = mc^2$ and $$\\sum_{i=1}^{n} i$$", "<span class=\"math-inline\"><code>E = mc^2</code></span> and<div class=\"math-display\"><code>\\sum_{i=1}^{n} i</code></div>", []],
         ["$unterminated", "<span class=\"math-inline\"><code>unterminated</code></span>", []],
         ["% This is a comment\nText", "<!-- % This is a comment -->\nText", []],
         ["\\documentclass[12pt]{article}\n\\usepackage{amsmath}\nBody", "Body", []],
         ["\\section{Valid} \\invalidcommand{test}", "<h1>Valid</h1>\n\\invalidcommand{test}", []],
-        ["Special <chars> & \"quotes\" 'apos'", "Special&lt;chars&gt;&amp;&quot;quotes&quot;&#39;apos&#39;", []],
-        ["a_b^c & d ] [ }", "a_b^c&amp;d][}", []],
+        ["Special <chars> & \"quotes\" 'apos'", "Special &lt;chars&gt; &amp; &quot;quotes&quot; &#39;apos&#39;", []],
+        ["a_b^c & d ] [ }", "a_b^c &amp; d ] [ }", []],
         ["\\section", "<h1></h1>", ["expected next token to be LBRACE, got EOF instead"]],
         ["\\section{unclosed", "<h1>unclosed</h1>", []],
         ["\\paragraph{P}\\subparagraph{S}\\subsubsection{SS}", "<h4>P</h4>\n<h5>S</h5>\n<h3>SS</h3>", []],
         ["\\underline{u}\\sout{s}\\textsuperscript{sp}\\textsubscript{sb}\\texttt{tt}", "<u>u</u><s>s</s><sup>sp</sup><sub>sb</sub><code>tt</code>", []],
-        ["\\begin{itemize}\n\\item First item\n\\item Second item with \\texttt{code}\n\\end{itemize}", "<ul>\n<li>Firstitem</li>\nSeconditemwith<code>code</code></ul>", []],
-        ["\n\t\t\\section{Introduction}\n\n\t\tThis document demonstrates the \\textbf{LaTeX to HTML} converter.\n\n\t\t\\subsection{Features}\n\n\t\tThe converter supports:\n\n\t\t\\begin{itemize}\n\t\t\\item Text formatting like \\textit{italic} and \\textbf{bold}\n\t\t\\item Mathematical expressions: $E = mc^2$\n\t\t\\item Code blocks: \\texttt{func main()}\n\t\t\\item Links: \\href{https://golang.org}{Go Language}\n\t\t\\end{itemize}\n\n\t\t\\subsection{Mathematics}\n\n\t\tDisplay math:\n\t\t$$\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}$$\n\n\t\tInline math: $\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}$\n\t", "<h1>Introduction</h1>\nThisdocumentdemonstratesthe<strong>LaTeX to HTML</strong>converter.<h2>Features</h2>\nTheconvertersupports:<ul>\n<li>Textformattinglike<em>italic</em>and<strong>bold</strong></li>\nMathematicalexpressions:<span class=\"math-inline\"><code>E=mc^2</code></span><li>Codeblocks:<code>func main()</code></li>\nLinks:<a href=\"https://golang.org\">Go Language</a></ul>\n<h2>Mathematics</h2>\nDisplaymath:<div class=\"math-display\"><code>\\int_{-\\infty}^{\\infty}e^{-x^2}dx=\\sqrt{\\pi}</code></div>\nInlinemath:<span class=\"math-inline\"><code>\\sum_{i=1}^{n}i=\\frac{n(n+1)}{2}</code></span>", []],
+        ["\\begin{itemize}\n\\item First item\n\\item Second item with \\texttt{code}\n\\end{itemize}", "<ul>\n<li>First item</li>\n<li>Second item with <code>code</code></li>\n</ul>", []],
+        ["\n\t\t\\section{Introduction}\n\n\t\tThis document demonstrates the \\textbf{LaTeX to HTML} converter.\n\n\t\t\\subsection{Features}\n\n\t\tThe converter supports:\n\n\t\t\\begin{itemize}\n\t\t\\item Text formatting like \\textit{italic} and \\textbf{bold}\n\t\t\\item Mathematical expressions: $E = mc^2$\n\t\t\\item Code blocks: \\texttt{func main()}\n\t\t\\item Links: \\href{https://golang.org}{Go Language}\n\t\t\\end{itemize}\n\n\t\t\\subsection{Mathematics}\n\n\t\tDisplay math:\n\t\t$$\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}$$\n\n\t\tInline math: $\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}$\n\t", "<h1>Introduction</h1>\nThis document demonstrates the <strong>LaTeX to HTML</strong> converter.<h2>Features</h2>\nThe converter supports:<ul>\n<li>Text formatting like <em>italic</em> and <strong>bold</strong></li>\n<li>Mathematical expressions: <span class=\"math-inline\"><code>E = mc^2</code></span></li>\n<li>Code blocks: <code>func main()</code></li>\n<li>Links: <a href=\"https://golang.org\">Go Language</a></li>\n</ul>\n<h2>Mathematics</h2>\nDisplay math:<div class=\"math-display\"><code>\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}</code></div>\nInline math: <span class=\"math-inline\"><code>\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}</code></span>", []],
         ["\\begin{itemize}\\item x", "<ul>\n<li>x</li>\n</ul>", []],
-        ["\\end{itemize} stray", "\\end{itemize}stray", []],
+        ["\\end{itemize} stray", "\\end{itemize} stray", []],
         ["\\begin x", "x", ["expected next token to be LBRACE, got TEXT instead"]],
         ["\\begin{quote}\\section{In}\\textbf{b}\\end{quote}", "<blockquote>\n<h1>In</h1>\n<strong>b</strong></blockquote>", []],
         ["\\begin{tabular}{l}\\textbf{H} & $x$ \\\\\\end{tabular}", "<table>\n<tr><td>{l}<strong>H</strong></td><td><span class=\"math-inline\"><code>x</code></span></td></tr>\n</table>", []],
-        ["{group} [opt]", "{group}[opt]", []],
-        ["\\foo\\bar baz", "\\foo\\barbaz", []],
-        ["\\textit{nested {braces} here}", "<em>nested{braces}here</em>", []],
+        ["{group} [opt]", "{group} [opt]", []],
+        ["\\foo\\bar baz", "\\foo\\bar baz", []],
+        ["\\textit{nested {braces} here}", "<em>nested {braces} here</em>", []],
         ["\\href{u}", "<a href=\"u\"></a>", ["expected next token to be LBRACE, got EOF instead"]],
-        ["\\begin{itemize}\\item a\\end{enumerate}\\item b\\end{itemize}", "<ul>\n<li>a</li>\n{enumerate}<li>b</li>\n{itemize}</ul>", []],
+        ["\\begin{itemize}\\item a\\end{enumerate}\\item b\\end{itemize}", "<ul>\n<li>a</li>\n<li>b</li>\n</ul>", []],
         ["\u0001ctrl\u007f", "\u0001ctrl\u007f", []],
-        ["\r\nwin\r\nlines", "winlines", []],
-        ["\\begin{itemize}\\item one\\end{itemize}\n\\section{After}", "<ul>\n<li>one</li>\n{itemize}<h1>After</h1>\n</ul>", []],
+        ["\r\nwin\r\nlines", "win lines", []],
+        ["\\begin{itemize}\\item one\\end{itemize}\n\\section{After}", "<ul>\n<li>one</li>\n</ul>\n<h1>After</h1>", []],
     ];
 
     it.each(cases)('%j', (input, expectedBody, expectedErrors) => {
@@ -286,10 +286,70 @@ describe('Go parity (body output)', () => {
     // Intentional deviation: Go re-encodes each non-ASCII byte that starts a
     // token as a Latin-1 rune ("élan" -> "Ã©lan"); the port preserves it.
     it.each([
-        ['café élan naïve', 'caféélannaïve'],
+        ['café élan naïve', 'café élan naïve'],
         ['\\textbf{élan}', '<strong>élan</strong>'],
-        ['x 😀 y', 'x😀y'],
+        ['x 😀 y', 'x 😀 y'],
     ])('non-ASCII %j keeps characters intact', (input, expectedBody) => {
         expect(latexToHtmlBodyOnly(input)).toBe(expectedBody);
+    });
+});
+
+// Regression tests for https://github.com/wwelden/Keystroke/issues/25.
+describe('LaTeX to HTML content loss (#25)', () => {
+    it('keeps spaces between words in body text', () => {
+        expect(latexToHtmlBodyOnly('Hello world')).toBe('Hello world');
+        expect(latexToHtmlBodyOnly('\\textbf{a} b c')).toBe('<strong>a</strong> b c');
+        expect(latexToHtmlBodyOnly('one\ntwo')).toBe('one two');
+    });
+
+    it('does not add spaces where the source had none', () => {
+        expect(latexToHtmlBodyOnly('\\textbf{a}b')).toBe('<strong>a</strong>b');
+        expect(latexToHtmlBodyOnly('  padded  ')).toBe('padded');
+    });
+
+    it('keeps the argument of a command with options', () => {
+        const { document, errors } = parseLatex('\\textbf[opt]{bold} after');
+        expect(errors).toEqual([]);
+        expect(latexToHtmlBodyOnly('\\textbf[opt]{bold} after')).toBe('<strong>bold</strong> after');
+        expect(document.children).toHaveLength(3);
+    });
+
+    it('keeps lstlisting content after options', () => {
+        expect(latexToHtmlBodyOnly('\\begin{lstlisting}[language=go]\nfmt.Println(x)\n\\end{lstlisting}'))
+            .toBe('<pre><code class="language-go">fmt.Println(x)</code></pre>');
+    });
+
+    it('renders lstlisting verbatim, escaped, with line breaks and indentation', () => {
+        const input = '\\begin{lstlisting}[language=go]\nif x < 1 {\n    return $a & b$ % not a comment\n}\n\\end{lstlisting} after';
+        expect(latexToHtmlBodyOnly(input)).toBe(
+            '<pre><code class="language-go">if x &lt; 1 {\n    return $a &amp; b$ % not a comment\n}</code></pre>\nafter',
+        );
+    });
+
+    it('renders every \\item inside its own <li>', () => {
+        expect(latexToHtmlBodyOnly('\\begin{itemize}\n\\item One two\n\\item Three\n\\end{itemize}'))
+            .toBe('<ul>\n<li>One two</li>\n<li>Three</li>\n</ul>');
+        expect(latexToHtmlBodyOnly('\\begin{enumerate}\\item a\\item b\\item c\\end{enumerate}'))
+            .toBe('<ol>\n<li>a</li>\n<li>b</li>\n<li>c</li>\n</ol>');
+    });
+
+    it('closes a list before content that follows it', () => {
+        expect(latexToHtmlBodyOnly('\\begin{itemize}\\item one\\end{itemize}\n\\section{After}'))
+            .toBe('<ul>\n<li>one</li>\n</ul>\n<h1>After</h1>');
+    });
+
+    it('does not emit an empty row after a final \\\\ and newline', () => {
+        expect(latexToHtmlBodyOnly('\\begin{tabular}{c}\na \\\\\nb \\\\\n\\end{tabular}'))
+            .toBe('<table>\n<tr><td>{c} a</td></tr>\n<tr><td>b</td></tr>\n</table>');
+    });
+
+    it('keeps spaces inside optional arguments', () => {
+        const { document } = parseLatex('\\begin{lstlisting}[language=Python, caption=Hello World]\nx\n\\end{lstlisting}');
+        expect((document.children[0] as EnvironmentNode).options).toBe('language=Python, caption=Hello World');
+    });
+
+    it('keeps the \\end of a table whose last row has no \\\\', () => {
+        expect(latexToHtmlBodyOnly('\\begin{tabular}{l}A & B\\end{tabular} x'))
+            .toBe('<table>\n<tr><td>{l}A</td><td>B</td></tr>\n</table>\nx');
     });
 });

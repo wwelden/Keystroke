@@ -45,9 +45,16 @@ export class Lexer {
     }
 
     nextToken(): Token {
-        let tok: Token;
+        const spaceBefore = this.skipWhitespace();
+        const position = this.position;
+        const tok = this.readToken();
+        tok.position = position;
+        tok.spaceBefore = spaceBefore;
+        return tok;
+    }
 
-        this.skipWhitespace();
+    private readToken(): Token {
+        let tok: Token;
 
         switch (this.ch) {
             case '\\':
@@ -198,10 +205,26 @@ export class Lexer {
         return newToken(TokenType.COMMENT, this.input.slice(position, this.position));
     }
 
-    private skipWhitespace(): void {
+    /** Skips spaces, tabs and carriage returns; returns true if any were skipped. */
+    private skipWhitespace(): boolean {
+        const start = this.position;
         while (this.ch === ' ' || this.ch === '\t' || this.ch === '\r') {
             this.readChar();
         }
+        return this.position !== start;
+    }
+
+    /**
+     * Returns the raw source from `start` up to (not including) `terminator`,
+     * then resumes lexing just after the terminator, or at EOF if it never
+     * appears. Used for verbatim environments such as lstlisting.
+     */
+    readVerbatim(start: number, terminator: string): string {
+        const end = this.input.indexOf(terminator, start);
+        const stop = end === -1 ? this.input.length : end;
+        this.readPosition = end === -1 ? this.input.length : end + terminator.length;
+        this.readChar();
+        return this.input.slice(start, stop);
     }
 
     /** Reads content between braces { ... }. Not used by the parser (as in Go). */

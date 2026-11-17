@@ -49,16 +49,44 @@ export class Parser {
 
     parseDocument(): DocumentNode {
         const children: Node[] = [];
+        let pendingSpace = false;
 
         while (!this.curTokenIs(TokenType.EOF)) {
-            const node = this.parseElement();
-            if (node !== null) {
-                children.push(node);
+            const start = this.curToken;
+            pendingSpace = this.appendElement(children, this.parseElement(), start, pendingSpace);
+            if (!this.stoppedOnTerminator(start)) {
+                this.nextToken();
             }
-            this.nextToken();
         }
 
         return new DocumentNode(children);
+    }
+
+    /**
+     * Appends `node` (if any) to `children`, inserting a single space when
+     * whitespace separated it from the previous inline sibling. Returns the
+     * pending-space state for the next element: true when `node` was skipped
+     * whitespace (a newline) that should still separate the next element.
+     */
+    private appendElement(children: Node[], node: Node | null, start: Token, pendingSpace: boolean): boolean {
+        const space = pendingSpace || start.spaceBefore;
+        if (node === null) {
+            return space || start.type === TokenType.NEWLINE;
+        }
+        const prev = children[children.length - 1];
+        if (space && prev !== undefined && isInline(prev) && isInline(node)) {
+            children.push(new TextNode(' '));
+        }
+        children.push(node);
+        return false;
+    }
+
+    /**
+     * True when parsing an element advanced onto an \item or \end that it
+     * left for the enclosing loop to handle; that loop must not skip past it.
+     */
+    private stoppedOnTerminator(start: Token): boolean {
+        return this.curToken !== start && (this.curTokenIs(TokenType.ITEM) || this.curTokenIs(TokenType.END));
     }
 
     private parseElement(): Node | null {
@@ -127,11 +155,10 @@ export class Parser {
         let value = '';
         let options = '';
 
-        // Optional parameters [...]
+        // Optional parameters [...]; leaves curToken on the closing ']'
         if (this.peekTokenIs(TokenType.LBRACKET)) {
             this.nextToken();
             options = this.readBracketContent();
-            this.syncTokens();
         }
 
         // Mandatory parameter {...}
@@ -154,13 +181,18 @@ export class Parser {
         if (this.peekTokenIs(TokenType.LBRACKET)) {
             this.nextToken();
             options = this.readBracketContent();
-            this.syncTokens();
         }
 
         const env = new EnvironmentNode(envType, envName, options);
 
+        if (envName === 'lstlisting') {
+            this.parseVerbatimContent(env);
+            return env;
+        }
+
         // Parse environment content until \end{environment}
         this.nextToken();
+        let pendingSpace = false;
         while (!this.curTokenIs(TokenType.EOF)) {
             if (this.curToken.type === TokenType.END) {
                 // Check if this is the matching \end
@@ -169,17 +201,40 @@ export class Parser {
                     if (endEnvName === envName) {
                         break;
                     }
+                    // Drop a stray \end{other} instead of rendering it as text
+                    this.nextToken();
+                    continue;
                 }
             }
 
+            const start = this.curToken;
             const node = envName === 'tabular' ? this.parseTableContent() : this.parseElement();
-            if (node !== null) {
-                env.children.push(node);
+            pendingSpace = this.appendElement(env.children, node, start, pendingSpace);
+            if (!this.stoppedOnTerminator(start)) {
+                this.nextToken();
             }
-            this.nextToken();
         }
 
         return env;
+    }
+
+    /**
+     * Reads the environment body verbatim up to \end{name}, keeping spaces and
+     * line breaks. The line break after \begin{name}[...] and the one before
+     * \end{name} are not part of the content.
+     */
+    private parseVerbatimContent(env: EnvironmentNode): void {
+        // curToken is the '}' or ']' that closes the \begin line
+        const start = this.curToken.position + this.curToken.literal.length;
+        const raw = this.lexer.readVerbatim(start, '\\end{' + env.environment + '}');
+        const content = raw.replace(/^[ \t]*\r?\n/, '').replace(/\r?\n[ \t]*$/, '');
+        if (content !== '') {
+            env.children.push(new TextNode(content));
+        }
+
+        // Resume after \end{name}; curToken stands in for its closing '}'
+        this.curToken = newToken(TokenType.RBRACE, '}');
+        this.peekToken = this.lexer.nextToken();
     }
 
     private parseTableContent(): Node | null {
@@ -190,6 +245,7 @@ export class Parser {
 
         const row = new TableRowNode();
         let cell = new TableCellNode(false);
+        let pendingSpace = false;
 
         while (!this.curTokenIs(TokenType.EOF) && !this.curTokenIs(TokenType.LINEBREAK) && !this.curTokenIs(TokenType.END)) {
             if (this.curToken.type === TokenType.AMPERSAND) {
@@ -197,10 +253,12 @@ export class Parser {
                 row.cells.push(cell);
                 row.children.push(cell);
                 cell = new TableCellNode(false);
+                pendingSpace = false;
             } else {
-                const node = this.parseElement();
-                if (node !== null) {
-                    cell.children.push(node);
+                const start = this.curToken;
+                pendingSpace = this.appendElement(cell.children, this.parseElement(), start, pendingSpace);
+                if (this.stoppedOnTerminator(start)) {
+                    continue;
                 }
             }
             this.nextToken();
@@ -212,7 +270,8 @@ export class Parser {
             row.children.push(cell);
         }
 
-        return row;
+        // Whitespace after the final \\ is not a row
+        return row.cells.length > 0 ? row : null;
     }
 
     private parseItem(): Node {
@@ -220,11 +279,10 @@ export class Parser {
 
         // Parse content until next \item or end of environment
         this.nextToken();
+        let pendingSpace = false;
         while (!this.curTokenIs(TokenType.EOF) && !this.curTokenIs(TokenType.ITEM) && !this.curTokenIs(TokenType.END)) {
-            const node = this.parseElement();
-            if (node !== null) {
-                item.children.push(node);
-            }
+            const start = this.curToken;
+            pendingSpace = this.appendElement(item.children, this.parseElement(), start, pendingSpace);
             if (this.curTokenIs(TokenType.EOF) || this.curTokenIs(TokenType.ITEM) || this.curTokenIs(TokenType.END)) {
                 break;
             }
@@ -266,6 +324,9 @@ export class Parser {
 
         // Read until the closing delimiter (left as curToken for the caller)
         while (!this.curTokenIs(TokenType.EOF) && !this.curTokenIs(endTokenType)) {
+            if (this.curToken.spaceBefore && content !== '') {
+                content += ' ';
+            }
             content += this.curToken.literal;
             this.nextToken();
         }
@@ -300,34 +361,21 @@ export class Parser {
 
         let content = '';
         let braceCount = 1;
-        let lastTokenWasText = false;
 
         this.nextToken(); // Move past opening brace
 
         while (!this.curTokenIs(TokenType.EOF) && braceCount > 0) {
             if (this.curToken.type === TokenType.LBRACE) {
                 braceCount++;
-                content += this.curToken.literal;
-                lastTokenWasText = false;
             } else if (this.curToken.type === TokenType.RBRACE) {
                 braceCount--;
-                if (braceCount > 0) {
-                    content += this.curToken.literal;
-                }
-                lastTokenWasText = false;
-            } else if (this.curToken.type === TokenType.TEXT) {
-                // Re-insert the space the lexer skipped between adjacent words
-                if (lastTokenWasText && content !== '') {
+            }
+            if (braceCount > 0) {
+                // Re-insert the whitespace the lexer skipped before this token
+                if (this.curToken.spaceBefore && content !== '') {
                     content += ' ';
                 }
                 content += this.curToken.literal;
-                lastTokenWasText = true;
-            } else {
-                content += this.curToken.literal;
-                lastTokenWasText = false;
-            }
-
-            if (braceCount > 0) {
                 this.nextToken();
             }
         }
@@ -344,22 +392,15 @@ export class Parser {
         this.nextToken(); // Move past opening bracket
 
         while (!this.curTokenIs(TokenType.EOF) && !this.curTokenIs(TokenType.RBRACKET)) {
+            if (this.curToken.spaceBefore && content !== '') {
+                content += ' ';
+            }
             content += this.curToken.literal;
             this.nextToken();
         }
 
         // The closing bracket is left as curToken for the caller
         return content;
-    }
-
-    /**
-     * Refreshes cur/peek from the lexer. Ported as-is from Go: because the
-     * lexer is already one token ahead, this discards the closing ']' and the
-     * token after it.
-     */
-    private syncTokens(): void {
-        this.curToken = this.lexer.nextToken();
-        this.peekToken = this.lexer.nextToken();
     }
 
     private skipToEndOfCommand(): void {
@@ -392,4 +433,18 @@ export class Parser {
         this.peekError(t);
         return false;
     }
+}
+
+/** Nodes that flow inline with text, so whitespace between them is kept. */
+function isInline(node: Node): boolean {
+    if (node instanceof TextNode) {
+        return true;
+    }
+    if (node instanceof MathNode) {
+        return !node.isDisplay;
+    }
+    if (node instanceof CommandNode) {
+        return node.type !== TokenType.LINEBREAK && node.type !== TokenType.HRULE;
+    }
+    return false;
 }
