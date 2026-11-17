@@ -4,71 +4,49 @@ import { Renderer } from './Renderer';
 import * as fs from 'fs';
 import * as path from 'path';
 
+export const DEFAULT_INPUT_PATH = path.join(__dirname, '..', 'tests', 'test-files', 'file1.md');
+export const DEFAULT_OUTPUT_DIR = path.join(__dirname, '..', 'output');
 
-// Function to read markdown file
-function readMarkdownFile(filename: string): string {
-    const filePath = path.join(__dirname, '..', 'tests', 'test-files', filename);
+// Resolve the CLI argument against the caller's working directory,
+// falling back to the bundled sample file when no argument is given.
+export function resolveInputPath(arg: string | undefined, cwd: string = process.cwd()): string {
+    return arg ? path.resolve(cwd, arg) : DEFAULT_INPUT_PATH;
+}
+
+export function compileMarkdown(markdownInput: string): string {
+    const lexer = new Lexer(markdownInput);
+    const parser = new Parser(lexer);
+    const documentNode = parser.parse();
+    return new Renderer().render(documentNode);
+}
+
+// Compile a Markdown file to `<outputDir>/<name>.html` and return the output path.
+export function compileFile(inputPath: string, outputDir: string = DEFAULT_OUTPUT_DIR): string {
+    const markdownInput = fs.readFileSync(inputPath, 'utf8');
+    const htmlOutput = compileMarkdown(markdownInput);
+    const outputPath = path.join(outputDir, `${path.basename(inputPath, path.extname(inputPath))}.html`);
+    fs.mkdirSync(outputDir, { recursive: true });
+    fs.writeFileSync(outputPath, htmlOutput);
+    return outputPath;
+}
+
+// Run the CLI and return its exit code.
+export function main(
+    argv: string[],
+    cwd: string = process.cwd(),
+    outputDir: string = DEFAULT_OUTPUT_DIR
+): number {
+    const inputPath = resolveInputPath(argv[0], cwd);
     try {
-        return fs.readFileSync(filePath, 'utf8');
+        const outputPath = compileFile(inputPath, outputDir);
+        console.log(`HTML file generated successfully at: ${outputPath}`);
+        return 0;
     } catch (error) {
-        console.error(`Error reading file ${filename}:`, error);
-        process.exit(1);
+        console.error(`Error compiling ${inputPath}: ${error instanceof Error ? error.message : error}`);
+        return 1;
     }
 }
 
-const markdownTest1 = `
-# Hello, World!
-
-This is
-**bold**
-and
-_italic_ text.
-
-- [ ] Task 1
-- [x] Task 2
-- [ ] Task 3
-
-> This is a blockquote.
- hello a new line
-
----
-
-This is a horizontal rule.
-
-\`\`\`typescript
-const a = 1;
-\`\`\`
-
-[Google](https://www.google.com)
-
-###### This is a header6
-`;
-
-// Get filename from command line arguments or use default
-const filename = process.argv[2] || 'file1.md';
-const markdownInput = readMarkdownFile(filename);
-
-// Initialize the lexer and parser
-const lexer = new Lexer(markdownInput);
-const parser = new Parser(lexer);
-const documentNode = parser.parse();
-
-// Render the parsed document
-const renderer = new Renderer();
-const htmlOutput = renderer.render(documentNode);
-
-// Write to HTML file
-const outputPath = path.join(__dirname, '..', 'output', `${path.basename(filename, '.md')}.html`);
-try {
-    // Create output directory if it doesn't exist
-    const outputDir = path.dirname(outputPath);
-    if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-    }
-
-    fs.writeFileSync(outputPath, htmlOutput);
-    console.log(`HTML file generated successfully at: ${outputPath}`);
-} catch (error) {
-    console.error('Error writing HTML file:', error);
-    process.exit(1);
+if (require.main === module) {
+    process.exitCode = main(process.argv.slice(2));
 }

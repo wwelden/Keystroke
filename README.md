@@ -27,7 +27,9 @@ A markdown parser and compiler written in TypeScript
 ## Usage
 
 - Run tests with `bun run test`
-- Run with `ts-node src/index.ts`
+- Compile a Markdown file to HTML with `bun src/index.ts <path>` (the path is relative to
+  your current directory; with no path it compiles `tests/test-files/file1.md`). The
+  HTML is written to `output/<name>.html` in this repository.
 - Build the browser playground with `bun run build:web` (outputs `public/js/keystroke.js`)
 
 ## Testing
@@ -72,8 +74,8 @@ bun install --frozen-lockfile
 # Run tests
 bun run test
 
-# Run the parser
-ts-node src/index.ts
+# Compile a Markdown file to output/<name>.html
+bun src/index.ts path/to/notes.md
 
 # Compile TypeScript
 npx tsc
