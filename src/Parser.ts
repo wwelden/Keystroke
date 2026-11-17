@@ -235,6 +235,11 @@ export class Parser {
                 this.nextToken();
                 return space;
             }
+            case TokenType.TAB: {
+                const tab = new TabNode(this.currentToken);
+                this.nextToken();
+                return tab;
+            }
             case TokenType.TEXT:
             case TokenType.LEFT_PARENTHESIS:
             case TokenType.RIGHT_PARENTHESIS: {

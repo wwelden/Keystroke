@@ -102,6 +102,11 @@ describe('Markdown Interpreter', () => {
             expect(processMarkdown('# Title `code`')).toBe('<h1>Title <code>code</code></h1>\n');
         });
 
+        it('should keep a tab after inline content in a container', () => {
+            expect(processMarkdown('# **one**\ttwo')).toBe('<h1><b>one</b>&emsp;two</h1>\n');
+            expect(processMarkdown('> **one**\ttwo')).toBe('<blockquote><b>one</b>&emsp;two</blockquote>\n');
+        });
+
         it('should keep inline code inside bold, italic and strikethrough', () => {
             expect(processMarkdown('**a `b` c**')).toBe('<b>a <code>b</code> c</b>');
             expect(processMarkdown('_a `b` c_')).toBe('<i>a <code>b</code> c</i>');

@@ -22,6 +22,17 @@ export class Lexer {
         this.readChar();
     }
 
+    /** Opaque read position, so a parser can look ahead and rewind with restoreState. */
+    public saveState(): [number, number, string] {
+        return [this.position, this.readPosition, this.ch];
+    }
+
+    public restoreState([position, readPosition, ch]: [number, number, string]): void {
+        this.position = position;
+        this.readPosition = readPosition;
+        this.ch = ch;
+    }
+
     private readChar(): void {
         if (this.readPosition >= this.input.length) {
             this.ch = EOF_CHAR;

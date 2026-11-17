@@ -34,7 +34,8 @@ function commandSource(node: CommandNode): string {
     if (node.type === TokenType.HREF) {
         return '\\href{' + node.options + '}{' + node.value + '}';
     }
-    return node.command + '{' + node.value + '}';
+    const options = node.options !== '' ? '[' + node.options + ']' : '';
+    return node.command + options + '{' + node.value + '}';
 }
 
 export class Parser {
@@ -415,6 +416,7 @@ export class Parser {
         // locals until the end because nested commands reset the fields.
         const leadingSpace = this.curToken.spaceBefore && !this.curTokenIs(TokenType.RBRACE);
         let trailingSpace = false;
+        let spaceAfterCommand = false;
 
         while (!this.curTokenIs(TokenType.EOF)) {
             const tok = this.curToken;
@@ -428,14 +430,27 @@ export class Parser {
                 text += ' ';
             }
 
-            if (NESTED_COMMANDS.has(tok.type) && this.peekTokenIs(TokenType.LBRACE)) {
+            // Whitespace just inside the previous nested command's closing brace
+            if (spaceAfterCommand && text === '') {
+                text = ' ';
+            }
+            spaceAfterCommand = false;
+
+            const takesArgument = this.peekTokenIs(TokenType.LBRACE) ||
+                (tok.type !== TokenType.HREF && this.peekIsOptionalBeforeBrace());
+            if (NESTED_COMMANDS.has(tok.type) && takesArgument) {
+                const node = (tok.type === TokenType.HREF ? this.parseHref() : this.parseCommand()) as CommandNode;
+                // \textit{ b } spaces itself from its siblings, as appendElement does at top level
+                if (this.braceLeadingSpace && (text !== '' || children.length > 0) && !text.endsWith(' ')) {
+                    text += ' ';
+                }
                 if (text !== '') {
                     children.push(new TextNode(text));
                     text = '';
                 }
-                const node = (tok.type === TokenType.HREF ? this.parseHref() : this.parseCommand()) as CommandNode;
                 children.push(node);
                 value += commandSource(node);
+                spaceAfterCommand = this.braceTrailingSpace;
             } else {
                 if (tok.type === TokenType.LBRACE) {
                     braceCount++;
@@ -456,6 +471,24 @@ export class Parser {
         this.braceLeadingSpace = leadingSpace;
         this.braceTrailingSpace = trailingSpace;
         return { value, children };
+    }
+
+    /**
+     * True when peekToken opens an optional argument whose closing ']' is
+     * followed by a mandatory '{', as parseCommand expects. Rewinds the lexer.
+     */
+    private peekIsOptionalBeforeBrace(): boolean {
+        if (!this.peekTokenIs(TokenType.LBRACKET)) {
+            return false;
+        }
+        const state = this.lexer.saveState();
+        let tok = this.lexer.nextToken();
+        while (tok.type !== TokenType.RBRACKET && tok.type !== TokenType.RBRACE && tok.type !== TokenType.EOF) {
+            tok = this.lexer.nextToken();
+        }
+        const result = tok.type === TokenType.RBRACKET && this.lexer.nextToken().type === TokenType.LBRACE;
+        this.lexer.restoreState(state);
+        return result;
     }
 
     private readBraceContent(): string {

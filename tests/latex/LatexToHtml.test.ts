@@ -384,6 +384,15 @@ describe('nested formatting commands', () => {
         [String.raw`\textbf{a {\textit{b}} c}`, '<strong>a {<em>b</em>} c</strong>'],
         [String.raw`\textbf{go \href{https://x.io/?a=1&b=2}{\textit{here}} now}`, '<strong>go <a href="https://x.io/?a=1&amp;b=2"><em>here</em></a> now</strong>'],
         [String.raw`\href{https://e.com}{A \textbf{B}}`, '<a href="https://e.com">A <strong>B</strong></a>'],
+        // Optional argument before the mandatory brace
+        [String.raw`\textbf{\textit[opt]{b}}`, '<strong><em>b</em></strong>'],
+        [String.raw`\textbf{a \textit[o] {b} c}`, '<strong>a <em>b</em> c</strong>'],
+        // Spaces just inside a nested command's braces separate it from its siblings
+        [String.raw`\textbf{a\textit{ b }c}`, '<strong>a <em>b</em> c</strong>'],
+        [String.raw`\textbf{a \textit{ b } c}`, '<strong>a <em>b</em> c</strong>'],
+        [String.raw`\textbf{\textit{x}\textit{ y }\textit{z}}`, '<strong><em>x</em> <em>y</em> <em>z</em></strong>'],
+        [String.raw`\textbf{\textit{ b }}`, '<strong><em>b</em></strong>'],
+        [String.raw`\textbf{a\href{u}{ t }b}`, '<strong>a <a href="u">t</a> b</strong>'],
     ])('%s', (input, expected) => {
         expect(latexToHtmlBodyOnly(input)).toBe(expected);
         expect(parseLatex(input).errors).toEqual([]);
@@ -402,6 +411,11 @@ describe('nested formatting commands', () => {
         // Unsupported commands, or supported ones without a brace argument, stay literal
         [String.raw`\textbf{a \foo{b} c}`, '<strong>a \\foo{b} c</strong>'],
         [String.raw`\textbf{a \textit b}`, '<strong>a \\textit b</strong>'],
+        [String.raw`\textbf{\textit[o]}`, '<strong>\\textit[o]</strong>'],
+        [String.raw`\textbf{\textit[o}`, '<strong>\\textit[o</strong>'],
+        [String.raw`\textbf{\href[o]{u}{t}}`, '<strong>\\href[o]{u}{t}</strong>'],
+        // Spaces outside the inner braces are unchanged
+        [String.raw`\textbf{a\textit{b}c}`, '<strong>a<em>b</em>c</strong>'],
         [String.raw`\textbf{$x$}`, '<strong>$x$</strong>'],
     ])('%s keeps text, whitespace and literals', (input, expected) => {
         expect(latexToHtmlBodyOnly(input)).toBe(expected);
@@ -410,6 +424,8 @@ describe('nested formatting commands', () => {
     it('keeps the source text in CommandNode.value', () => {
         const doc = parseLatex(String.raw`\textbf{a \textit{b} \href{u}{c}}`).document;
         expect((doc.children[0] as CommandNode).value).toBe(String.raw`a \textit{b} \href{u}{c}`);
+        const withOptions = parseLatex(String.raw`\textbf{\textit[o]{b}}`).document;
+        expect((withOptions.children[0] as CommandNode).value).toBe(String.raw`\textit[o]{b}`);
     });
 
     it('stops at an unclosed group without consuming past EOF', () => {
