@@ -110,7 +110,7 @@ select {
     line-height: 1.6;
     tab-size: 4;
 }
-#editor:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+#editor:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 .editor-hint {
     display: none;
