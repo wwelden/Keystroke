@@ -248,6 +248,42 @@ describe('html Parser', () => {
   });
 
   it.each([
+    ['double-quoted', '<a href="https://example.com/a?b=1">', 'https://example.com/a?b=1'],
+    ['single-quoted', "<a href='https://example.com/a?b=1'>", 'https://example.com/a?b=1'],
+    ['unquoted', '<a href=https://example.com/a?b=1>', 'https://example.com/a?b=1'],
+    ['spaces around =', '<a href = "https://example.com">', 'https://example.com'],
+    ['uppercase name', '<a HREF="https://example.com">', 'https://example.com'],
+    ['other quote inside value', `<a href="it's" title='say "hi"'>`, "it's"],
+    ['after a bare attribute', '<a download href="https://example.com">', 'https://example.com'],
+    ['after a prefixed name', '<a data-href="wrong" href="https://example.com">', 'https://example.com'],
+    ['after a suffixed name', '<a hreflang="en" href="https://example.com">', 'https://example.com'],
+    ['inside another value', '<a title="href=wrong" href="https://example.com">', 'https://example.com'],
+    ['only a prefixed name', '<a data-href="wrong">', ''],
+    ['bare attribute', '<a href>', ''],
+    ['first occurrence wins', '<a href="first" href="second">', 'first'],
+  ])('extracts the href attribute: %s', (_label, literal, expected) => {
+    const p = new Parser(new Lexer(''));
+    p['curToken'] = new Token(TokenType.A, literal);
+    expect(p['extractAttribute']('href')).toBe(expected);
+  });
+
+  it.each([
+    ['single-quoted', "<a href='https://example.com'>Link</a>"],
+    ['unquoted', '<a href=https://example.com>Link</a>'],
+    ['after a prefixed name', '<a data-href="wrong" href="https://example.com">Link</a>'],
+  ])('parses a link with a %s href', (_label, html) => {
+    const { doc } = parse(html);
+    const link = doc.children[0] as LinkNode;
+    expect(link).toBeInstanceOf(LinkNode);
+    expect(link.url).toBe('https://example.com');
+  });
+
+  it('extracts the language from a single-quoted class, ignoring prefixed names', () => {
+    const { doc } = parse(`<pre data-class="language-x" class='language-go'>f</pre>`);
+    expect((doc.children[0] as PreNode).language).toBe('go');
+  });
+
+  it.each([
     ['language-go', 'go'],
     ['language-python', 'python'],
     ['language-javascript', 'javascript'],

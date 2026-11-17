@@ -331,15 +331,65 @@ export class Parser {
     }
 
     private extractAttribute(attrName: string): string {
-        // Simple attribute extraction from the raw tag literal; only handles name="value"
-        const tokenLiteral = this.curToken.literal;
-        const attrPattern = attrName + '="';
-        const idx = tokenLiteral.indexOf(attrPattern);
-        if (idx !== -1) {
-            const start = idx + attrPattern.length;
-            const end = tokenLiteral.indexOf('"', start);
-            if (end !== -1) {
-                return tokenLiteral.slice(start, end);
+        // Scan the raw tag literal attribute by attribute, supporting
+        // name="value", name='value', name=value and bare name forms.
+        // Names are matched whole and case-insensitively; the first
+        // occurrence wins, as in HTML.
+        const literal = this.curToken.literal;
+        const target = attrName.toLowerCase();
+        const isSpace = (c: string) => c === ' ' || c === '\t' || c === '\n' || c === '\r' || c === '\f';
+        const len = literal.length;
+
+        // Skip '<' and the tag name
+        let i = literal.startsWith('<') ? 1 : 0;
+        while (i < len && !isSpace(literal[i]) && literal[i] !== '/' && literal[i] !== '>') {
+            i++;
+        }
+
+        while (i < len) {
+            while (i < len && (isSpace(literal[i]) || literal[i] === '/')) {
+                i++;
+            }
+            if (i >= len || literal[i] === '>') {
+                break;
+            }
+
+            const nameStart = i;
+            // The first character may be '='; per HTML it is then part of the name
+            i++;
+            while (i < len && !isSpace(literal[i]) && literal[i] !== '/' && literal[i] !== '>' && literal[i] !== '=') {
+                i++;
+            }
+            const name = literal.slice(nameStart, i).toLowerCase();
+
+            while (i < len && isSpace(literal[i])) {
+                i++;
+            }
+
+            let value = "";
+            if (literal[i] === '=') {
+                i++;
+                while (i < len && isSpace(literal[i])) {
+                    i++;
+                }
+                const quote = literal[i];
+                if (quote === '"' || quote === "'") {
+                    const end = literal.indexOf(quote, i + 1);
+                    // Unterminated quote: take the rest, minus the tag's closing '>'
+                    const stop = end !== -1 ? end : (literal.endsWith('>') ? len - 1 : len);
+                    value = literal.slice(i + 1, stop);
+                    i = stop + 1;
+                } else {
+                    const valueStart = i;
+                    while (i < len && !isSpace(literal[i]) && literal[i] !== '>') {
+                        i++;
+                    }
+                    value = literal.slice(valueStart, i);
+                }
+            }
+
+            if (name === target) {
+                return value;
             }
         }
         return "";

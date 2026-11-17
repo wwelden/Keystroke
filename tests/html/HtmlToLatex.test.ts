@@ -40,6 +40,7 @@ describe('htmlToLatex', () => {
 
   it('converts a link', () => {
     expect(htmlToLatexBodyOnly('<a href="https://example.com">Link text</a>')).toContain('\\href{');
+    expect(htmlToLatexBodyOnly("<a href='https://example.com'>Link</a>")).toContain('\\href{https://example.com}{Link}');
   });
 
   it('converts a list', () => {
