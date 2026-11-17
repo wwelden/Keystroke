@@ -360,8 +360,8 @@ export class TableNode extends HTMLNode {
             return "";
         }
 
-        // Count columns from first row
-        const colCount = this.rows[0].cells.length;
+        // One column per cell of the widest row
+        const colCount = Math.max(...this.rows.map(row => row.cells.length));
 
         let result = "\\begin{tabular}{" + "l".repeat(colCount) + "}\n";
         result += "\\toprule\n";

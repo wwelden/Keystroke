@@ -1,6 +1,6 @@
 # HTML to LaTeX Converter
 
-TypeScript port of the Go `keystroke/html` package. Converts HTML to LaTeX with a
+Converter originally ported from the Go `keystroke/html` package. Converts HTML to LaTeX with a
 hand-written lexer and parser (no DOM, no runtime dependencies), so it runs in the
 browser as well as in Node.
 
@@ -103,5 +103,10 @@ linkToHref("url", "text");         // \href{url}{text}
 - The parser is forgiving of malformed HTML and never throws.
 - Table columns default to left-aligned (`l`).
 - Code blocks take a language from `class="language-xxx"`.
-- This is a faithful port, so it keeps the Go version's known limitations. See
-  `tests/html/GoParity.test.ts` for real outputs.
+- Text keeps its spaces: whitespace runs collapse to one space, except inside `<pre>`.
+- Tags with no LaTeX mapping (`<div>`, `<span>`, `<thead>`, `<tbody>`, `<img>`, unknown
+  tags, comments) are dropped and their content kept.
+- Ported from the Go `keystroke/html` package, but byte-for-byte parity was intentionally
+  dropped (#24): the Go version lost spaces between words, sibling list items, table
+  rows and cells, and words after inline tags. See `tests/html/GoParity.test.ts` for
+  real outputs.

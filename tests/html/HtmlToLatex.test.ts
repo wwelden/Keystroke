@@ -108,3 +108,52 @@ describe('htmlToLatex', () => {
     expect(Array.isArray(errors)).toBe(true);
   });
 });
+
+// Regression tests for #24: conversion used to drop spaces, sibling elements and
+// words after inline tags.
+describe('htmlToLatexBodyOnly preserves content', () => {
+  it.each([
+    ['<p>Hello world</p>', 'Hello world'],
+    ['<p>a <b>b</b> c d</p>', 'a \\textbf{b} c d'],
+    ['<ul><li>A</li><li>B</li><li>C</li></ul>', '\\begin{itemize}\n\\item A\n\\item B\n\\item C\n\\end{itemize}'],
+    [
+      '<table><tr><td>1</td><td>2</td></tr><tr><td>3</td><td>4</td></tr></table>',
+      '\\begin{tabular}{ll}\n\\toprule\n1 & 2 \\\\\n\\midrule\n3 & 4 \\\\\n\\bottomrule\n\\end{tabular}',
+    ],
+    ['<p>one\n   two\tthree</p>', 'one two three'],
+    ['<p>a <span>b</span> c</p>', 'a b c'],
+    ['<p>x<!-- note -->y</p>', 'xy'],
+    ['<p>a&nbsp;b</p>', 'a\u00A0b'],
+    ['<p>AT&T rocks</p>', 'AT\\&T rocks'],
+  ])('%j -> %j', (input, expected) => {
+    expect(htmlToLatexBodyOnly(input)).toBe(expected);
+  });
+
+  it('keeps whitespace inside <pre>', () => {
+    expect(htmlToLatexBodyOnly('<pre>a\n  b</pre>')).toBe('\\begin{lstlisting}\na\n  b\n\\end{lstlisting}');
+  });
+
+  it('keeps nested lists and the items after them', () => {
+    expect(htmlToLatexBodyOnly('<ul><li>A<ul><li>a1</li><li>a2</li></ul></li><li>B</li></ul>')).toBe(
+      '\\begin{itemize}\n\\item A\\begin{itemize}\n\\item a1\n\\item a2\n\\end{itemize}\n\n\\item B\n\\end{itemize}',
+    );
+  });
+
+  it('reads rows through <thead> and <tbody>', () => {
+    expect(
+      htmlToLatexBodyOnly('<table><thead><tr><th>H</th><th>I</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>'),
+    ).toBe('\\begin{tabular}{ll}\n\\toprule\n\\textbf{H} & \\textbf{I} \\\\\n\\midrule\n1 & 2 \\\\\n\\bottomrule\n\\end{tabular}');
+  });
+
+  it('sizes the tabular to its widest row', () => {
+    expect(htmlToLatexBodyOnly('<table><tr><td>1</td></tr><tr><td>2</td><td>3</td></tr></table>')).toContain(
+      '\\begin{tabular}{ll}',
+    );
+  });
+
+  it('leaves a mismatched closing tag for the enclosing element', () => {
+    expect(htmlToLatexBodyOnly('<ul><li>a<b>b</li><li>c</li></ul>')).toBe(
+      '\\begin{itemize}\n\\item a\\textbf{b}\n\\item c\n\\end{itemize}',
+    );
+  });
+});

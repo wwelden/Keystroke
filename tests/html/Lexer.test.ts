@@ -46,11 +46,26 @@ describe('html Lexer', () => {
       expect(tok.literal).toBe('<a href="https://example.com" class="link">');
     });
 
-    it('lexes text one word at a time', () => {
-      const l = new Lexer('Hello World');
+    it('lexes a text run as one token, keeping whitespace', () => {
+      const l = new Lexer(' Hello  World\n<b>');
       const tok = l.nextToken();
       expect(tok.type).toBe(TokenType.TEXT);
-      expect(tok.literal).toBe('Hello');
+      expect(tok.literal).toBe(' Hello  World\n');
+      expect(l.nextToken().type).toBe(TokenType.B);
+    });
+
+    it('decodes entities inside a text run', () => {
+      const l = new Lexer('a &amp; b &lt;c&gt;');
+      expect(l.nextToken().literal).toBe('a & b <c>');
+      expect(l.nextToken().type).toBe(TokenType.EOF);
+    });
+
+    it('lexes tags without a LaTeX mapping as TAG_OPEN / TAG_CLOSE', () => {
+      const l = new Lexer('<section>x</section>');
+      expect(l.nextToken()).toMatchObject({ type: TokenType.TAG_OPEN, literal: '<section>' });
+      expect(l.nextToken()).toMatchObject({ type: TokenType.TEXT, literal: 'x' });
+      expect(l.nextToken()).toMatchObject({ type: TokenType.TAG_CLOSE, literal: '</section>' });
+      expect(l.nextToken().type).toBe(TokenType.EOF);
     });
 
     it('lexes a sequence of tags and text', () => {
@@ -177,14 +192,6 @@ describe('html Lexer', () => {
     ['@', false],
   ])('isDigit(%j) is %s', (ch, expected) => {
     expect(isDigit(ch)).toBe(expected);
-  });
-
-  it.each([
-    ['"hello world"', '"', 'hello world'],
-    ["'single quotes'", "'", 'single quotes'],
-    ['"unclosed', '"', 'unclosed'],
-  ])('readString(%j)', (input, delimiter, expected) => {
-    expect(new Lexer(input)['readString'](delimiter)).toBe(expected);
   });
 
   it('peekChar does not advance', () => {
