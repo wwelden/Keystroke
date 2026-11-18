@@ -343,10 +343,19 @@ export class Parser {
             return new TextNode(textToken, '[' + text + ']');
         }
 
+        // Balanced parentheses belong to the URL (as in CommonMark), so
+        // `[x](https://example.com/a(b))` keeps `a(b)`; the first `)` that
+        // closes no `(` ends the destination.
         let url = '';
+        let depth = 0;
         this.nextToken(); // Move past (
-        while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF) &&
-            !this.currentTokenIs(TokenType.NEWLINE)) {
+        while (!(this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && depth === 0) &&
+            !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
+            if (this.currentTokenIs(TokenType.LEFT_PARENTHESIS)) {
+                depth++;
+            } else if (this.currentTokenIs(TokenType.RIGHT_PARENTHESIS)) {
+                depth--;
+            }
             url += this.currentToken.literal;
             this.nextToken();
         }
