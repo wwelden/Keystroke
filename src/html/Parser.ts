@@ -415,8 +415,38 @@ export class Parser {
 
     // A closing tag for an element being parsed. It ends the current element
     // (closing any unclosed ones inside it); a stray closing tag is skipped.
+    // An <li> opening tag also ends an open item, since its end tag is optional.
     private atClosingTag(): boolean {
+        if (this.curTokenIs(TokenType.LI) && !this.isClosingTag()) {
+            return this.inOpenListItem();
+        }
         return this.isClosingTag() && !this.isTransparentTag() && this.openElements.includes(this.curToken.type);
+    }
+
+    // Whether an <li> start tag here implicitly closes an open <li>, as in HTML:
+    // only through formatting elements, not past a list, table or other block.
+    private inOpenListItem(): boolean {
+        for (let i = this.openElements.length - 1; i >= 0; i--) {
+            switch (this.openElements[i]) {
+                case TokenType.LI:
+                    return true;
+                case TokenType.P:
+                case TokenType.B:
+                case TokenType.STRONG:
+                case TokenType.I:
+                case TokenType.EM:
+                case TokenType.U:
+                case TokenType.S:
+                case TokenType.SUP:
+                case TokenType.SUB:
+                case TokenType.A:
+                case TokenType.CODE:
+                    continue;
+                default:
+                    return false;
+            }
+        }
+        return false;
     }
 
     // Records the current opening tag as open and skips it
