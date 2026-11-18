@@ -496,18 +496,19 @@ export class Parser {
      * Reads the operand after a ^ or ~ (`marker`) and returns its text. Leaves
      * currentToken on the first token after the script. The operand is one of:
      * - a parenthesized group: `x^(a+b)`
-     * - the paired form's contents: `x^2^`, `H~2~O`
      * - an optional sign, then a number or a run of letters and digits:
      *   `x^2`, `x^-2`, `x^2.5`, `y~ij`
-     * In the last form the operand ends where that pattern does, so `x^2+y`
-     * is `x<sup>2</sup>+y`; the rest of the text token stays for the caller.
+     * The operand ends where that pattern does, so `x^2+y` is
+     * `x<sup>2</sup>+y` and `x^2+y^2` has two scripts; the rest of the text
+     * token stays for the caller. A marker right after the operand closes the
+     * paired form: `x^2^`, `H~2~O`.
      */
     private parseScriptOperand(marker: TokenType): string {
         let text = '';
         this.nextToken(); // Move past ^ or ~
 
         if (this.currentTokenIs(TokenType.TEXT)) {
-            text = this.readUnbracketedOperand(marker);
+            text = this.readUnbracketedOperand();
         } else if (this.currentTokenIs(TokenType.LIST_ITEM)) {
             text = '-';
             this.nextToken();
@@ -538,25 +539,14 @@ export class Parser {
     }
 
     // currentToken is TEXT. See parseScriptOperand.
-    private readUnbracketedOperand(marker: TokenType): string {
+    private readUnbracketedOperand(): string {
         const literal = this.currentToken.literal;
-
-        // Paired form: the whole token is the script, as before.
-        if (this.peekToken.type === marker) {
-            this.nextToken();
-            return literal;
-        }
 
         // The lexer splits a sign from the number after it (`-2` lexes as
         // `-`, `2`), so join a lone sign with the following text token.
         if ((literal === '-' || literal === '+') && this.peekToken.type === TokenType.TEXT &&
             OPERAND_START.test(this.peekToken.literal)) {
             this.nextToken();
-            if (this.peekToken.type === marker) {
-                const paired = literal + this.currentToken.literal;
-                this.nextToken();
-                return paired;
-            }
             return literal + this.takeOperandPrefix(this.currentToken.literal);
         }
 

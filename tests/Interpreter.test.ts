@@ -334,7 +334,11 @@ describe('Markdown Interpreter', () => {
             ['$x^10$', math('x<sup>10</sup>')],
             ['$x^-2^$', math('x<sup>-2</sup>')],
             ['x^2+y', 'x<sup>2</sup>+y'],
-            ['x^a+b^', 'x<sup>a+b</sup>'],
+            ['$x^2+y^2$', math('x<sup>2</sup>+y<sup>2</sup>')],
+            ['$x^2+y^2=z^2$', math('x<sup>2</sup>+y<sup>2</sup>=z<sup>2</sup>')],
+            ['$e^x+e^y$', math('e<sup>x</sup>+e<sup>y</sup>')],
+            ['$x~i+y~j$', math('x<sub>i</sub>+y<sub>j</sub>')],
+            ['$x^-2+y^2$', math('x<sup>-2</sup>+y<sup>2</sup>')],
             ['$x^(a+b)$', math('x<sup>(a+b)</sup>')],
         ])('%j', (input, expected) => {
             expect(processMarkdown(input)).toBe(expected);
