@@ -252,6 +252,13 @@ export class Parser {
             options = this.readBracketContent();
         }
 
+        // tabular's required column specification ({ll}, {|c|c|}) is layout,
+        // not content; consume it so it doesn't land in the first cell
+        if (envName === 'tabular' && this.peekTokenIs(TokenType.LBRACE)) {
+            this.nextToken();
+            this.readBraceContent();
+        }
+
         const env = new EnvironmentNode(envType, envName, options);
 
         if (envName === 'lstlisting') {

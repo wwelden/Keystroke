@@ -245,8 +245,8 @@ describe('body output', () => {
         ["\\begin{quote}Quoted text\\end{quote}", "<blockquote>\nQuoted text</blockquote>", []],
         ["\\begin{lstlisting}[language=go]\nfunc main() {}\n\\end{lstlisting}", "<pre><code class=\"language-go\">func main() {}</code></pre>", []],
         ["\\begin{lstlisting}\ncode here\n\\end{lstlisting}", "<pre><code>code here</code></pre>", []],
-        ["\\begin{tabular}{ll}Cell1 & Cell2 \\\\ Cell3 & Cell4 \\\\\\end{tabular}", "<table>\n<tr><td>{ll}Cell1</td><td>Cell2</td></tr>\n<tr><td>Cell3</td><td>Cell4</td></tr>\n</table>", []],
-        ["\\begin{tabular}{|c|c|}\\toprule A & B \\\\ \\midrule 1 & 2 \\\\ \\bottomrule\\end{tabular}", "<table>\n<tr><td>{|c|c|} A</td><td>B</td></tr>\n<tr><td>1</td><td>2</td></tr>\n</table>", []],
+        ["\\begin{tabular}{ll}Cell1 & Cell2 \\\\ Cell3 & Cell4 \\\\\\end{tabular}", "<table>\n<tr><td>Cell1</td><td>Cell2</td></tr>\n<tr><td>Cell3</td><td>Cell4</td></tr>\n</table>", []],
+        ["\\begin{tabular}{|c|c|}\\toprule A & B \\\\ \\midrule 1 & 2 \\\\ \\bottomrule\\end{tabular}", "<table>\n<tr><td>A</td><td>B</td></tr>\n<tr><td>1</td><td>2</td></tr>\n</table>", []],
         ["\\begin{custom}inside\\end{custom}", "<div class=\"custom\">\ninside</div>", []],
         ["\\begin{foo\"bar}x\\end{foo\"bar}", "<div class=\"foo\"bar\">\nx</div>", []],
         ["\\href{https://example.com}{Link text}", "<a href=\"https://example.com\">Link text</a>", []],
@@ -272,7 +272,7 @@ describe('body output', () => {
         ["\\end{itemize} stray", "\\end{itemize} stray", []],
         ["\\begin x", "x", ["expected next token to be LBRACE, got TEXT instead"]],
         ["\\begin{quote}\\section{In}\\textbf{b}\\end{quote}", "<blockquote>\n<h1>In</h1>\n<strong>b</strong></blockquote>", []],
-        ["\\begin{tabular}{l}\\textbf{H} & $x$ \\\\\\end{tabular}", "<table>\n<tr><td>{l}<strong>H</strong></td><td><span class=\"math-inline\"><code>x</code></span></td></tr>\n</table>", []],
+        ["\\begin{tabular}{l}\\textbf{H} & $x$ \\\\\\end{tabular}", "<table>\n<tr><td><strong>H</strong></td><td><span class=\"math-inline\"><code>x</code></span></td></tr>\n</table>", []],
         ["{group} [opt]", "{group} [opt]", []],
         ["\\foo\\bar baz", "\\foo\\bar baz", []],
         ["\\textit{nested {braces} here}", "<em>nested {braces} here</em>", []],
@@ -363,7 +363,7 @@ describe('LaTeX to HTML content loss (#25)', () => {
 
     it('does not emit an empty row after a final \\\\ and newline', () => {
         expect(latexToHtmlBodyOnly('\\begin{tabular}{c}\na \\\\\nb \\\\\n\\end{tabular}'))
-            .toBe('<table>\n<tr><td>{c} a</td></tr>\n<tr><td>b</td></tr>\n</table>');
+            .toBe('<table>\n<tr><td>a</td></tr>\n<tr><td>b</td></tr>\n</table>');
     });
 
     it('keeps spaces inside optional arguments', () => {
@@ -373,7 +373,7 @@ describe('LaTeX to HTML content loss (#25)', () => {
 
     it('keeps the \\end of a table whose last row has no \\\\', () => {
         expect(latexToHtmlBodyOnly('\\begin{tabular}{l}A & B\\end{tabular} x'))
-            .toBe('<table>\n<tr><td>{l}A</td><td>B</td></tr>\n</table>\nx');
+            .toBe('<table>\n<tr><td>A</td><td>B</td></tr>\n</table>\nx');
     });
 });
 
@@ -501,5 +501,17 @@ describe('tabular booktabs rules (#71)', () => {
         expect(html).not.toMatch(/rule|\[/);
         expect(html.match(/<tr>/g)).toHaveLength(2);
         expect(html).toContain('<tr><td>1</td><td>2</td></tr>');
+    });
+});
+
+// Issue #65: tabular's required column specification is layout, not content,
+// so it must not appear in the first cell.
+describe('tabular column specification (#65)', () => {
+    it.each([
+        [String.raw`\begin{tabular}{ll}A&B\\\end{tabular}`],
+        [String.raw`\begin{tabular}[t]{|c|c|}A & B \\\end{tabular}`],
+        [String.raw`\begin{tabular}{p{2cm}l}A & B \\\end{tabular}`],
+    ])('drops the spec from %s', (input) => {
+        expect(latexToHtmlBodyOnly(input)).toBe('<table>\n<tr><td>A</td><td>B</td></tr>\n</table>');
     });
 });
