@@ -254,4 +254,44 @@ describe('latex Parser', () => {
         expect(p['expectPeek'](TokenType.RBRACE)).toBe(false);
         expect(p.getErrors().length).toBeGreaterThan(0);
     });
+
+    describe('unterminated constructs (#66)', () => {
+        function errorsFor(input: string): string[] {
+            const p = newParser(input);
+            p.parseDocument();
+            return p.getErrors();
+        }
+
+        it('reports unterminated inline and display math', () => {
+            expect(errorsFor('$unfinished')).toEqual(['unterminated inline math: missing closing $']);
+            expect(errorsFor('$$x')).toEqual(['unterminated display math: missing closing $$']);
+        });
+
+        it('reports an unterminated brace group', () => {
+            expect(errorsFor('\\textbf{unfinished')).toEqual(['unterminated group: missing closing }']);
+            expect(errorsFor('\\section{Title')).toEqual(['unterminated group: missing closing }']);
+        });
+
+        it('reports an unterminated optional argument', () => {
+            expect(errorsFor('\\textbf[a')).toContain('unterminated optional argument: missing closing ]');
+        });
+
+        it('reports a mismatched \\end and the environment it leaves open', () => {
+            expect(errorsFor('\\begin{quote}X\\end{itemize}')).toEqual([
+                '\\end{itemize} does not match \\begin{quote}',
+                'unterminated environment: missing \\end{quote}',
+            ]);
+        });
+
+        it('reports an environment missing its \\end', () => {
+            expect(errorsFor('\\begin{quote}X')).toEqual(['unterminated environment: missing \\end{quote}']);
+            expect(errorsFor('\\begin{lstlisting}\ncode')).toEqual(['unterminated environment: missing \\end{lstlisting}']);
+        });
+
+        it('reports nothing for terminated constructs', () => {
+            const input = 'a $x$ $$y$$ \\textbf[o]{b} \\begin{itemize}\\item i\\end{itemize}\n' +
+                '\\begin{lstlisting}\ncode\n\\end{lstlisting}\n\\begin{tabular}{cc}a & b \\\\\n\\end{tabular}';
+            expect(errorsFor(input)).toEqual([]);
+        });
+    });
 });

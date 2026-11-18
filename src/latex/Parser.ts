@@ -29,6 +29,8 @@ const NESTED_COMMANDS: ReadonlySet<TokenType> = new Set([
     TokenType.HREF,
 ]);
 
+const UNTERMINATED_GROUP = 'unterminated group: missing closing }';
+
 /** Rebuilds the LaTeX source of a parsed nested command for CommandNode.value. */
 function commandSource(node: CommandNode): string {
     if (node.type === TokenType.HREF) {
@@ -234,15 +236,18 @@ export class Parser {
         // Parse environment content until \end{environment}
         this.nextToken();
         let pendingSpace = false;
+        let closed = false;
         while (!this.curTokenIs(TokenType.EOF)) {
             if (this.curToken.type === TokenType.END) {
                 // Check if this is the matching \end
                 if (this.expectPeek(TokenType.LBRACE)) {
                     const endEnvName = this.readBraceContent();
                     if (endEnvName === envName) {
+                        closed = true;
                         break;
                     }
                     // Drop a stray \end{other} instead of rendering it as text
+                    this.errors.push(`\\end{${endEnvName}} does not match \\begin{${envName}}`);
                     this.nextToken();
                     continue;
                 }
@@ -254,6 +259,9 @@ export class Parser {
             if (!this.stoppedOnTerminator(start)) {
                 this.nextToken();
             }
+        }
+        if (!closed) {
+            this.errors.push(`unterminated environment: missing \\end{${envName}}`);
         }
 
         return env;
@@ -267,7 +275,11 @@ export class Parser {
     private parseVerbatimContent(env: EnvironmentNode): void {
         // curToken is the '}' or ']' that closes the \begin line
         const start = this.curToken.position + this.curToken.literal.length;
-        const raw = this.lexer.readVerbatim(start, '\\end{' + env.environment + '}');
+        const terminator = '\\end{' + env.environment + '}';
+        if (!this.lexer.containsFrom(start, terminator)) {
+            this.errors.push(`unterminated environment: missing ${terminator}`);
+        }
+        const raw = this.lexer.readVerbatim(start, terminator);
         const content = raw.replace(/^[ \t]*\r?\n/, '').replace(/\r?\n[ \t]*$/, '');
         if (content !== '') {
             env.children.push(new TextNode(content));
@@ -374,6 +386,9 @@ export class Parser {
             content += this.curToken.literal;
             this.nextToken();
         }
+        if (this.curTokenIs(TokenType.EOF)) {
+            this.errors.push(`unterminated ${isDisplay ? 'display' : 'inline'} math: missing closing ${isDisplay ? '$$' : '$'}`);
+        }
 
         return new MathNode(content, isDisplay);
     }
@@ -470,6 +485,9 @@ export class Parser {
             this.nextToken();
         }
 
+        if (this.curTokenIs(TokenType.EOF)) {
+            this.errors.push(UNTERMINATED_GROUP);
+        }
         if (text !== '') {
             children.push(new TextNode(text));
         }
@@ -527,6 +545,9 @@ export class Parser {
                 this.nextToken();
             }
         }
+        if (braceCount > 0) {
+            this.errors.push(UNTERMINATED_GROUP);
+        }
 
         return content;
     }
@@ -545,6 +566,10 @@ export class Parser {
             }
             content += this.curToken.literal;
             this.nextToken();
+        }
+
+        if (this.curTokenIs(TokenType.EOF)) {
+            this.errors.push('unterminated optional argument: missing closing ]');
         }
 
         // The closing bracket is left as curToken for the caller
