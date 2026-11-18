@@ -77,7 +77,11 @@ export class HTMLNode implements Node {
         }
     }
 
+    // Children win; a node built with text and no children renders that text
     protected renderChildrenLaTeX(): string {
+        if (this.children.length === 0) {
+            return escapeLaTeX(this.content);
+        }
         return this.children.map(child => child.renderLaTeX()).join("");
     }
 }
@@ -176,20 +180,24 @@ export class TextNode extends HTMLNode {
     }
 
     renderLaTeX(): string {
-        // Escape special LaTeX characters.
-        // Order matters: backslash first to avoid double-escaping.
-        return this.text
-            .split("\\").join("\\textbackslash ")
-            .split("{").join("\\{")
-            .split("}").join("\\}")
-            .split("$").join("\\$")
-            .split("&").join("\\&")
-            .split("%").join("\\%")
-            .split("#").join("\\#")
-            .split("^").join("\\textasciicircum ")
-            .split("_").join("\\_")
-            .split("~").join("\\textasciitilde ");
+        return escapeLaTeX(this.text);
     }
+}
+
+// Escape special LaTeX characters.
+// Order matters: backslash first to avoid double-escaping.
+function escapeLaTeX(text: string): string {
+    return text
+        .split("\\").join("\\textbackslash ")
+        .split("{").join("\\{")
+        .split("}").join("\\}")
+        .split("$").join("\\$")
+        .split("&").join("\\&")
+        .split("%").join("\\%")
+        .split("#").join("\\#")
+        .split("^").join("\\textasciicircum ")
+        .split("_").join("\\_")
+        .split("~").join("\\textasciitilde ");
 }
 
 function formattingTokenType(formatType: string): TokenType {
