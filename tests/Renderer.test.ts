@@ -120,6 +120,12 @@ describe('Renderer', () => {
                 expect(compile('Use `a_b` here')).toBe('Use <code>a_b</code> here');
             });
 
+            it('escapes HTML inside inline code', () => {
+                expect(compile('Try `<img src=x onerror=alert(1)>` and `a & b`')).toBe(
+                    'Try <code>&lt;img src=x onerror=alert(1)&gt;</code> and <code>a &amp; b</code>'
+                );
+            });
+
             it('renders the fenced block from issue #22 verbatim', () => {
                 expect(compile('```\nconst a = 1;\nconst b = 2;\n```')).toBe(
                     '<pre><code>const a = 1;\nconst b = 2;\n</code></pre>\n'
