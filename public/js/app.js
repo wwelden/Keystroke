@@ -462,6 +462,10 @@ $e^(i*pi) + 1 = 0$
         insertText(before + inner + after);
         editor.setSelectionRange(start + before.length, start + before.length + inner.length);
     });
+    // Safari and Firefox on macOS don't focus a button on click, so pressing an item
+    // would blur the focused one with no relatedTarget and close the menu before the
+    // click lands. Keeping focus where it is on mousedown stops that.
+    cheat.addEventListener('mousedown', e => e.preventDefault());
     cheat.addEventListener('focusout', e => {
         if (isOpen('cheat') && !cheat.contains(e.relatedTarget) && e.relatedTarget !== cheatToggle) setOpen('cheat', false);
     });
