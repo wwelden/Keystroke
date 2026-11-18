@@ -87,6 +87,46 @@ $e^(i*pi) + 1 = 0$
         return out;
     }
 
+    // Long streams are shown a page at a time so typing stays responsive.
+    // When tokens are hidden the panel says so and offers to show the rest.
+    // Editing the text goes back to the first page.
+    const TOKEN_PAGE = 5000;
+    let tokenLimit = TOKEN_PAGE;
+    let tokenSource = null;
+
+    function renderTokens(md) {
+        if (md !== tokenSource) {
+            tokenSource = md;
+            tokenLimit = TOKEN_PAGE;
+        }
+        const tokens = Keystroke.tokenize(md);
+        const shown = Math.min(tokens.length, tokenLimit);
+        let html = tokens.slice(0, shown).map(t =>
+            `<span class="token" title="${escapeHtml(JSON.stringify(t.literal))}">` +
+            `<b>${escapeHtml(t.type)}</b>${t.literal.trim() ? ' ' + escapeHtml(t.literal) : ''}</span>`
+        ).join('');
+        if (shown < tokens.length) {
+            const total = tokens.length.toLocaleString();
+            const note = `Showing the first ${shown.toLocaleString()} of ${total} tokens.`;
+            const more = Math.min(TOKEN_PAGE, tokens.length - shown).toLocaleString();
+            html = `<p class="token-note">${note} The rest are hidden below.</p>` + html +
+                `<p class="token-note">${note} ` +
+                `<button type="button" data-tokens="more">Show ${more} more</button> ` +
+                `<button type="button" data-tokens="all">Show all ${total}</button></p>`;
+        }
+        tokensOut.innerHTML = html;
+    }
+
+    tokensOut.addEventListener('click', e => {
+        const button = e.target.closest('button[data-tokens]');
+        if (!button) return;
+        const which = button.dataset.tokens;
+        tokenLimit = which === 'all' ? Infinity : tokenLimit + TOKEN_PAGE;
+        renderTokens(tokenSource);
+        // The clicked button was replaced; keep focus nearby for keyboard users.
+        (tokensOut.querySelector(`button[data-tokens="${which}"]`) || tokensOut).focus();
+    });
+
     function update() {
         const md = editor.value;
         const t0 = performance.now();
@@ -104,11 +144,7 @@ $e^(i*pi) + 1 = 0$
         } else if (activeView === 'html') {
             htmlOut.textContent = html;
         } else if (activeView === 'tokens') {
-            const tokens = Keystroke.tokenize(md);
-            tokensOut.innerHTML = tokens.map(t =>
-                `<span class="token" title="${escapeHtml(JSON.stringify(t.literal))}">` +
-                `<b>${escapeHtml(t.type)}</b>${t.literal.trim() ? ' ' + escapeHtml(t.literal) : ''}</span>`
-            ).join('');
+            renderTokens(md);
         } else if (activeView === 'ast') {
             astOut.textContent = JSON.stringify(astToPlain(Keystroke.parse(md)), null, 2);
         }

@@ -147,6 +147,24 @@ select {
     white-space: pre;
 }
 .token b { color: var(--accent); font-weight: 600; font-size: .72rem; }
+.token-note {
+    flex-basis: 100%;
+    margin: .25rem 0;
+    color: var(--muted);
+    white-space: normal;
+}
+.token-note button {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .2rem .55rem;
+    margin-left: .25rem;
+    font: inherit;
+    cursor: pointer;
+}
+.token-note button:hover { border-color: var(--accent); }
+.token-note button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 .site-footer {
     padding: .6rem 1.5rem 1rem;
