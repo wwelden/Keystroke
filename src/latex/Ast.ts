@@ -190,6 +190,7 @@ export class EnvironmentNode extends LaTeXNode {
                 return '<ol>\n' + content + '</ol>\n';
             case 'quote':
                 return '<blockquote>\n' + content + '</blockquote>\n';
+            case 'verbatim': // no options, so it renders as a plain listing
             case 'lstlisting':
                 if (this.options !== '') {
                     const lang = extractLanguage(this.options);

@@ -349,6 +349,13 @@ describe('LaTeX to HTML content loss (#25)', () => {
         );
     });
 
+    it('renders verbatim literally, keeping % and markup as text (#69)', () => {
+        const input = '\\begin{verbatim}[opt] abc%note\n  \\textbf{x} $a & b$ <i>\n\\end{verbatim} after';
+        expect(latexToHtmlBodyOnly(input)).toBe(
+            '<pre><code>[opt] abc%note\n  \\textbf{x} $a &amp; b$ &lt;i&gt;</code></pre>\nafter',
+        );
+    });
+
     it('renders every \\item inside its own <li>', () => {
         expect(latexToHtmlBodyOnly('\\begin{itemize}\n\\item One two\n\\item Three\n\\end{itemize}'))
             .toBe('<ul>\n<li>One two</li>\n<li>Three</li>\n</ul>');
