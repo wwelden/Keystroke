@@ -60,8 +60,15 @@ describe('Renderer', () => {
             const unchecked = new ChecklistNode(uncheckedToken, 'Todo');
             const checked = new ChecklistCheckedNode(checkedToken, 'Done');
 
-            expect(renderer.render(unchecked)).toBe('<li><input type="checkbox">Todo</li>\n');
-            expect(renderer.render(checked)).toBe('<li><input type="checkbox" checked>Done</li>\n');
+            expect(renderer.render(unchecked)).toBe('<li><label><input type="checkbox">Todo</label></li>\n');
+            expect(renderer.render(checked)).toBe('<li><label><input type="checkbox" checked>Done</label></li>\n');
+        });
+
+        it('should wrap the checkbox and its task text in one label (#59)', () => {
+            const item = new ChecklistNode(new Token(TokenType.CHECKLIST, '- [ ]'), '');
+            item.children.push(new TextNode(new Token(TokenType.TEXT, 'Review docs'), 'Review docs'));
+
+            expect(renderer.render(item)).toMatch(/<label><input type="checkbox">Review docs<\/label>/);
         });
     });
 

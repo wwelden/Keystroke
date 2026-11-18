@@ -16,10 +16,11 @@ export class Renderer {
                 return `<ul>${this.renderChildren(node)}</ul>\n`;
             case TokenType.LIST_ITEM:
                 return `<li>${this.renderChildren(node)}</li>\n`;
+            // The label wraps the box and its text so the text names the box.
             case TokenType.CHECKLIST:
-                return `<li><input type="checkbox">${this.renderChildren(node)}</li>\n`;
+                return `<li><label><input type="checkbox">${this.renderChildren(node)}</label></li>\n`;
             case TokenType.CHECKLIST_CHECKED:
-                return `<li><input type="checkbox" checked>${this.renderChildren(node)}</li>\n`;
+                return `<li><label><input type="checkbox" checked>${this.renderChildren(node)}</label></li>\n`;
             case TokenType.BLOCKQUOTE:
                 return `<blockquote>${this.renderChildren(node)}</blockquote>\n`;
             case TokenType.HORIZONTAL_RULE:
