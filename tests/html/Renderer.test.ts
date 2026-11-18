@@ -106,7 +106,7 @@ describe('html Renderer', () => {
 
     const result = r.render(pre);
     expect(result).toContain('\\begin{lstlisting}[language=go]');
-    expect(result).toContain('func main() \\{\\}');
+    expect(result).toContain('\nfunc main() {}\n');
     expect(result).toContain('\\end{lstlisting}');
   });
 

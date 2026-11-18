@@ -33,8 +33,8 @@ const goldenCases: { input: string; body: string; full: string }[] = [
   },
   {
     input: "<pre class=\"language-go\">func main() {}</pre>",
-    body: "\\begin{lstlisting}[language=go]\nfunc main() \\{\\}\n\\end{lstlisting}",
-    full: "\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage{ulem}\n\\usepackage{hyperref}\n\\usepackage{listings}\n\\usepackage{booktabs}\n\\usepackage{array}\n\\usepackage{graphicx}\n\\begin{document}\n\n\\begin{lstlisting}[language=go]\nfunc main() \\{\\}\n\\end{lstlisting}\n\n\\end{document}",
+    body: "\\begin{lstlisting}[language=go]\nfunc main() {}\n\\end{lstlisting}",
+    full: "\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage{ulem}\n\\usepackage{hyperref}\n\\usepackage{listings}\n\\usepackage{booktabs}\n\\usepackage{array}\n\\usepackage{graphicx}\n\\begin{document}\n\n\\begin{lstlisting}[language=go]\nfunc main() {}\n\\end{lstlisting}\n\n\\end{document}",
   },
   {
     input: "<table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>",

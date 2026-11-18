@@ -154,6 +154,14 @@ describe('htmlToLatexBodyOnly preserves content', () => {
     );
   });
 
+  it.each([
+    ['<pre><code>file_name</code></pre>', 'file_name'],
+    ['<pre><code>if (a && b) { x = y % 2; } # ~^\\</code></pre>', 'if (a && b) { x = y % 2; } # ~^\\'],
+    ['<pre>a <b>bold</b> <a href="x">link</a><br>next</pre>', 'a bold link\nnext'],
+  ])('copies <pre> descendant text verbatim: %j', (input, code) => {
+    expect(htmlToLatexBodyOnly(input)).toBe('\\begin{lstlisting}\n' + code + '\n\\end{lstlisting}');
+  });
+
   it('renders a caption and stray table text above the tabular', () => {
     expect(htmlToLatexBodyOnly('<table><caption>Report</caption><tr><td>A</td></tr><tr>loose<td>B</td></tr></table>')).toBe(
       'Report\nloose\n\\begin{tabular}{l}\n\\toprule\nA \\\\\n\\midrule\nB \\\\\n\\bottomrule\n\\end{tabular}',
