@@ -112,11 +112,37 @@ $e^(i*pi) + 1 = 0$
         } else if (activeView === 'ast') {
             astOut.textContent = JSON.stringify(astToPlain(Keystroke.parse(md)), null, 2);
         }
-        try { localStorage.setItem('keystroke:md', md); } catch (_) { /* ignore */ }
+        if (unsavedEdit && editingDraft) saveDraft();
+        unsavedEdit = false;
+    }
+
+    // The draft is saved only when the user edits it. A loaded sample is
+    // scratch space: editing it must not replace the saved draft, and the
+    // "Your draft" option in the sample menu brings the draft back.
+    const DRAFT_KEY = 'keystroke:md';
+    let editingDraft = true;
+    let unsavedEdit = false;
+    let draftOption = null;
+
+    function loadDraft() {
+        try { return localStorage.getItem(DRAFT_KEY); } catch (_) { return null; }
+    }
+
+    // Safari ignores `hidden` on <option>, so add the element only once a draft exists.
+    function showDraftOption() {
+        if (draftOption) return;
+        draftOption = new Option('Your draft', 'draft');
+        sample.add(draftOption, 1);
+    }
+
+    function saveDraft() {
+        try { localStorage.setItem(DRAFT_KEY, editor.value); } catch (_) { return; }
+        showDraftOption();
     }
 
     let pending;
     editor.addEventListener('input', () => {
+        unsavedEdit = true;
         cancelAnimationFrame(pending);
         pending = requestAnimationFrame(update);
     });
@@ -135,6 +161,7 @@ $e^(i*pi) + 1 = 0$
             e.preventDefault();
             const { selectionStart: s, selectionEnd: end } = editor;
             editor.setRangeText('    ', s, end, 'end');
+            unsavedEdit = true;
             update();
             return;
         }
@@ -169,15 +196,22 @@ $e^(i*pi) + 1 = 0$
     });
 
     sample.addEventListener('change', () => {
-        if (SAMPLES[sample.value]) {
-            editor.value = SAMPLES[sample.value];
+        if (unsavedEdit) { cancelAnimationFrame(pending); update(); }
+        const isDraft = sample.value === 'draft';
+        const text = isDraft ? loadDraft() : SAMPLES[sample.value];
+        if (typeof text === 'string') {
+            // With no saved draft there is nothing to protect, so edits to
+            // the sample become the draft.
+            editingDraft = isDraft || loadDraft() === null;
+            unsavedEdit = false;
+            editor.value = text;
             update();
         }
         sample.value = '';
     });
 
-    let saved = null;
-    try { saved = localStorage.getItem('keystroke:md'); } catch (_) { /* ignore */ }
-    editor.value = saved || SAMPLES.tour;
+    const saved = loadDraft();
+    if (saved !== null) showDraftOption();
+    editor.value = saved ?? SAMPLES.tour;
     update();
 })();
