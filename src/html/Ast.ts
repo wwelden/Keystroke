@@ -355,6 +355,10 @@ function verbatimText(node: Node): string {
         return "\n";
     }
     if (node instanceof HTMLNode) {
+        // A node built without children shows its own text (as LinkNode does)
+        if (node.children.length === 0) {
+            return node.content;
+        }
         return node.children.map(verbatimText).join("");
     }
     return node.toString();

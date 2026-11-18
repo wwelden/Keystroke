@@ -269,6 +269,12 @@ describe('html AST', () => {
       expect(result).toContain('\\begin{lstlisting}');
       expect(result).not.toContain('[language=');
     });
+
+    it('keeps the text of child nodes built without children', () => {
+      const pre = new PreNode('', '', {});
+      pre.children = [new HTMLNode({ content: 'const x = 1;' }), new LinkNode('https://example.com', ' a_b', {})];
+      expect(pre.renderLaTeX()).toBe('\\begin{lstlisting}\nconst x = 1; a_b\n\\end{lstlisting}\n');
+    });
   });
 
   describe('BlockquoteNode', () => {
