@@ -1,3 +1,5 @@
+<img src="public/favicon.svg" width="64" height="64" alt="">
+
 # Keystroke
 A markdown parser and compiler written in TypeScript
 
