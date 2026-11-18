@@ -112,11 +112,30 @@ $e^(i*pi) + 1 = 0$
         } else if (activeView === 'ast') {
             astOut.textContent = JSON.stringify(astToPlain(Keystroke.parse(md)), null, 2);
         }
-        try { localStorage.setItem('keystroke:md', md); } catch (_) { /* ignore */ }
+    }
+
+    // Only the user's own edits are saved. Loading a sample must not replace
+    // the saved draft, so the "Your draft" option can bring it back.
+    const DRAFT_KEY = 'keystroke:md';
+    const draftOption = sample.querySelector('option[value="draft"]');
+
+    function loadDraft() {
+        try { return localStorage.getItem(DRAFT_KEY); } catch (_) { return null; }
+    }
+
+    function showDraftOption(hasDraft) {
+        draftOption.hidden = !hasDraft;
+        draftOption.disabled = !hasDraft;
+    }
+
+    function saveDraft() {
+        try { localStorage.setItem(DRAFT_KEY, editor.value); } catch (_) { return; }
+        showDraftOption(true);
     }
 
     let pending;
     editor.addEventListener('input', () => {
+        saveDraft();
         cancelAnimationFrame(pending);
         pending = requestAnimationFrame(update);
     });
@@ -135,6 +154,7 @@ $e^(i*pi) + 1 = 0$
             e.preventDefault();
             const { selectionStart: s, selectionEnd: end } = editor;
             editor.setRangeText('    ', s, end, 'end');
+            saveDraft();
             update();
             return;
         }
@@ -169,15 +189,16 @@ $e^(i*pi) + 1 = 0$
     });
 
     sample.addEventListener('change', () => {
-        if (SAMPLES[sample.value]) {
-            editor.value = SAMPLES[sample.value];
+        const text = sample.value === 'draft' ? loadDraft() : SAMPLES[sample.value];
+        if (typeof text === 'string') {
+            editor.value = text;
             update();
         }
         sample.value = '';
     });
 
-    let saved = null;
-    try { saved = localStorage.getItem('keystroke:md'); } catch (_) { /* ignore */ }
+    const saved = loadDraft();
+    showDraftOption(saved !== null);
     editor.value = saved || SAMPLES.tour;
     update();
 })();
