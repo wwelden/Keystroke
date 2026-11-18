@@ -171,6 +171,10 @@ export class Parser {
 
     private parseSection(level: number): Node {
         let title = '';
+        // \section*{...} is the unnumbered form; the star is not part of the title.
+        if (this.peekTokenIs(TokenType.TEXT) && this.peekToken.literal === '*') {
+            this.nextToken();
+        }
         if (this.expectPeek(TokenType.LBRACE)) {
             title = this.readBraceContent();
         }

@@ -67,6 +67,23 @@ describe('latex Parser', () => {
     });
 
     it.each([
+        ['\\section*{Introduction}', 1],
+        ['\\subsection*{Introduction}', 2],
+        ['\\subsubsection*{Introduction}', 3],
+        ['\\paragraph*{Introduction}', 4],
+        ['\\subparagraph*{Introduction}', 5],
+        ['\\section* {Introduction}', 1],
+    ])('starred section %s keeps its title at level %i', (input, level) => {
+        const p = newParser(input);
+        const doc = p.parseDocument();
+        expect(p.getErrors()).toEqual([]);
+        expect(doc.children).toHaveLength(1);
+        expect(doc.children[0]).toBeInstanceOf(SectionNode);
+        expect((doc.children[0] as SectionNode).level).toBe(level);
+        expect((doc.children[0] as SectionNode).title).toBe('Introduction');
+    });
+
+    it.each([
         ['\\textbf{bold}', TokenType.TEXTBF],
         ['\\textit{italic}', TokenType.TEXTIT],
         ['\\underline{underlined}', TokenType.UNDERLINE],

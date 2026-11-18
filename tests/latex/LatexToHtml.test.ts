@@ -20,6 +20,10 @@ import {
 } from '../../src/latex';
 
 describe('latex public API', () => {
+    it('renders a starred section as a heading with its title (#68)', () => {
+        expect(latexToHtmlBodyOnly('\\section*{Introduction}')).toBe('<h1>Introduction</h1>');
+    });
+
     it('latexToHtml produces a full document', () => {
         const result = latexToHtml('\\section{Test Title}');
         expect(result).toContain('<!DOCTYPE html>');
