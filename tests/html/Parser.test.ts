@@ -283,12 +283,22 @@ describe('html Parser', () => {
     expect((doc.children[0] as PreNode).language).toBe('go');
   });
 
+  it('extracts the language when the class attribute lists several classes', () => {
+    const { doc } = parse('<pre class="highlight language-python">print(1)</pre>');
+    expect((doc.children[0] as PreNode).language).toBe('python');
+  });
+
   it.each([
     ['language-go', 'go'],
     ['language-python', 'python'],
     ['language-javascript', 'javascript'],
     ['other-class', ''],
     ['', ''],
+    ['highlight language-python', 'python'],
+    ['language-python highlight', 'python'],
+    ['highlight\tlanguage-go\nnumbered', 'go'],
+    ['  language-rust  ', 'rust'],
+    ['language- language-go', 'go'],
   ])('extractLanguageFromClass(%j) is %j', (cls, expected) => {
     const p = new Parser(new Lexer(''));
     p['curToken'] = new Token(TokenType.PRE, `<pre class="${cls}">`);
