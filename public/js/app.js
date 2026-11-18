@@ -196,6 +196,7 @@ $e^(i*pi) + 1 = 0$
     });
 
     sample.addEventListener('change', () => {
+        if (unsavedEdit) { cancelAnimationFrame(pending); update(); }
         const isDraft = sample.value === 'draft';
         const text = isDraft ? loadDraft() : SAMPLES[sample.value];
         if (typeof text === 'string') {
