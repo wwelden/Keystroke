@@ -11,14 +11,16 @@ export function compile(markdown: string): string {
     return new Renderer().render(parser.parse());
 }
 
+// Returns the whole stream, through EOF. The Tokens view pages long streams
+// itself, so a cap here would silently drop the end of long documents.
 export function tokenize(markdown: string): Token[] {
     const lexer = new Lexer(markdown);
     const tokens: Token[] = [];
-    for (let i = 0; i < 100000; i++) {
-        const token = lexer.nextToken();
+    let token: Token;
+    do {
+        token = lexer.nextToken();
         tokens.push(token);
-        if (token.type === TokenType.EOF) break;
-    }
+    } while (token.type !== TokenType.EOF);
     return tokens;
 }
 
@@ -26,4 +28,4 @@ export function parse(markdown: string): MarkdownNode {
     return new Parser(new Lexer(markdown)).parse();
 }
 
-(window as any).Keystroke = { compile, tokenize, parse };
+if (typeof window !== 'undefined') (window as any).Keystroke = { compile, tokenize, parse };
