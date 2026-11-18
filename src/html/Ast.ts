@@ -338,10 +338,26 @@ export class PreNode extends HTMLNode {
             result += "[language=" + this.language + "]";
         }
         result += "\n";
-        result += this.renderChildrenLaTeX();
+        // lstlisting prints its body verbatim, so it gets the plain text of the
+        // descendants: LaTeX markup or escapes would show up as literal code
+        result += this.children.map(verbatimText).join("");
         result += "\n\\end{lstlisting}\n";
         return result;
     }
+}
+
+// The text a node displays, without LaTeX markup or escaping
+function verbatimText(node: Node): string {
+    if (node instanceof TextNode) {
+        return node.text;
+    }
+    if (node instanceof BreakNode) {
+        return "\n";
+    }
+    if (node instanceof HTMLNode) {
+        return node.children.map(verbatimText).join("");
+    }
+    return node.toString();
 }
 
 // BLOCKQUOTE tags
