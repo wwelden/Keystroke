@@ -97,6 +97,26 @@ describe('Parser', () => {
             );
             expect(hasLinkNodes).toBe(true);
         });
+
+        it('should keep balanced parentheses in the link destination', () => {
+            const doc = parse('[x](https://example.com/a(b))');
+            expect(doc.children).toHaveLength(1);
+            const link = doc.children[0] as LinkNode;
+            expect(link).toBeInstanceOf(LinkNode);
+            expect(link.url).toBe('https://example.com/a(b)');
+        });
+
+        it('should end the destination at the first unbalanced )', () => {
+            const doc = parse('[x](a)b)');
+            expect((doc.children[0] as LinkNode).url).toBe('a');
+            expect(doc.children.slice(1).map(child => child.value).join('')).toBe('b)');
+        });
+
+        it('should stop an unclosed destination at the end of the line', () => {
+            const doc = parse('[x](a(b\nnext');
+            expect((doc.children[0] as LinkNode).url).toBe('a(b');
+            expect(doc.children.some(child => child.value === 'next')).toBe(true);
+        });
     });
 
     describe('Blockquotes', () => {
@@ -318,6 +338,10 @@ describe('Parser', () => {
             expect(link).toBeDefined();
             expect(link.text).toBe('link');
             expect(link.url).toBe('url');
+
+            const headerLink = parse('# [x](https://e.com/a(b)) after').children[0]
+                .children.find(child => child instanceof LinkNode) as LinkNode;
+            expect(headerLink.url).toBe('https://e.com/a(b)');
 
             const list = parse('- [ ] solve $x^2$').children[0] as ListNode;
             expect(list).toBeInstanceOf(ListNode);
