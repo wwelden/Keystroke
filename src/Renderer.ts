@@ -20,7 +20,8 @@ export class Renderer {
             case TokenType.CHECKLIST_CHECKED: {
                 const checked = node.type === TokenType.CHECKLIST_CHECKED ? ' checked' : '';
                 const content = this.renderChildren(node);
-                const fallback = content.trim() ? '' : ' aria-label="Task"';
+                const hasText = content.replace(/<[^>]*>/g, '').replace(/&(?:emsp|nbsp);/g, ' ').trim().length > 0;
+                const fallback = hasText ? '' : ' aria-label="Task"';
                 return `<li><label><input type="checkbox"${checked}${fallback}>${content}</label></li>\n`;
             }
             case TokenType.BLOCKQUOTE:

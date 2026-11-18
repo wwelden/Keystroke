@@ -74,6 +74,19 @@ describe('Renderer', () => {
             expect(renderer.render(unchecked)).toBe('<li><label><input type="checkbox" aria-label="Task"></label></li>\n');
             expect(renderer.render(checked)).toBe('<li><label><input type="checkbox" checked aria-label="Task"></label></li>\n');
         });
+
+        it('should render empty-bold checklist items with a fallback accessible name', () => {
+            const uncheckedToken = new Token(TokenType.CHECKLIST, '- [ ]');
+            const unchecked = new ChecklistNode(uncheckedToken, '');
+            unchecked.children = [new BoldNode(new Token(TokenType.BOLD, '**'), '')];
+
+            const checkedToken = new Token(TokenType.CHECKLIST_CHECKED, '- [x]');
+            const checked = new ChecklistCheckedNode(checkedToken, '');
+            checked.children = [new BoldNode(new Token(TokenType.BOLD, '**'), '')];
+
+            expect(renderer.render(unchecked)).toBe('<li><label><input type="checkbox" aria-label="Task"><b></b></label></li>\n');
+            expect(renderer.render(checked)).toBe('<li><label><input type="checkbox" checked aria-label="Task"><b></b></label></li>\n');
+        });
     });
 
     describe('Text Formatting', () => {

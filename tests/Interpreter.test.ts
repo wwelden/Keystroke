@@ -382,5 +382,14 @@ describe('Markdown Interpreter', () => {
                 '<ul><li><label><input type="checkbox" checked aria-label="Task"></label></li>\n</ul>\n'
             );
         });
+
+        it('provides a fallback accessible name for empty-bold checklist items', () => {
+            expect(processMarkdown('- [ ] ****')).toBe(
+                '<ul><li><label><input type="checkbox" aria-label="Task"> <b></b></label></li>\n</ul>\n'
+            );
+            expect(processMarkdown('- [x] ****')).toBe(
+                '<ul><li><label><input type="checkbox" checked aria-label="Task"> <b></b></label></li>\n</ul>\n'
+            );
+        });
     });
 });
