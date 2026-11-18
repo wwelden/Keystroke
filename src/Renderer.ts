@@ -31,7 +31,8 @@ export class Renderer {
             case TokenType.ILLEGAL:
                 return "";
             case TokenType.INLINE_CODE:
-                return `<code>${this.renderChildren(node)}</code>`;
+                // Like fenced code, inline code is shown literally.
+                return `<code>${escapeHtml(this.renderChildren(node))}</code>`;
             case TokenType.CODE_BLOCK: {
                 // Code is shown verbatim: escaped, never parsed as markdown.
                 const block = node as CodeBlockNode;
