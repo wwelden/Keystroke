@@ -92,8 +92,8 @@ describe('Markdown Interpreter', () => {
             ['- [x](https://example.com)', '<ul><li><a href="https://example.com">x</a></li>\n</ul>\n'],
             ['- [ ](u) gap', '<ul><li><a href="u"> </a> gap</li>\n</ul>\n'],
             ['- [x] Done', '<ul><li><label><input type="checkbox" checked> Done</label></li>\n</ul>\n'],
-            ['- [x]', '<ul><li><label><input type="checkbox" checked></label></li>\n</ul>\n'],
-            ['- [ ]\n- b', '<ul><li><label><input type="checkbox"></label></li>\n<li>b</li>\n</ul>\n'],
+            ['- [x]', '<ul><li><label><input type="checkbox" checked aria-label="Task"></label></li>\n</ul>\n'],
+            ['- [ ]\n- b', '<ul><li><label><input type="checkbox" aria-label="Task"></label></li>\n<li>b</li>\n</ul>\n'],
         ])('%j needs whitespace or end of line after ] to be a checkbox', (input, expected) => {
             expect(processMarkdown(input)).toBe(expected);
         });
@@ -371,6 +371,15 @@ describe('Markdown Interpreter', () => {
             expect(processMarkdown(input)).toBe(
                 '<ul><li><label><input type="checkbox"> Task 1</label></li>\n' +
                 '<li><label><input type="checkbox" checked> Task 2</label></li>\n</ul>\n'
+            );
+        });
+
+        it('provides a fallback accessible name for empty checklist items', () => {
+            expect(processMarkdown('- [ ]')).toBe(
+                '<ul><li><label><input type="checkbox" aria-label="Task"></label></li>\n</ul>\n'
+            );
+            expect(processMarkdown('- [x]')).toBe(
+                '<ul><li><label><input type="checkbox" checked aria-label="Task"></label></li>\n</ul>\n'
             );
         });
     });

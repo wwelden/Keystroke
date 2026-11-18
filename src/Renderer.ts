@@ -17,9 +17,12 @@ export class Renderer {
             case TokenType.LIST_ITEM:
                 return `<li>${this.renderChildren(node)}</li>\n`;
             case TokenType.CHECKLIST:
-                return `<li><label><input type="checkbox">${this.renderChildren(node)}</label></li>\n`;
-            case TokenType.CHECKLIST_CHECKED:
-                return `<li><label><input type="checkbox" checked>${this.renderChildren(node)}</label></li>\n`;
+            case TokenType.CHECKLIST_CHECKED: {
+                const checked = node.type === TokenType.CHECKLIST_CHECKED ? ' checked' : '';
+                const content = this.renderChildren(node);
+                const fallback = content.trim() ? '' : ' aria-label="Task"';
+                return `<li><label><input type="checkbox"${checked}${fallback}>${content}</label></li>\n`;
+            }
             case TokenType.BLOCKQUOTE:
                 return `<blockquote>${this.renderChildren(node)}</blockquote>\n`;
             case TokenType.HORIZONTAL_RULE:

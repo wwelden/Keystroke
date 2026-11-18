@@ -64,11 +64,15 @@ describe('Renderer', () => {
             expect(renderer.render(checked)).toBe('<li><label><input type="checkbox" checked>Done</label></li>\n');
         });
 
-        it('should render empty checklist items wrapped in a label', () => {
+        it('should render empty checklist items wrapped in a label with a fallback accessible name', () => {
             const uncheckedToken = new Token(TokenType.CHECKLIST, '- [ ]');
             const unchecked = new ChecklistNode(uncheckedToken, '');
 
-            expect(renderer.render(unchecked)).toBe('<li><label><input type="checkbox"></label></li>\n');
+            const checkedToken = new Token(TokenType.CHECKLIST_CHECKED, '- [x]');
+            const checked = new ChecklistCheckedNode(checkedToken, '');
+
+            expect(renderer.render(unchecked)).toBe('<li><label><input type="checkbox" aria-label="Task"></label></li>\n');
+            expect(renderer.render(checked)).toBe('<li><label><input type="checkbox" checked aria-label="Task"></label></li>\n');
         });
     });
 
