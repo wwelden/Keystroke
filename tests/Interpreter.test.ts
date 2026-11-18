@@ -329,6 +329,8 @@ describe('Markdown Interpreter', () => {
             ['$e^-x$', math('e<sup>-x</sup>')],
             ['$x^+2$', math('x<sup>+2</sup>')],
             ['$x^2.5$', math('x<sup>2.5</sup>')],
+            ['$x^.5$', math('x<sup>.5</sup>')],
+            ['$x^-.5+y$', math('x<sup>-.5</sup>+y')],
             ['$x^10$', math('x<sup>10</sup>')],
             ['$x^-2^$', math('x<sup>-2</sup>')],
             ['x^2+y', 'x<sup>2</sup>+y'],

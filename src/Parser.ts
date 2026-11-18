@@ -35,8 +35,8 @@ import {
 
 // An unparenthesized ^ or ~ operand: an optional sign, then a number or a run
 // of letters and digits.
-const SCRIPT_OPERAND = /^[+-]?(?:\d+(?:\.\d+)?|[\p{L}\p{N}]+)/u;
-const OPERAND_START = /^[\p{L}\p{N}]/u;
+const SCRIPT_OPERAND = /^[+-]?(?:\d*\.\d+|\d+|[\p{L}\p{N}]+)/u;
+const OPERAND_START = /^(?:[\p{L}\p{N}]|\.\d)/u;
 
 export class Parser {
     private lexer: Lexer;
