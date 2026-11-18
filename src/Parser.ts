@@ -33,6 +33,11 @@ import {
     TextNode
 } from "./Ast";
 
+// An unparenthesized ^ or ~ operand: an optional sign, then a number or a run
+// of letters and digits.
+const SCRIPT_OPERAND = /^[+-]?(?:\d+(?:\.\d+)?|[\p{L}\p{N}]+)/u;
+const OPERAND_START = /^[\p{L}\p{N}]/u;
+
 export class Parser {
     private lexer: Lexer;
     private currentToken: Token;
@@ -477,76 +482,98 @@ export class Parser {
         return math;
     }
     private parseSuperscript(): SuperscriptNode {
-        let superscriptText = '';
-        this.nextToken(); // Move past ^
+        const superscriptText = this.parseScriptOperand(TokenType.SUPERSCRIPT);
+        return new SuperscriptNode(this.currentToken, superscriptText);
+    }
+    private parseSubscript(): SubscriptNode {
+        const subscriptText = this.parseScriptOperand(TokenType.SUBSCRIPT);
+        return new SubscriptNode(this.currentToken, subscriptText);
+    }
+
+    /**
+     * Reads the operand after a ^ or ~ (`marker`) and returns its text. Leaves
+     * currentToken on the first token after the script. The operand is one of:
+     * - a parenthesized group: `x^(a+b)`
+     * - the paired form's contents: `x^2^`, `H~2~O`
+     * - an optional sign, then a number or a run of letters and digits:
+     *   `x^2`, `x^-2`, `x^2.5`, `y~ij`
+     * In the last form the operand ends where that pattern does, so `x^2+y`
+     * is `x<sup>2</sup>+y`; the rest of the text token stays for the caller.
+     */
+    private parseScriptOperand(marker: TokenType): string {
+        let text = '';
+        this.nextToken(); // Move past ^ or ~
 
         if (this.currentTokenIs(TokenType.TEXT)) {
-            superscriptText += this.currentToken.literal;
-            this.nextToken();
+            text = this.readUnbracketedOperand(marker);
         } else if (this.currentTokenIs(TokenType.LIST_ITEM)) {
-            superscriptText += '-';
+            text = '-';
             this.nextToken();
         } else if (this.currentTokenIs(TokenType.LEFT_PARENTHESIS)) {
             // Handle parentheses content like ^(98+13)
-            superscriptText += this.currentToken.literal; // Add opening (
+            text += this.currentToken.literal; // Add opening (
             this.nextToken();
 
             // Collect everything until closing parenthesis
             while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
-                superscriptText += this.currentToken.literal;
+                text += this.currentToken.literal;
                 this.nextToken();
             }
 
             // Add closing parenthesis if found
             if (this.currentTokenIs(TokenType.RIGHT_PARENTHESIS)) {
-                superscriptText += this.currentToken.literal;
+                text += this.currentToken.literal;
                 this.nextToken();
             }
         }
 
         // Paired form (e.g. H~2~O, x^2^): consume the closing marker.
-        if (superscriptText !== '' && this.currentTokenIs(TokenType.SUPERSCRIPT)) {
+        if (text !== '' && this.currentTokenIs(marker)) {
             this.nextToken();
         }
 
-        const superscript = new SuperscriptNode(this.currentToken, superscriptText);
-        return superscript;
+        return text;
     }
-    private parseSubscript(): SubscriptNode {
-        let subscriptText = '';
-        this.nextToken(); // Move past ~
 
-        if (this.currentTokenIs(TokenType.TEXT)) {
-            subscriptText += this.currentToken.literal;
-            this.nextToken();
-        } else if (this.currentTokenIs(TokenType.LIST_ITEM)) {
-            subscriptText += '-';
-            this.nextToken();
-        } else if (this.currentTokenIs(TokenType.LEFT_PARENTHESIS)) {
-            // Handle parentheses content like ~(abc+def)
-            subscriptText += this.currentToken.literal; // Add opening (
-            this.nextToken();
+    // currentToken is TEXT. See parseScriptOperand.
+    private readUnbracketedOperand(marker: TokenType): string {
+        const literal = this.currentToken.literal;
 
-            // Collect everything until closing parenthesis
-            while (!this.currentTokenIs(TokenType.RIGHT_PARENTHESIS) && !this.currentTokenIs(TokenType.EOF) && !this.currentTokenIs(TokenType.NEWLINE)) {
-                subscriptText += this.currentToken.literal;
-                this.nextToken();
-            }
-
-            // Add closing parenthesis if found
-            if (this.currentTokenIs(TokenType.RIGHT_PARENTHESIS)) {
-                subscriptText += this.currentToken.literal;
-                this.nextToken();
-            }
+        // Paired form: the whole token is the script, as before.
+        if (this.peekToken.type === marker) {
+            this.nextToken();
+            return literal;
         }
 
-        // Paired form (e.g. H~2~O, x^2^): consume the closing marker.
-        if (subscriptText !== '' && this.currentTokenIs(TokenType.SUBSCRIPT)) {
+        // The lexer splits a sign from the number after it (`-2` lexes as
+        // `-`, `2`), so join a lone sign with the following text token.
+        if ((literal === '-' || literal === '+') && this.peekToken.type === TokenType.TEXT &&
+            OPERAND_START.test(this.peekToken.literal)) {
             this.nextToken();
+            if (this.peekToken.type === marker) {
+                const paired = literal + this.currentToken.literal;
+                this.nextToken();
+                return paired;
+            }
+            return literal + this.takeOperandPrefix(this.currentToken.literal);
         }
 
-        const subscript = new SubscriptNode(this.currentToken, subscriptText);
-        return subscript;
+        return this.takeOperandPrefix(literal);
+    }
+
+    // Consumes the operand at the start of `literal` (currentToken's text).
+    // Any rest stays in place as a TEXT token for the caller.
+    private takeOperandPrefix(literal: string): string {
+        const match = SCRIPT_OPERAND.exec(literal);
+        // No operand (e.g. `x^=`): take a single character.
+        const operand = match ? match[0] : Array.from(literal)[0];
+        const rest = literal.slice(operand.length);
+        if (rest === '') {
+            this.nextToken();
+        } else {
+            this.currentToken = new Token(TokenType.TEXT, rest);
+        }
+        return operand;
     }
 
     private parseCode(): InlineCodeNode {
