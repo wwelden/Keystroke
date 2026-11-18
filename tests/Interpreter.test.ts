@@ -42,7 +42,7 @@ describe('Markdown Interpreter', () => {
             ['- **bold** item', '<ul><li><b>bold</b> item</li>\n</ul>\n'],
             ['1. first\n2. second', '<ol><li>first</li>\n<li>second</li>\n</ol>\n'],
             ['- [ ] Todo\n- [x] Done',
-                '<ul><li><input type="checkbox"> Todo</li>\n<li><input type="checkbox" checked> Done</li>\n</ul>\n'],
+                '<ul><li><label><input type="checkbox"> Todo</label></li>\n<li><label><input type="checkbox" checked> Done</label></li>\n</ul>\n'],
         ])('%j renders as one list', (input, expected) => {
             expect(processMarkdown(input)).toBe(expected);
         });
@@ -60,13 +60,13 @@ describe('Markdown Interpreter', () => {
                 '<ul><li><i>i</i> <s>s</s> <a href="http://x.com">link</a> <code>code</code></li>\n</ul>\n'
             );
             expect(processMarkdown('- [x] **done** (soon)')).toBe(
-                '<ul><li><input type="checkbox" checked> <b>done</b> (soon)</li>\n</ul>\n'
+                '<ul><li><label><input type="checkbox" checked> <b>done</b> (soon)</label></li>\n</ul>\n'
             );
         });
 
         it('groups -, * and checklist items into one list', () => {
             expect(processMarkdown('- a\n* b\n- [ ] c')).toBe(
-                '<ul><li>a</li>\n<li>b</li>\n<li><input type="checkbox"> c</li>\n</ul>\n'
+                '<ul><li>a</li>\n<li>b</li>\n<li><label><input type="checkbox"> c</label></li>\n</ul>\n'
             );
         });
 
@@ -91,15 +91,15 @@ describe('Markdown Interpreter', () => {
         it.each([
             ['- [x](https://example.com)', '<ul><li><a href="https://example.com">x</a></li>\n</ul>\n'],
             ['- [ ](u) gap', '<ul><li><a href="u"> </a> gap</li>\n</ul>\n'],
-            ['- [x] Done', '<ul><li><input type="checkbox" checked> Done</li>\n</ul>\n'],
-            ['- [x]', '<ul><li><input type="checkbox" checked></li>\n</ul>\n'],
-            ['- [ ]\n- b', '<ul><li><input type="checkbox"></li>\n<li>b</li>\n</ul>\n'],
+            ['- [x] Done', '<ul><li><label><input type="checkbox" checked> Done</label></li>\n</ul>\n'],
+            ['- [x]', '<ul><li><label><input type="checkbox" checked></label></li>\n</ul>\n'],
+            ['- [ ]\n- b', '<ul><li><label><input type="checkbox"></label></li>\n<li>b</li>\n</ul>\n'],
         ])('%j needs whitespace or end of line after ] to be a checkbox', (input, expected) => {
             expect(processMarkdown(input)).toBe(expected);
         });
 
         it('treats - [X] as a checked box', () => {
-            expect(processMarkdown('- [X] done')).toBe('<ul><li><input type="checkbox" checked> done</li>\n</ul>\n');
+            expect(processMarkdown('- [X] done')).toBe('<ul><li><label><input type="checkbox" checked> done</label></li>\n</ul>\n');
         });
 
         it('keeps the start number of an ordered list', () => {
@@ -122,9 +122,9 @@ describe('Markdown Interpreter', () => {
                 '<ul><li>Item 1</li>\n<li>Item 2</li>\n<li>Item 3</li>\n</ul>\n' +
                 '<br>\n' +
                 '<h2>Checklist</h2>\n' +
-                '<ul><li><input type="checkbox"> Write the lexer</li>\n' +
-                '<li><input type="checkbox" checked> Write the parser</li>\n' +
-                '<li><input type="checkbox" checked> Render to HTML</li>\n</ul>\n'
+                '<ul><li><label><input type="checkbox"> Write the lexer</label></li>\n' +
+                '<li><label><input type="checkbox" checked> Write the parser</label></li>\n' +
+                '<li><label><input type="checkbox" checked> Render to HTML</label></li>\n</ul>\n'
             );
         });
     });
@@ -219,7 +219,7 @@ describe('Markdown Interpreter', () => {
             expect(processMarkdown('**$5** and **$6**')).toBe('<b>$5</b> and <b>$6</b>');
             expect(processMarkdown('# Cost $5')).toBe('<h1>Cost $5</h1>\n');
             expect(processMarkdown('> pay $5 now')).toBe('<blockquote>pay $5 now</blockquote>\n');
-            expect(processMarkdown('- [ ] buy for $5')).toBe('<ul><li><input type="checkbox"> buy for $5</li>\n</ul>\n');
+            expect(processMarkdown('- [ ] buy for $5')).toBe('<ul><li><label><input type="checkbox"> buy for $5</label></li>\n</ul>\n');
             expect(processMarkdown('# **cost $5** $x$')).toBe('<h1><b>cost $5</b> <span class="math">x</span></h1>\n');
         });
 
@@ -249,8 +249,8 @@ describe('Markdown Interpreter', () => {
         });
 
         it('should keep inline code and links inside checklist items', () => {
-            expect(processMarkdown('- [ ] run `test`')).toBe('<ul><li><input type="checkbox"> run <code>test</code></li>\n</ul>\n');
-            expect(processMarkdown('- [x] read [docs](url)')).toBe('<ul><li><input type="checkbox" checked> read <a href="url">docs</a></li>\n</ul>\n');
+            expect(processMarkdown('- [ ] run `test`')).toBe('<ul><li><label><input type="checkbox"> run <code>test</code></label></li>\n</ul>\n');
+            expect(processMarkdown('- [x] read [docs](url)')).toBe('<ul><li><label><input type="checkbox" checked> read <a href="url">docs</a></label></li>\n</ul>\n');
         });
 
         it.each(['^', '~'])('should stop an unclosed %s math group at the line boundary', marker => {
@@ -342,10 +342,36 @@ describe('Markdown Interpreter', () => {
             ['- item', '<ul><li>item</li>\n</ul>\n'],
             ['---', '<hr>\n'],
             ['-----', '<hr>\n'],
-            ['- [ ] todo', '<ul><li><input type="checkbox"> todo</li>\n</ul>\n'],
+            ['- [ ] todo', '<ul><li><label><input type="checkbox"> todo</label></li>\n</ul>\n'],
             ['text\n# H\nC# x\n> q', 'text<br>\n<h1>H</h1>\nC# x<br>\n<blockquote>q</blockquote>\n'],
         ])('%j is still a block', (input, expected) => {
             expect(processMarkdown(input)).toBe(expected);
+        });
+    });
+
+    // Regression for #59: task checkboxes must associate task text with the control via a label.
+    describe('Checklist accessible names (#59)', () => {
+        it('wraps the checkbox and task text in a label for unchecked and checked items', () => {
+            expect(processMarkdown('- [ ] Review docs')).toBe(
+                '<ul><li><label><input type="checkbox"> Review docs</label></li>\n</ul>\n'
+            );
+            expect(processMarkdown('- [x] Review docs')).toBe(
+                '<ul><li><label><input type="checkbox" checked> Review docs</label></li>\n</ul>\n'
+            );
+        });
+
+        it('supports formatted text inside task labels', () => {
+            expect(processMarkdown('- [ ] Review **bold** and *italic* docs')).toBe(
+                '<ul><li><label><input type="checkbox"> Review <b>bold</b> and <i>italic</i> docs</label></li>\n</ul>\n'
+            );
+        });
+
+        it('wraps consecutive checklist items in labels within a single list', () => {
+            const input = '- [ ] Task 1\n- [x] Task 2';
+            expect(processMarkdown(input)).toBe(
+                '<ul><li><label><input type="checkbox"> Task 1</label></li>\n' +
+                '<li><label><input type="checkbox" checked> Task 2</label></li>\n</ul>\n'
+            );
         });
     });
 });
