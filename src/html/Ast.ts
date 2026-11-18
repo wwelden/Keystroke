@@ -340,7 +340,7 @@ export class PreNode extends HTMLNode {
         result += "\n";
         // lstlisting prints its body verbatim, so it gets the plain text of the
         // descendants: LaTeX markup or escapes would show up as literal code
-        result += this.children.map(verbatimText).join("");
+        result += verbatimText(this);
         result += "\n\\end{lstlisting}\n";
         return result;
     }
