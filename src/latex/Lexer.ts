@@ -245,7 +245,7 @@ export class Lexer {
     /**
      * Returns the raw source from `start` up to (not including) `terminator`,
      * then resumes lexing just after the terminator, or at EOF if it never
-     * appears. Used for verbatim environments such as lstlisting.
+     * appears. Used for verbatim environments such as verbatim and lstlisting.
      */
     readVerbatim(start: number, terminator: string): string {
         const end = this.input.indexOf(terminator, start);

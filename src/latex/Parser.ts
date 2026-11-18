@@ -246,6 +246,13 @@ export class Parser {
         const envName = this.readBraceContent();
         const envType = this.getEnvironmentType(envName);
 
+        // verbatim takes no options: a [ right after \begin{verbatim} is content
+        if (envName === 'verbatim') {
+            const env = new EnvironmentNode(envType, envName, '');
+            this.parseVerbatimContent(env);
+            return env;
+        }
+
         let options = '';
         if (this.peekTokenIs(TokenType.LBRACKET)) {
             this.nextToken();
