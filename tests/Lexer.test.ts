@@ -232,6 +232,14 @@ describe('Lexer', () => {
       return out;
     }
 
+    it.each(['\r', '\r\n'])('treats %j as a line break before a block marker', (eol) => {
+      expect(types(`# one${eol}# two`)).toEqual([
+        [TokenType.HEADER1, '#'], [TokenType.SPACE, ' '], [TokenType.TEXT, 'one'],
+        [TokenType.NEWLINE, '\n'],
+        [TokenType.HEADER1, '#'], [TokenType.SPACE, ' '], [TokenType.TEXT, 'two'],
+      ]);
+    });
+
     it.each([
       ['C# is great', '#'],
       ['a > b', '>'],

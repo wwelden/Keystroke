@@ -15,7 +15,8 @@ export class Lexer {
     constructor(input: string) {
         // '\0' marks end of input below, so a NUL in the source would end
         // the scan early. CommonMark replaces U+0000 with U+FFFD anyway.
-        this.input = input.replace(/\0/g, '�');
+        // CRLF and lone CR line endings become LF, so a bare `\r` still ends a line.
+        this.input = input.replace(/\0/g, '�').replace(/\r\n?/g, '\n');
         this.position = 0;
         this.readPosition = 0;
         this.ch = '';
