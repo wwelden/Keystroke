@@ -1,4 +1,4 @@
-import { Lexer } from "./Lexer";
+import { Lexer, decodeHTMLEntities } from "./Lexer";
 import { Token, TokenType, newToken } from "./Token";
 import {
     Node,
@@ -389,7 +389,7 @@ export class Parser {
             }
 
             if (name === target) {
-                return value;
+                return decodeHTMLEntities(value);
             }
         }
         return "";

@@ -47,6 +47,10 @@ describe('htmlToLatex', () => {
     expect(htmlToLatexBodyOnly(`<!-- ${comment} --><h1>Title</h1>`)).toContain('\\section{Title}');
   });
 
+  it('decodes character references in a link destination', () => {
+    expect(htmlToLatexBodyOnly('<a href="/search?a=1&amp;b=2">Go</a>')).toBe('\\href{/search?a=1&b=2}{Go}');
+  });
+
   it.each(["'", '"'])('keeps a link after a quoted > attribute (%s)', quote => {
     expect(htmlToLatexBodyOnly(`<a title=${quote}1 > 0${quote} href=${quote}https://example.com${quote}>Link</a>`))
       .toBe('\\href{https://example.com}{Link}');

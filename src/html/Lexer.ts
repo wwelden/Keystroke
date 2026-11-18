@@ -49,6 +49,13 @@ const htmlEntities: { [entity: string]: string } = {
     '&nbsp;': '\u00A0', // Non-breaking space
 };
 
+// Decodes the character references in an attribute value, using the same
+// rules as text: a candidate is '&', up to 9 name characters, then ';'
+export function decodeHTMLEntities(value: string): string {
+    return value.replace(/&[^;<&\s]{0,9};/g, entity =>
+        Object.prototype.hasOwnProperty.call(htmlEntities, entity) ? htmlEntities[entity] : entity);
+}
+
 export function isLetter(ch: string): boolean {
     return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch === '_';
 }
