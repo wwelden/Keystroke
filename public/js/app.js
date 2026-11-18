@@ -89,10 +89,17 @@ $e^(i*pi) + 1 = 0$
 
     // Long streams are shown a page at a time so typing stays responsive.
     // When tokens are hidden the panel says so and offers to show the rest.
+    // Editing the text goes back to the first page.
     const TOKEN_PAGE = 5000;
     let tokenLimit = TOKEN_PAGE;
+    let tokenSource = null;
 
-    function renderTokens(tokens) {
+    function renderTokens(md) {
+        if (md !== tokenSource) {
+            tokenSource = md;
+            tokenLimit = TOKEN_PAGE;
+        }
+        const tokens = Keystroke.tokenize(md);
         const shown = Math.min(tokens.length, tokenLimit);
         let html = tokens.slice(0, shown).map(t =>
             `<span class="token" title="${escapeHtml(JSON.stringify(t.literal))}">` +
@@ -115,7 +122,7 @@ $e^(i*pi) + 1 = 0$
         if (!button) return;
         const which = button.dataset.tokens;
         tokenLimit = which === 'all' ? Infinity : tokenLimit + TOKEN_PAGE;
-        update();
+        renderTokens(tokenSource);
         // The clicked button was replaced; keep focus nearby for keyboard users.
         (tokensOut.querySelector(`button[data-tokens="${which}"]`) || tokensOut).focus();
     });
@@ -137,7 +144,7 @@ $e^(i*pi) + 1 = 0$
         } else if (activeView === 'html') {
             htmlOut.textContent = html;
         } else if (activeView === 'tokens') {
-            renderTokens(Keystroke.tokenize(md));
+            renderTokens(md);
         } else if (activeView === 'ast') {
             astOut.textContent = JSON.stringify(astToPlain(Keystroke.parse(md)), null, 2);
         }
