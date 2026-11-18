@@ -200,6 +200,30 @@ describe('htmlToLatexBodyOnly with malformed HTML', () => {
     );
   });
 
+  it('ends a list item at the next <li> when its end tag is omitted', () => {
+    expect(htmlToLatexBodyOnly('<ul><li>Alpha<li>Beta</ul>')).toBe(
+      '\\begin{itemize}\n\\item Alpha\n\\item Beta\n\\end{itemize}',
+    );
+  });
+
+  it('closes open formatting when an omitted </li> is implied', () => {
+    expect(htmlToLatexBodyOnly('<ol><li><b>A<li>B</ol>')).toBe(
+      '\\begin{enumerate}\n\\item \\textbf{A}\n\\item B\n\\end{enumerate}',
+    );
+  });
+
+  it('ends nested items with omitted end tags at their own list', () => {
+    expect(htmlToLatexBodyOnly('<ul><li>A<ul><li>a1<li>a2</ul><li>B</ul>')).toBe(
+      '\\begin{itemize}\n\\item A\\begin{itemize}\n\\item a1\n\\item a2\n\\end{itemize}\n\n\\item B\n\\end{itemize}',
+    );
+  });
+
+  it('does not end a list item at an <li> inside a table cell', () => {
+    expect(htmlToLatexBodyOnly('<ul><li><table><tr><td>x<li>y</td></tr></table>z</li></ul>')).toContain(
+      '\\end{tabular}\nz',
+    );
+  });
+
   it('puts content outside <li> into a list item', () => {
     expect(htmlToLatexBodyOnly('<ul>stray<li>a</li></ul>')).toBe(
       '\\begin{itemize}\n\\item stray\n\\item a\n\\end{itemize}',
