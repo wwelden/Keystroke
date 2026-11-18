@@ -237,6 +237,11 @@ export class Lexer {
         return this.position !== start;
     }
 
+    /** True when `text` appears in the source at or after offset `start`. */
+    containsFrom(start: number, text: string): boolean {
+        return this.input.indexOf(text, start) !== -1;
+    }
+
     /**
      * Returns the raw source from `start` up to (not including) `terminator`,
      * then resumes lexing just after the terminator, or at EOF if it never
