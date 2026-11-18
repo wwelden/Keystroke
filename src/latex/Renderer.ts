@@ -1,6 +1,6 @@
 // HTML renderer for the LaTeX AST. Ported from the Go package keystroke/latek/render.
 
-import { Node, DocumentNode, htmlEscape } from './Ast';
+import { Node, DocumentNode, RenderContext, htmlEscape } from './Ast';
 
 /** Configurable rendering options. Omitted fields behave like Go zero values. */
 export interface RenderOptions {
@@ -10,6 +10,8 @@ export interface RenderOptions {
     title?: string;
     language?: string;
     bodyOnly?: boolean;
+    /** Emit math as \(...\) / \[...\] text for MathJax instead of <code>. */
+    mathDelimiters?: boolean;
 }
 
 // Kept byte-for-byte identical to the Go raw string (including the doubled
@@ -27,11 +29,11 @@ MathJax = {
 </head>`;
 
 export class Renderer {
-    render(node: Node | null | undefined): string {
+    render(node: Node | null | undefined, ctx: RenderContext = {}): string {
         if (node === null || node === undefined) {
             return '';
         }
-        return node.renderHTML();
+        return node.renderHTML(ctx);
     }
 
     renderToString(node: Node | null | undefined): string {
@@ -47,14 +49,14 @@ export class Renderer {
     }
 
     /** Renders only the document body content without the HTML wrapper. */
-    renderBodyOnly(doc: DocumentNode | null | undefined): string {
+    renderBodyOnly(doc: DocumentNode | null | undefined, ctx: RenderContext = {}): string {
         if (doc === null || doc === undefined) {
             return '';
         }
 
         let result = '';
         for (const child of doc.children) {
-            result += this.render(child);
+            result += this.render(child, ctx);
         }
         return result.trim();
     }
@@ -64,8 +66,9 @@ export class Renderer {
             return '';
         }
 
+        const ctx: RenderContext = { mathDelimiters: options.mathDelimiters };
         if (options.bodyOnly) {
-            return this.renderBodyOnly(doc);
+            return this.renderBodyOnly(doc, ctx);
         }
 
         let result = '';
@@ -98,7 +101,7 @@ export class Renderer {
         result += '</head>\n<body>\n';
 
         for (const child of doc.children) {
-            result += this.render(child);
+            result += this.render(child, ctx);
         }
 
         result += '</body>\n</html>';
@@ -111,6 +114,7 @@ export class Renderer {
             includeDoctype: true,
             includeStyle: true,
             title: 'LaTeX Document with Math',
+            mathDelimiters: true,
         });
 
         // Insert MathJax before the first </head>. A replacer function is used

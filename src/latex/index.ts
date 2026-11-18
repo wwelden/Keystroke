@@ -11,7 +11,7 @@ export { Parser } from './Parser';
 export { Renderer, getDefaultCSS } from './Renderer';
 export type { RenderOptions } from './Renderer';
 export { Token, TokenType, newToken, newTokenWithValue, newTokenWithOptions } from './Token';
-export type { Node } from './Ast';
+export type { Node, RenderContext } from './Ast';
 export {
     LaTeXNode,
     DocumentNode,
