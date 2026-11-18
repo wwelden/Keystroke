@@ -261,6 +261,9 @@ describe('html Parser', () => {
     ['only a prefixed name', '<a data-href="wrong">', ''],
     ['bare attribute', '<a href>', ''],
     ['first occurrence wins', '<a href="first" href="second">', 'first'],
+    ['with character references', '<a href="/q?a=1&amp;b=&quot;x&quot;">', '/q?a=1&b="x"'],
+    ['unquoted with a character reference', '<a href=/q?a=1&amp;b=2>', '/q?a=1&b=2'],
+    ['with a bare ampersand', '<a href="/q?a=1&b=2">', '/q?a=1&b=2'],
   ])('extracts the href attribute: %s', (_label, literal, expected) => {
     const p = new Parser(new Lexer(''));
     p['curToken'] = new Token(TokenType.A, literal);
