@@ -204,6 +204,21 @@ describe('Parser', () => {
             );
             expect(hasMathNodes).toBe(true);
         });
+
+        // Regression for #57: a top-level $ with no closing $ became a math
+        // node that swallowed the rest of the line.
+        it('keeps a lone $ and the prose after it as literal text', () => {
+            const parser = new Parser(new Lexer('Price: $5 today.'));
+            const doc = parser.parse();
+            expect(doc.children.some(child => child instanceof MathNode)).toBe(false);
+            expect(doc.children.map(child => child.value).join('')).toBe('Price: $5 today.');
+            expect(parser.getErrors()).toEqual([]);
+        });
+
+        it('still parses closed math after a lone $ on an earlier line', () => {
+            const doc = parse('Cost $5\nnext $y$ line');
+            expect(doc.children.filter(child => child instanceof MathNode)).toHaveLength(1);
+        });
     });
 
     // Regression for #20: parse() advanced again after inline sub-parsers had
