@@ -375,7 +375,7 @@ export class Parser {
     }
 
     private parseText(): Node {
-        return new TextNode(this.curToken.literal);
+        return new TextNode(displayText(this.curToken));
     }
 
     private parseComment(): Node {
@@ -459,7 +459,7 @@ export class Parser {
                     braceCount--;
                 }
                 value += tok.literal;
-                text += tok.literal;
+                text += displayText(tok);
             }
 
             prev = this.curToken;
@@ -519,7 +519,7 @@ export class Parser {
                 if (this.curToken.spaceBefore && content !== '') {
                     content += ' ';
                 }
-                content += this.curToken.literal;
+                content += displayText(this.curToken);
                 this.nextToken();
             }
         }
@@ -577,6 +577,11 @@ export class Parser {
         this.peekError(t);
         return false;
     }
+}
+
+/** The text a token displays: an escaped character (\%) shows without its backslash. */
+function displayText(tok: Token): string {
+    return tok.type === TokenType.TEXT && tok.value !== '' ? tok.value : tok.literal;
 }
 
 /** Nodes that flow inline with text, so whitespace between them is kept. */

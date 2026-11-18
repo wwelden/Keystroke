@@ -4,9 +4,12 @@
 // the two are identical. See README notes in the port report for the
 // (intentional) difference on non-ASCII input.
 
-import { Token, TokenType, newToken } from './Token';
+import { Token, TokenType, newToken, newTokenWithValue } from './Token';
 
 const EOF_CHAR = '\0';
+
+// Special characters that a backslash turns back into literal text.
+const ESCAPABLE: ReadonlySet<string> = new Set(['#', '$', '%', '&', '_', '{', '}']);
 
 export class Lexer {
     private input: string;
@@ -152,6 +155,15 @@ export class Lexer {
     private readCommand(): Token {
         const position = this.position;
         this.readChar(); // skip '\'
+
+        // Escaped special character (\%, \&, ...): literal text, not a command.
+        // The literal keeps the source so positions and math stay intact;
+        // the value is the character to display.
+        if (ESCAPABLE.has(this.ch)) {
+            const ch = this.ch;
+            this.readChar();
+            return newTokenWithValue(TokenType.TEXT, '\\' + ch, ch);
+        }
 
         const commandName = this.readIdentifier();
         const fullCommand = this.input.slice(position, this.position);
