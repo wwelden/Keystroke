@@ -17,6 +17,7 @@ export {
     DocumentNode,
     SectionNode,
     TextNode,
+    ParagraphNode,
     CommandNode,
     EnvironmentNode,
     ItemNode,
