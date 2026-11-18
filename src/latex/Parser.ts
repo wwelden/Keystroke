@@ -243,7 +243,8 @@ export class Parser {
                 if (this.expectPeek(TokenType.LBRACE)) {
                     const endEnvName = this.readBraceContent();
                     if (endEnvName === envName) {
-                        closed = true;
+                        // \end{name without its '}' still leaves the environment open
+                        closed = this.curTokenIs(TokenType.RBRACE);
                         break;
                     }
                     // Drop a stray \end{other} instead of rendering it as text

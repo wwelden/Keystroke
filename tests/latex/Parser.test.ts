@@ -285,6 +285,10 @@ describe('latex Parser', () => {
 
         it('reports an environment missing its \\end', () => {
             expect(errorsFor('\\begin{quote}X')).toEqual(['unterminated environment: missing \\end{quote}']);
+            expect(errorsFor('\\begin{quote}X\\end{quote')).toEqual([
+                'unterminated group: missing closing }',
+                'unterminated environment: missing \\end{quote}',
+            ]);
             expect(errorsFor('\\begin{lstlisting}\ncode')).toEqual(['unterminated environment: missing \\end{lstlisting}']);
         });
 
