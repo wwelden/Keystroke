@@ -246,7 +246,7 @@ describe('body output', () => {
         ["\\begin{lstlisting}[language=go]\nfunc main() {}\n\\end{lstlisting}", "<pre><code class=\"language-go\">func main() {}</code></pre>", []],
         ["\\begin{lstlisting}\ncode here\n\\end{lstlisting}", "<pre><code>code here</code></pre>", []],
         ["\\begin{tabular}{ll}Cell1 & Cell2 \\\\ Cell3 & Cell4 \\\\\\end{tabular}", "<table>\n<tr><td>{ll}Cell1</td><td>Cell2</td></tr>\n<tr><td>Cell3</td><td>Cell4</td></tr>\n</table>", []],
-        ["\\begin{tabular}{|c|c|}\\toprule A & B \\\\ \\midrule 1 & 2 \\\\ \\bottomrule\\end{tabular}", "<table>\n<tr><td>{|c|c|}\\toprule A</td><td>B</td></tr>\n<tr><td>\\midrule 1</td><td>2</td></tr>\n<tr><td>\\bottomrule</td></tr>\n</table>", []],
+        ["\\begin{tabular}{|c|c|}\\toprule A & B \\\\ \\midrule 1 & 2 \\\\ \\bottomrule\\end{tabular}", "<table>\n<tr><td>{|c|c|} A</td><td>B</td></tr>\n<tr><td>1</td><td>2</td></tr>\n</table>", []],
         ["\\begin{custom}inside\\end{custom}", "<div class=\"custom\">\ninside</div>", []],
         ["\\begin{foo\"bar}x\\end{foo\"bar}", "<div class=\"foo\"bar\">\nx</div>", []],
         ["\\href{https://example.com}{Link text}", "<a href=\"https://example.com\">Link text</a>", []],
@@ -486,5 +486,20 @@ describe('LaTeX blank-line paragraphs (#67)', () => {
         ['\\begin{itemize}\n\\item A\n\n\\item B\n\\end{itemize}', '<ul>\n<li>A</li>\n<li>B</li>\n</ul>'],
     ])('%j has no paragraph break', (input, expected) => {
         expect(latexToHtmlBodyOnly(input)).toBe(expected);
+    });
+});
+
+// Issue #71: booktabs rules draw lines between rows; they are not cell text,
+// and a rule on its own after the last \\ is not a row.
+describe('tabular booktabs rules (#71)', () => {
+    it.each([
+        [String.raw`\begin{tabular}{l}\toprule A & B \\ \midrule 1 & 2 \\ \bottomrule\end{tabular}`],
+        ['\\begin{tabular}{l}\n\\toprule\nA & B \\\\\n\\midrule\n1 & 2 \\\\\n\\bottomrule\n\\end{tabular}'],
+        [String.raw`\begin{tabular}{l}\toprule[1pt] A & B \\ \midrule[0.5pt] 1 & 2 \\ \bottomrule[1pt]\end{tabular}`],
+    ])('keeps rules out of the cells of %s', (input) => {
+        const html = latexToHtmlBodyOnly(input);
+        expect(html).not.toMatch(/rule|\[/);
+        expect(html.match(/<tr>/g)).toHaveLength(2);
+        expect(html).toContain('<tr><td>1</td><td>2</td></tr>');
     });
 });
