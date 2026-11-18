@@ -646,8 +646,13 @@ export class Parser {
                     node = this.parseCodeBlock();
                     break;
                 case TokenType.MATH:
-                    node = this.parseMath();
-                    consumedOwnTokens = true;
+                    if (this.hasClosingMath(TokenType.NEWLINE)) {
+                        node = this.parseMath();
+                        consumedOwnTokens = true;
+                    } else {
+                        // A lone $ (e.g. a price) is literal, as in parseInlineNode
+                        node = this.parseText();
+                    }
                     break;
                 case TokenType.SUPERSCRIPT:
                     node = this.parseSuperscript();
