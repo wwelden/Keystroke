@@ -256,7 +256,8 @@ describe('Markdown Interpreter', () => {
         it.each(['^', '~'])('should stop an unclosed %s math group at the line boundary', marker => {
             const tag = marker === '^' ? 'sup' : 'sub';
             expect(processMarkdown('$x' + marker + '(2)$')).toBe('<span class="math">x<' + tag + '>(2)</' + tag + '></span>');
-            expect(processMarkdown('$x' + marker + '(\nnext')).toBe('<span class="math">x<' + tag + '>(</' + tag + '></span><br>\nnext');
+            // An unclosed $ is literal (#57); the group still stops at the newline
+            expect(processMarkdown('$x' + marker + '(\nnext')).toBe('$x<' + tag + '>(</' + tag + '><br>\nnext');
             // In a heading the unclosed $ is literal, and the next line stays outside
             const result = processMarkdown('# $x' + marker + '(\nnext');
             expect(result).not.toContain('class="math"');
