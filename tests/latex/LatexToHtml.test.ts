@@ -444,3 +444,17 @@ describe('LaTeX link destination schemes', () => {
         expect(latexToHtmlBodyOnly('\\textbf{\\href{' + url + '}{click}}')).toBe('<strong><a href="' + url + '">click</a></strong>');
     });
 });
+
+describe('LaTeX escaped special characters', () => {
+    it.each([
+        [String.raw`50\%done`, '50%done'],
+        [String.raw`100\% \& more`, '100% &amp; more'],
+        [String.raw`\$5 \#1 a\_b \{x\}`, '$5 #1 a_b {x}'],
+        [String.raw`\textbf{50\%done} after`, '<strong>50%done</strong> after'],
+        [String.raw`\section{Up 5\%}`, '<h1>Up 5%</h1>'],
+        [String.raw`$50\%$`, String.raw`<span class="math-inline"><code>50\%</code></span>`],
+        ['a % comment', 'a<!-- % comment -->'],
+    ])('%s renders as literal text', (input, expected) => {
+        expect(latexToHtmlBodyOnly(input)).toBe(expected);
+    });
+});
