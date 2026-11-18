@@ -339,8 +339,14 @@ export class Parser {
             } else {
                 const start = this.curToken;
                 // booktabs rules (\toprule, \midrule, \bottomrule) draw lines
-                // between rows; they are not cell content
-                const node = isTableRule(start.type) ? null : this.parseElement();
+                // between rows; they and their optional [width] are not cell content
+                let node: Node | null = null;
+                if (!isTableRule(start.type)) {
+                    node = this.parseElement();
+                } else if (this.peekTokenIs(TokenType.LBRACKET)) {
+                    this.nextToken();
+                    this.readBracketContent();
+                }
                 this.appendElement(cell.children, node, start, flow);
                 if (this.stoppedOnTerminator(start)) {
                     continue;

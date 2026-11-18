@@ -495,9 +495,10 @@ describe('tabular booktabs rules (#71)', () => {
     it.each([
         [String.raw`\begin{tabular}{l}\toprule A & B \\ \midrule 1 & 2 \\ \bottomrule\end{tabular}`],
         ['\\begin{tabular}{l}\n\\toprule\nA & B \\\\\n\\midrule\n1 & 2 \\\\\n\\bottomrule\n\\end{tabular}'],
+        [String.raw`\begin{tabular}{l}\toprule[1pt] A & B \\ \midrule[0.5pt] 1 & 2 \\ \bottomrule[1pt]\end{tabular}`],
     ])('keeps rules out of the cells of %s', (input) => {
         const html = latexToHtmlBodyOnly(input);
-        expect(html).not.toContain('rule');
+        expect(html).not.toMatch(/rule|\[/);
         expect(html.match(/<tr>/g)).toHaveLength(2);
         expect(html).toContain('<tr><td>1</td><td>2</td></tr>');
     });
