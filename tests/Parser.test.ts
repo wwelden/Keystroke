@@ -272,6 +272,17 @@ describe('Parser', () => {
             expect(doc.children[3].value).toBe('a');
         });
 
+        it('splits the operand from the text after it (#58)', () => {
+            const doc = parse('x^2+y');
+            expect(doc.children.map(c => c.type)).toEqual([
+                TokenType.TEXT, TokenType.SUPERSCRIPT, TokenType.TEXT,
+            ]);
+            const sup = doc.children[1] as SuperscriptNode;
+            expect(sup.text).toBe('2');
+            expect(sup.value).toBe('^');
+            expect(doc.children[2].value).toBe('+y');
+        });
+
         it('consumes the closing marker of paired subscript', () => {
             const doc = parse('H~2~O');
             expect(doc.children.map(c => c.type)).toEqual([

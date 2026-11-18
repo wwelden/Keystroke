@@ -315,6 +315,36 @@ describe('Markdown Interpreter', () => {
         });
     });
 
+    // Regression for #58: an unparenthesized script ends at the operand, so it
+    // keeps a leading sign and leaves any following operator outside.
+    describe('Unparenthesized script operands', () => {
+        const math = (html: string) => `<span class="math">${html}</span>`;
+        it.each([
+            ['$x^2+y$', math('x<sup>2</sup>+y')],
+            ['$y~i+1$', math('y<sub>i</sub>+1')],
+            ['$x^2-1$', math('x<sup>2</sup>-1')],
+            ['$x^-2$', math('x<sup>-2</sup>')],
+            ['$x~-1$', math('x<sub>-1</sub>')],
+            ['$x^-2+y$', math('x<sup>-2</sup>+y')],
+            ['$e^-x$', math('e<sup>-x</sup>')],
+            ['$x^+2$', math('x<sup>+2</sup>')],
+            ['$x^2.5$', math('x<sup>2.5</sup>')],
+            ['$x^.5$', math('x<sup>.5</sup>')],
+            ['$x^-.5+y$', math('x<sup>-.5</sup>+y')],
+            ['$x^10$', math('x<sup>10</sup>')],
+            ['$x^-2^$', math('x<sup>-2</sup>')],
+            ['x^2+y', 'x<sup>2</sup>+y'],
+            ['$x^2+y^2$', math('x<sup>2</sup>+y<sup>2</sup>')],
+            ['$x^2+y^2=z^2$', math('x<sup>2</sup>+y<sup>2</sup>=z<sup>2</sup>')],
+            ['$e^x+e^y$', math('e<sup>x</sup>+e<sup>y</sup>')],
+            ['$x~i+y~j$', math('x<sub>i</sub>+y<sub>j</sub>')],
+            ['$x^-2+y^2$', math('x<sup>-2</sup>+y<sup>2</sup>')],
+            ['$x^(a+b)$', math('x<sup>(a+b)</sup>')],
+        ])('%j', (input, expected) => {
+            expect(processMarkdown(input)).toBe(expected);
+        });
+    });
+
     // Regression for #21: block markers only count at the start of a line.
     describe('Block markers only at line start', () => {
         it.each([
