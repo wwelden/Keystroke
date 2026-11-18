@@ -482,12 +482,14 @@ export class Parser {
         return math;
     }
     private parseSuperscript(): SuperscriptNode {
+        const marker = this.currentToken;
         const superscriptText = this.parseScriptOperand(TokenType.SUPERSCRIPT);
-        return new SuperscriptNode(this.currentToken, superscriptText);
+        return new SuperscriptNode(marker, superscriptText);
     }
     private parseSubscript(): SubscriptNode {
+        const marker = this.currentToken;
         const subscriptText = this.parseScriptOperand(TokenType.SUBSCRIPT);
-        return new SubscriptNode(this.currentToken, subscriptText);
+        return new SubscriptNode(marker, subscriptText);
     }
 
     /**
