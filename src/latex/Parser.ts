@@ -338,7 +338,10 @@ export class Parser {
                 flow = newFlowState();
             } else {
                 const start = this.curToken;
-                this.appendElement(cell.children, this.parseElement(), start, flow);
+                // booktabs rules (\toprule, \midrule, \bottomrule) draw lines
+                // between rows; they are not cell content
+                const node = isTableRule(start.type) ? null : this.parseElement();
+                this.appendElement(cell.children, node, start, flow);
                 if (this.stoppedOnTerminator(start)) {
                     continue;
                 }
@@ -642,6 +645,10 @@ export class Parser {
 /** The text a token displays: an escaped character (\%) shows without its backslash. */
 function displayText(tok: Token): string {
     return tok.type === TokenType.TEXT && tok.value !== '' ? tok.value : tok.literal;
+}
+
+function isTableRule(type: TokenType): boolean {
+    return type === TokenType.TOPRULE || type === TokenType.MIDRULE || type === TokenType.BOTTOMRULE;
 }
 
 /** Nodes that flow inline with text, so whitespace between them is kept. */
