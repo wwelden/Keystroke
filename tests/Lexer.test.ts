@@ -211,6 +211,14 @@ describe('Lexer', () => {
       expectToken(lexer.nextToken(), { type: TokenType.SPACE, literal: ' ' });
       expectToken(lexer.nextToken(), { type: TokenType.TEXT, literal: '123' });
     });
+
+    // Regression for #70: a NUL in the source must not end the input.
+    it('keeps text after a NUL, replacing the NUL with U+FFFD', () => {
+      const lexer = new Lexer('before\0after');
+
+      expectToken(lexer.nextToken(), { type: TokenType.TEXT, literal: 'before�after' });
+      expectToken(lexer.nextToken(), { type: TokenType.EOF, literal: '' });
+    });
   });
 
   // Regression for #21: block markers only count at the start of a line.

@@ -13,7 +13,9 @@ export class Lexer {
     private atLineStart: boolean = true;
 
     constructor(input: string) {
-        this.input = input;
+        // '\0' marks end of input below, so a NUL in the source would end
+        // the scan early. CommonMark replaces U+0000 with U+FFFD anyway.
+        this.input = input.replace(/\0/g, '�');
         this.position = 0;
         this.readPosition = 0;
         this.ch = '';
