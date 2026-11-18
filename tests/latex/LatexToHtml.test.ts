@@ -105,7 +105,7 @@ describe('latex public API', () => {
         it('convertWithMathJax', () => {
             const result = new Converter().convertWithMathJax('$$\\sum_{i=1}^{n} i$$');
             expect(result).toContain('MathJax');
-            expect(result).toContain('math-display');
+            expect(result).toContain(String.raw`<div class="math-display">\[\sum_{i=1}^{n} i\]</div>`);
         });
 
         it('convertToAST', () => {

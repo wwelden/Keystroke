@@ -164,6 +164,31 @@ describe('latex Renderer', () => {
         expect(result.split('</head>')).toHaveLength(2);
     });
 
+    it('renderWithMathJax emits delimited math outside <code> so MathJax typesets it (#56)', () => {
+        const item = new ItemNode();
+        item.children.push(new MathNode('a_1', false));
+        const list = new EnvironmentNode(TokenType.BEGIN, 'itemize', '');
+        list.children.push(item);
+        const doc = new DocumentNode([
+            new MathNode('x^2 < y', false),
+            new MathNode('\\sum_{i=1}^{n} i', true),
+            list,
+        ]);
+        const body = r.renderWithMathJax(doc).split('<body>')[1];
+        expect(body).toContain(String.raw`<span class="math-inline">\(x^2 &lt; y\)</span>`);
+        expect(body).toContain(String.raw`<div class="math-display">\[\sum_{i=1}^{n} i\]</div>`);
+        expect(body).toContain(String.raw`<li><span class="math-inline">\(a_1\)</span></li>`);
+        expect(body).not.toContain('<code>');
+    });
+
+    it('keeps math as <code> outside the MathJax export', () => {
+        const doc = new DocumentNode([new MathNode('x^2', false)]);
+        expect(r.renderWithOptions(doc, { bodyOnly: true }))
+            .toBe('<span class="math-inline"><code>x^2</code></span>');
+        expect(r.renderWithOptions(doc, { bodyOnly: true, mathDelimiters: true }))
+            .toBe(String.raw`<span class="math-inline">\(x^2\)</span>`);
+    });
+
     it.each([
         ['Hello\n\n\nWorld', 'Hello\n\nWorld'],
         ['  \n  Text  \n  ', 'Text'],

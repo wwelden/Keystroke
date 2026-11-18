@@ -4,10 +4,20 @@
 
 import { TokenType } from './Token';
 
+/** Options that change how nodes render to HTML. */
+export interface RenderContext {
+    /**
+     * Emit math as delimited TeX text (\(...\) and \[...\]) instead of
+     * <code> elements, so MathJax finds and typesets it. MathJax skips
+     * <code> contents and only scans text for its configured delimiters.
+     */
+    mathDelimiters?: boolean;
+}
+
 export interface Node {
     tokenLiteral(): string;
     toString(): string;
-    renderHTML(): string;
+    renderHTML(ctx?: RenderContext): string;
 }
 
 /** Base class for all LaTeX nodes (Go: LaTeXNode). */
@@ -26,14 +36,14 @@ export class LaTeXNode implements Node {
         return this.content;
     }
 
-    renderHTML(): string {
+    renderHTML(_ctx: RenderContext = {}): string {
         return this.content;
     }
 
-    protected renderChildrenHTML(): string {
+    protected renderChildrenHTML(ctx: RenderContext = {}): string {
         let result = '';
         for (const child of this.children) {
-            result += child.renderHTML();
+            result += child.renderHTML(ctx);
         }
         return result;
     }
@@ -48,7 +58,7 @@ export class DocumentNode extends LaTeXNode {
         super(TokenType.EOF, '', children); // Document has no specific token type
     }
 
-    renderHTML(): string {
+    renderHTML(ctx: RenderContext = {}): string {
         let result = '<!DOCTYPE html>\n<html>\n<head>\n';
         result += '<meta charset="UTF-8">\n';
         result += '<title>LaTeX Document</title>\n';
@@ -65,7 +75,7 @@ export class DocumentNode extends LaTeXNode {
         result += 'th { background-color: #f0f0f0; font-weight: bold; }\n';
         result += '</style>\n';
         result += '</head>\n<body>\n';
-        result += this.renderChildrenHTML();
+        result += this.renderChildrenHTML(ctx);
         result += '</body>\n</html>';
         return result;
     }
@@ -120,8 +130,8 @@ export class CommandNode extends LaTeXNode {
         super(type, value, []);
     }
 
-    renderHTML(): string {
-        let content = this.renderChildrenHTML();
+    renderHTML(ctx: RenderContext = {}): string {
+        let content = this.renderChildrenHTML(ctx);
         if (content === '') {
             content = htmlEscape(this.value);
         }
@@ -159,8 +169,8 @@ export class EnvironmentNode extends LaTeXNode {
         super(type, '', []);
     }
 
-    renderHTML(): string {
-        const content = this.renderChildrenHTML();
+    renderHTML(ctx: RenderContext = {}): string {
+        const content = this.renderChildrenHTML(ctx);
 
         switch (this.environment) {
             case 'itemize':
@@ -191,8 +201,8 @@ export class ItemNode extends LaTeXNode {
         super(TokenType.ITEM, '', []);
     }
 
-    renderHTML(): string {
-        return '<li>' + this.renderChildrenHTML() + '</li>\n';
+    renderHTML(ctx: RenderContext = {}): string {
+        return '<li>' + this.renderChildrenHTML(ctx) + '</li>\n';
     }
 }
 
@@ -204,10 +214,10 @@ export class TableRowNode extends LaTeXNode {
         super(TokenType.AMPERSAND, '', []);
     }
 
-    renderHTML(): string {
+    renderHTML(ctx: RenderContext = {}): string {
         let result = '<tr>';
         for (const cell of this.cells) {
-            result += cell.renderHTML();
+            result += cell.renderHTML(ctx);
         }
         result += '</tr>\n';
         return result;
@@ -220,8 +230,8 @@ export class TableCellNode extends LaTeXNode {
         super(TokenType.AMPERSAND, '', []);
     }
 
-    renderHTML(): string {
-        const content = this.renderChildrenHTML();
+    renderHTML(ctx: RenderContext = {}): string {
+        const content = this.renderChildrenHTML(ctx);
         if (this.isHeader) {
             return '<th>' + content + '</th>';
         }
@@ -235,9 +245,16 @@ export class MathNode extends LaTeXNode {
         super(isDisplay ? TokenType.MATH_DISPLAY : TokenType.MATH_INLINE, content, []);
     }
 
-    renderHTML(): string {
-        // Rendered as code with a math class; MathJax/KaTeX can pick it up.
+    renderHTML(ctx: RenderContext = {}): string {
         const escapedContent = htmlEscape(this.content);
+        if (ctx.mathDelimiters) {
+            // MathJax ignores <code> and needs delimiters in plain text.
+            if (this.isDisplay) {
+                return '<div class="math-display">\\[' + escapedContent + '\\]</div>\n';
+            }
+            return '<span class="math-inline">\\(' + escapedContent + '\\)</span>';
+        }
+        // Without MathJax, show the TeX source as code.
         if (this.isDisplay) {
             return '<div class="math-display"><code>' + escapedContent + '</code></div>\n';
         }
