@@ -8,6 +8,7 @@ import {
     DocumentNode,
     SectionNode,
     TextNode,
+    ParagraphNode,
     CommandNode,
     EnvironmentNode,
     ItemNode,
@@ -30,6 +31,22 @@ const NESTED_COMMANDS: ReadonlySet<TokenType> = new Set([
 ]);
 
 const UNTERMINATED_GROUP = 'unterminated group: missing closing }';
+
+/** Per-container state that appendElement carries between elements. */
+interface FlowState {
+    /** Whitespace separates the next element from the previous one. */
+    space: boolean;
+    /** The previous element was a newline. */
+    afterNewline: boolean;
+    /** A blank line came after the last appended node. */
+    blankLine: boolean;
+    /** Child indices that start a new paragraph. */
+    breaks: Set<number>;
+}
+
+function newFlowState(): FlowState {
+    return { space: false, afterNewline: false, blankLine: false, breaks: new Set() };
+}
 
 /** Rebuilds the LaTeX source of a parsed nested command for CommandNode.value. */
 function commandSource(node: CommandNode): string {
@@ -76,38 +93,47 @@ export class Parser {
 
     parseDocument(): DocumentNode {
         const children: Node[] = [];
-        let pendingSpace = false;
+        const flow = newFlowState();
 
         while (!this.curTokenIs(TokenType.EOF)) {
             const start = this.curToken;
-            pendingSpace = this.appendElement(children, this.parseElement(), start, pendingSpace);
+            this.appendElement(children, this.parseElement(), start, flow);
             if (!this.stoppedOnTerminator(start)) {
                 this.nextToken();
             }
         }
 
-        return new DocumentNode(children);
+        return new DocumentNode(groupParagraphs(children, flow));
     }
 
     /**
      * Appends `node` (if any) to `children`, inserting a single space when
-     * whitespace separated it from the previous inline sibling. Returns the
-     * pending-space state for the next element: true when `node` was skipped
-     * whitespace (a newline) that should still separate the next element.
+     * whitespace separated it from the previous inline sibling. A blank line
+     * (two newlines in a row) between paragraph content instead records a
+     * paragraph break in `flow.breaks` for groupParagraphs.
      */
-    private appendElement(children: Node[], node: Node | null, start: Token, pendingSpace: boolean): boolean {
-        const space = pendingSpace || start.spaceBefore;
-        if (node === null) {
-            return space || start.type === TokenType.NEWLINE;
+    private appendElement(children: Node[], node: Node | null, start: Token, flow: FlowState): void {
+        const isNewline = start.type === TokenType.NEWLINE;
+        if (isNewline && flow.afterNewline) {
+            flow.blankLine = true;
         }
-        // \textbf{ a } spaces its content from its neighbours like "\textbf{a}" with spaces outside
-        const isCommand = node instanceof CommandNode;
+        flow.afterNewline = isNewline;
+
+        const space = flow.space || start.spaceBefore;
+        if (node === null) {
+            flow.space = space || isNewline;
+            return;
+        }
         const prev = children[children.length - 1];
-        if ((space || (isCommand && this.braceLeadingSpace)) && prev !== undefined && isInline(prev) && isInline(node)) {
+        if (flow.blankLine && prev !== undefined && isParagraphContent(prev) && isParagraphContent(node)) {
+            flow.breaks.add(children.length);
+        } else if ((space || (node instanceof CommandNode && this.braceLeadingSpace)) && prev !== undefined && isInline(prev) && isInline(node)) {
+            // \textbf{ a } spaces its content from its neighbours like "\textbf{a}" with spaces outside
             children.push(new TextNode(' '));
         }
         children.push(node);
-        return isCommand && this.braceTrailingSpace;
+        flow.blankLine = false;
+        flow.space = node instanceof CommandNode && this.braceTrailingSpace;
     }
 
     /**
@@ -235,7 +261,7 @@ export class Parser {
 
         // Parse environment content until \end{environment}
         this.nextToken();
-        let pendingSpace = false;
+        const flow = newFlowState();
         let closed = false;
         while (!this.curTokenIs(TokenType.EOF)) {
             if (this.curToken.type === TokenType.END) {
@@ -256,7 +282,7 @@ export class Parser {
 
             const start = this.curToken;
             const node = envName === 'tabular' ? this.parseTableContent() : this.parseElement();
-            pendingSpace = this.appendElement(env.children, node, start, pendingSpace);
+            this.appendElement(env.children, node, start, flow);
             if (!this.stoppedOnTerminator(start)) {
                 this.nextToken();
             }
@@ -265,6 +291,7 @@ export class Parser {
             this.errors.push(`unterminated environment: missing \\end{${envName}}`);
         }
 
+        env.children = groupParagraphs(env.children, flow);
         return env;
     }
 
@@ -299,18 +326,19 @@ export class Parser {
 
         const row = new TableRowNode();
         let cell = new TableCellNode(false);
-        let pendingSpace = false;
+        let flow = newFlowState();
 
         while (!this.curTokenIs(TokenType.EOF) && !this.curTokenIs(TokenType.LINEBREAK) && !this.curTokenIs(TokenType.END)) {
             if (this.curToken.type === TokenType.AMPERSAND) {
                 // End current cell, start new one
+                cell.children = groupParagraphs(cell.children, flow);
                 row.cells.push(cell);
                 row.children.push(cell);
                 cell = new TableCellNode(false);
-                pendingSpace = false;
+                flow = newFlowState();
             } else {
                 const start = this.curToken;
-                pendingSpace = this.appendElement(cell.children, this.parseElement(), start, pendingSpace);
+                this.appendElement(cell.children, this.parseElement(), start, flow);
                 if (this.stoppedOnTerminator(start)) {
                     continue;
                 }
@@ -319,6 +347,7 @@ export class Parser {
         }
 
         // Add the last cell
+        cell.children = groupParagraphs(cell.children, flow);
         if (cell.children.length > 0 || row.cells.length > 0) {
             row.cells.push(cell);
             row.children.push(cell);
@@ -333,10 +362,10 @@ export class Parser {
 
         // Parse content until next \item or end of environment
         this.nextToken();
-        let pendingSpace = false;
+        const flow = newFlowState();
         while (!this.curTokenIs(TokenType.EOF) && !this.curTokenIs(TokenType.ITEM) && !this.curTokenIs(TokenType.END)) {
             const start = this.curToken;
-            pendingSpace = this.appendElement(item.children, this.parseElement(), start, pendingSpace);
+            this.appendElement(item.children, this.parseElement(), start, flow);
             if (this.curTokenIs(TokenType.EOF) || this.curTokenIs(TokenType.ITEM) || this.curTokenIs(TokenType.END)) {
                 break;
             }
@@ -344,6 +373,7 @@ export class Parser {
         }
 
         // The current token is left on \item, \end or EOF for the caller
+        item.children = groupParagraphs(item.children, flow);
         return item;
     }
 
@@ -626,4 +656,45 @@ function isInline(node: Node): boolean {
         return node.type !== TokenType.LINEBREAK && node.type !== TokenType.HRULE;
     }
     return false;
+}
+
+/** True for nodes that belong inside a paragraph: inline content, \\ and comments. */
+function isParagraphContent(node: Node): boolean {
+    return isInline(node) || node instanceof CommentNode ||
+        (node instanceof CommandNode && node.type === TokenType.LINEBREAK);
+}
+
+/**
+ * Wraps each run of paragraph content in a ParagraphNode when blank lines
+ * split the container into paragraphs. A container without a paragraph break
+ * keeps its children as they are. `flow.breaks` holds the child indices that
+ * start a new paragraph.
+ */
+function groupParagraphs(children: Node[], flow: FlowState): Node[] {
+    if (flow.breaks.size === 0) {
+        return children;
+    }
+    const result: Node[] = [];
+    let run: Node[] = [];
+    const flush = (): void => {
+        if (run.some(isInline)) {
+            result.push(new ParagraphNode(run));
+        } else {
+            result.push(...run);
+        }
+        run = [];
+    };
+    children.forEach((child, i) => {
+        if (flow.breaks.has(i)) {
+            flush();
+        }
+        if (isParagraphContent(child)) {
+            run.push(child);
+        } else {
+            flush();
+            result.push(child);
+        }
+    });
+    flush();
+    return result;
 }

@@ -119,6 +119,17 @@ export class TextNode extends LaTeXNode {
     }
 }
 
+/** A paragraph of inline content, ended in the source by a blank line. */
+export class ParagraphNode extends LaTeXNode {
+    constructor(children: Node[]) {
+        super(TokenType.NEWLINE, '', children);
+    }
+
+    renderHTML(ctx: RenderContext = {}): string {
+        return '<p>' + this.renderChildrenHTML(ctx) + '</p>\n';
+    }
+}
+
 /** LaTeX commands with content: \textbf{}, \href{}{}, \\, \hrule, ... */
 export class CommandNode extends LaTeXNode {
     constructor(

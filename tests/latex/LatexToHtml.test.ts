@@ -462,3 +462,29 @@ describe('LaTeX escaped special characters', () => {
         expect(latexToHtmlBodyOnly(input)).toBe(expected);
     });
 });
+
+describe('LaTeX blank-line paragraphs (#67)', () => {
+    it.each([
+        ['First.\n\nSecond.', '<p>First.</p>\n<p>Second.</p>'],
+        ['First.\n  \n\n\nSecond.', '<p>First.</p>\n<p>Second.</p>'],
+        ['First.\r\n\r\nSecond.', '<p>First.</p>\n<p>Second.</p>'],
+        ['One\ntwo\n\nthree', '<p>One two</p>\n<p>three</p>'],
+        ['A\\\\ B\n\nC', '<p>A<br>\nB</p>\n<p>C</p>'],
+        ['\\textbf{A}\n\n$x$ y', '<p><strong>A</strong></p>\n<p><span class="math-inline"><code>x</code></span> y</p>'],
+        ['\\section{X}\n\nText\n\nMore', '<h1>X</h1>\n<p>Text</p>\n<p>More</p>'],
+        ['\\begin{quote}\nA\n\nB\n\\end{quote}', '<blockquote>\n<p>A</p>\n<p>B</p>\n</blockquote>'],
+        ['\\begin{itemize}\n\\item A\n\nB\n\\end{itemize}', '<ul>\n<li><p>A</p>\n<p>B</p>\n</li>\n</ul>'],
+    ])('%j renders separate paragraphs', (input, expected) => {
+        expect(latexToHtmlBodyOnly(input)).toBe(expected);
+    });
+
+    it.each([
+        ['First.\nSecond.', 'First. Second.'],
+        ['A\n%c\nB', 'A<!-- %c -->\nB'],
+        ['\\section{X}\n\nText', '<h1>X</h1>\nText'],
+        ['A\n\n\\section{X}\nB', 'A<h1>X</h1>\nB'],
+        ['\\begin{itemize}\n\\item A\n\n\\item B\n\\end{itemize}', '<ul>\n<li>A</li>\n<li>B</li>\n</ul>'],
+    ])('%j has no paragraph break', (input, expected) => {
+        expect(latexToHtmlBodyOnly(input)).toBe(expected);
+    });
+});
