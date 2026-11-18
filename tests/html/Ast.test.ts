@@ -91,6 +91,31 @@ describe('html AST', () => {
     });
   });
 
+  describe('constructor text without children (#63)', () => {
+    it.each([
+      ['HeaderNode', () => new HeaderNode(1, 'Example', {}), '\\section{Example}'],
+      ['ParagraphNode', () => new ParagraphNode('Some text', {}), '\nSome text\n'],
+      ['FormattingNode', () => new FormattingNode('b', 'bold', {}), '\\textbf{bold}'],
+      ['ListItemNode', () => new ListItemNode('item', {}), '\\item item\n'],
+      ['CodeNode', () => new CodeNode('x', '', {}), '\\texttt{x}'],
+      ['PreNode', () => new PreNode('print(1)', 'python', {}), '\\begin{lstlisting}[language=python]\nprint(1)\n\\end{lstlisting}\n'],
+      ['BlockquoteNode', () => new BlockquoteNode('quote', {}), '\\begin{quote}\nquote\n\\end{quote}\n'],
+      ['TableCellNode', () => new TableCellNode('cell', true, {}), '\\textbf{cell}'],
+    ])('%s renders its constructor text', (_name, make, expected) => {
+      expect(make().renderLaTeX()).toBe(expected);
+    });
+
+    it('escapes constructor text like a text child', () => {
+      expect(new ParagraphNode('50% & $5_x', {}).renderLaTeX()).toBe('\n50\\% \\& \\$5\\_x\n');
+    });
+
+    it('prefers children over constructor text', () => {
+      const header = new HeaderNode(2, 'Stored', {});
+      header.children = [new TextNode('Child')];
+      expect(header.renderLaTeX()).toBe('\\subsection{Child}');
+    });
+  });
+
   describe('TextNode', () => {
     it('stores its text', () => {
       const text = new TextNode('Hello World');
