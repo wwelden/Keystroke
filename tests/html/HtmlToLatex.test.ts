@@ -166,6 +166,18 @@ describe('htmlToLatexBodyOnly preserves content', () => {
     expect(htmlToLatexBodyOnly(input)).toBe('\\begin{lstlisting}\n' + code + '\n\\end{lstlisting}');
   });
 
+  it('keeps \\end{lstlisting} in <pre> code from closing the listing', () => {
+    expect(htmlToLatexBodyOnly('<pre>before\n\\end{lstlisting}\nafter</pre>')).toBe(
+      '\\begin{lstlisting}[escapeinside={(*@}{@*)}]\nbefore\n(*@\\textbackslash{}@*)end{lstlisting}\nafter\n\\end{lstlisting}',
+    );
+  });
+
+  it('picks an escape delimiter that does not appear in the code', () => {
+    expect(htmlToLatexBodyOnly('<pre class="language-tex">(*@ (*@@ \\end{lstlisting}</pre>')).toBe(
+      '\\begin{lstlisting}[language=tex,escapeinside={(*@@@}{@*)}]\n(*@ (*@@ (*@@@\\textbackslash{}@*)end{lstlisting}\n\\end{lstlisting}',
+    );
+  });
+
   it('renders a caption and stray table text above the tabular', () => {
     expect(htmlToLatexBodyOnly('<table><caption>Report</caption><tr><td>A</td></tr><tr>loose<td>B</td></tr></table>')).toBe(
       'Report\nloose\n\\begin{tabular}{l}\n\\toprule\nA \\\\\n\\midrule\nB \\\\\n\\bottomrule\n\\end{tabular}',

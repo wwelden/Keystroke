@@ -333,18 +333,36 @@ export class PreNode extends HTMLNode {
     }
 
     renderLaTeX(): string {
-        let result = "\\begin{lstlisting}";
-        if (this.language !== "") {
-            result += "[language=" + this.language + "]";
-        }
-        result += "\n";
         // lstlisting prints its body verbatim, so it gets the plain text of the
         // descendants: LaTeX markup or escapes would show up as literal code
-        result += verbatimText(this);
-        result += "\n\\end{lstlisting}\n";
+        let code = verbatimText(this);
+        const options: string[] = [];
+        if (this.language !== "") {
+            options.push("language=" + this.language);
+        }
+        // The listing ends at the first \end{lstlisting} in its body, so a
+        // terminator in the code has its backslash typeset through an escape
+        // to LaTeX, whose opening delimiter does not appear in the code
+        if (code.includes(LISTING_END)) {
+            let open = "(*@";
+            while (code.includes(open)) {
+                open += "@";
+            }
+            const close = "@*)";
+            options.push("escapeinside={" + open + "}{" + close + "}");
+            code = code.split(LISTING_END).join(open + "\\textbackslash{}" + close + LISTING_END.slice(1));
+        }
+
+        let result = "\\begin{lstlisting}";
+        if (options.length > 0) {
+            result += "[" + options.join(",") + "]";
+        }
+        result += "\n" + code + "\n" + LISTING_END + "\n";
         return result;
     }
 }
+
+const LISTING_END = "\\end{lstlisting}";
 
 // The text a node displays, without LaTeX markup or escaping
 function verbatimText(node: Node): string {

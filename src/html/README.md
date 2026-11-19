@@ -101,7 +101,8 @@ linkToHref("url", "text");         // \href{url}{text}
 - HTML entities (`&amp;`, `&lt;`, `&gt;`, `&quot;`, `&apos;`, `&nbsp;`) are decoded.
 - Special LaTeX characters in text are escaped, except inside `<pre>`: a listing gets the
   plain text of everything in it (`<pre><code>a_b</code></pre>` → `a_b`), since
-  `lstlisting` prints its body verbatim.
+  `lstlisting` prints its body verbatim. Code containing `\end{lstlisting}` gets its
+  backslash through an `escapeinside` escape, so the listing doesn't end early.
 - The parser is forgiving of malformed HTML and never throws.
 - Table columns default to left-aligned (`l`).
 - Code blocks take a language from `class="language-xxx"`.
