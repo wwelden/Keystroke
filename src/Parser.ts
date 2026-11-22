@@ -38,6 +38,10 @@ import {
 const SCRIPT_OPERAND = /^[+-]?(?:\d*\.\d+|\d+|[\p{L}\p{N}]+)/u;
 const OPERAND_START = /^(?:[\p{L}\p{N}]|\.\d)/u;
 
+// Default for the constructor's token params. Shared so each Parser doesn't allocate three.
+const NO_TOKEN = new Token(TokenType.ILLEGAL, '');
+const isNoToken = (token: Token) => token.type === TokenType.ILLEGAL && token.literal === '';
+
 export class Parser {
     private lexer: Lexer;
     private currentToken: Token;
@@ -45,7 +49,7 @@ export class Parser {
     private peekNextToken: Token;
     private errors: string[];
 
-        constructor(lexer: Lexer, currentToken: Token = new Token(TokenType.ILLEGAL, ''), peekToken: Token = new Token(TokenType.ILLEGAL, ''), peekNextToken: Token = new Token(TokenType.ILLEGAL, '')  ) {
+    constructor(lexer: Lexer, currentToken: Token = NO_TOKEN, peekToken: Token = NO_TOKEN, peekNextToken: Token = NO_TOKEN) {
         this.lexer = lexer;
         this.currentToken = currentToken;
         this.peekToken = peekToken;
@@ -53,9 +57,7 @@ export class Parser {
         this.errors = [];
 
         // Initialize tokens if they are not provided (when only lexer is passed)
-        if (this.currentToken.type === TokenType.ILLEGAL && this.currentToken.literal === '' &&
-            this.peekToken.type === TokenType.ILLEGAL && this.peekToken.literal === '' &&
-            this.peekNextToken.type === TokenType.ILLEGAL && this.peekNextToken.literal === '') {
+        if (isNoToken(this.currentToken) && isNoToken(this.peekToken) && isNoToken(this.peekNextToken)) {
             // Properly initialize all three tokens from the lexer
             this.currentToken = this.lexer.nextToken();
             this.peekToken = this.lexer.nextToken();

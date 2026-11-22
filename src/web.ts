@@ -28,4 +28,10 @@ export function parse(markdown: string): MarkdownNode {
     return new Parser(new Lexer(markdown)).parse();
 }
 
-if (typeof window !== 'undefined') (window as any).Keystroke = { compile, tokenize, parse };
+// render(parse(md)) is compile(md). The playground calls them separately so the
+// Under the hood drawer can reuse the AST instead of parsing the text again.
+export function render(ast: MarkdownNode): string {
+    return new Renderer().render(ast);
+}
+
+if (typeof window !== 'undefined') (window as any).Keystroke = { compile, tokenize, parse, render };
