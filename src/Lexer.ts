@@ -16,7 +16,10 @@ export class Lexer {
         // '\0' marks end of input below, so a NUL in the source would end
         // the scan early. CommonMark replaces U+0000 with U+FFFD anyway.
         // CRLF and lone CR line endings become LF, so a bare `\r` still ends a line.
-        this.input = input.replace(/\0/g, '�').replace(/\r\n?/g, '\n');
+        // Textarea input has neither, so skip the copies when there is nothing to replace.
+        if (input.includes('\0')) input = input.replace(/\0/g, '�');
+        if (input.includes('\r')) input = input.replace(/\r\n?/g, '\n');
+        this.input = input;
         this.position = 0;
         this.readPosition = 0;
         this.ch = '';
@@ -53,14 +56,6 @@ export class Lexer {
         }
     }
 
-    private readNumber(): string {
-        const position = this.position;
-        while (this.isDigit(this.ch)) {
-            this.readChar();
-        }
-        return this.input.slice(position, this.position);
-    }
-
     private isDigit(ch: string): boolean {
         return '0' <= ch && ch <= '9';
     }
@@ -90,11 +85,7 @@ export class Lexer {
             this.ch !== '$' &&  // Add math separator
             this.ch !== '-'
         ) {
-            if (this.isDigit(this.ch)) {
-                this.readNumber();
-            } else {
-                this.readChar();
-            }
+            this.readChar();
         }
         return this.input.slice(position, this.position);
     }
@@ -184,7 +175,8 @@ export class Lexer {
     }
 
     private readToken(): Token {
-        let token = new Token(TokenType.ILLEGAL, this.ch);
+        const ch = this.ch;
+        let token: Token | undefined;
 
         if (this.isMarkerAsText()) {
             token = new Token(TokenType.TEXT, this.readRun(this.ch));
@@ -361,6 +353,8 @@ export class Lexer {
                 }
                 break;
         }
+        // Only reached when no case above produced a token.
+        if (!token) token = new Token(TokenType.ILLEGAL, ch);
         this.readChar();
         return token;
     }

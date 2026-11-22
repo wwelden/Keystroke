@@ -176,10 +176,16 @@ $e^(i*pi) + 1 = 0$
         setText(pageCount, `≈ ${pages} page${pages === 1 ? '' : 's'}`);
     }
 
+    // The palette only changes with the theme, so this runs on load and theme
+    // changes rather than on every keystroke.
+    function syncProofVars() {
+        const doc = proofDoc();
+        if (doc) doc.getElementById('vars').textContent = previewVars();
+    }
+
     function writeProof() {
         const doc = proofDoc();
         if (!doc) return;
-        doc.getElementById('vars').textContent = previewVars();
         doc.body.innerHTML = proofHtml;
         updatePageCount();
     }
@@ -197,6 +203,7 @@ $e^(i*pi) + 1 = 0$
         });
         doc.addEventListener('keydown', handleShortcut);
         doc.fonts.ready.then(updatePageCount);
+        syncProofVars();
         writeProof();
     });
     new ResizeObserver(updatePageCount).observe(preview);
@@ -219,14 +226,16 @@ $e^(i*pi) + 1 = 0$
     const TOKEN_PAGE = 5000;
     let tokenLimit = TOKEN_PAGE;
     let tokenSource = null;
+    let tokenList = [];  // the shown stream for tokenSource, kept so "Show more" doesn't lex again
 
     function renderTokens(md) {
         if (md !== tokenSource) {
+            tokenList = Keystroke.tokenize(md).filter(t => t.type !== 'SPACE' && t.type !== 'NEWLINE');
             tokenSource = md;
             tokenLimit = TOKEN_PAGE;
         }
         const out = $('tokens-out');
-        const tokens = Keystroke.tokenize(md).filter(t => t.type !== 'SPACE' && t.type !== 'NEWLINE');
+        const tokens = tokenList;
         const shown = Math.min(tokens.length, tokenLimit);
         let html = tokens.slice(0, shown).map(t =>
             `<span class="token" title="${escapeHtml(JSON.stringify(t.literal))}"><b>${escapeHtml(t.type)}</b>` +
@@ -256,10 +265,21 @@ $e^(i*pi) + 1 = 0$
         (out.querySelector(`button[data-tokens="${which}"]`) || out.closest('[tabindex]') || out).focus();
     });
 
+    // The AST from the last compile, so the drawer doesn't parse the same text again.
+    let lastParse = { md: null, ast: null, error: null };
+
+    function parseFor(md) {
+        if (lastParse.md === md) {
+            if (lastParse.error) throw lastParse.error;
+            return lastParse.ast;
+        }
+        return Keystroke.parse(md);
+    }
+
     function renderHood(md, html) {
         try {
             renderTokens(md);
-            const tree = astText(Keystroke.parse(md));
+            const tree = astText(parseFor(md));
             $('ast-out').innerHTML = tree;
             $('ast-count').textContent = tree.split('\n').length - 1;
         } catch (err) {
@@ -276,8 +296,17 @@ $e^(i*pi) + 1 = 0$
         const t0 = performance.now();
         let html;
         let failed = false;
+        // Parse and render separately (together they are Keystroke.compile) so the
+        // drawer can reuse the AST.
+        lastParse = { md, ast: null, error: null };
         try {
-            html = Keystroke.compile(md);
+            try {
+                lastParse.ast = Keystroke.parse(md);
+            } catch (err) {
+                lastParse.error = err;
+                throw err;
+            }
+            html = Keystroke.render(lastParse.ast);
         } catch (err) {
             failed = true;
             html = `<p class="compile-error">Compile error: ${escapeHtml(String(err))}</p>`;
@@ -407,7 +436,7 @@ $e^(i*pi) + 1 = 0$
         const dark = themePick ? themePick === 'dark' : prefersDark.matches;
         root.dataset.resolved = dark ? 'dark' : 'light';
         themeButton.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
-        writeProof();
+        syncProofVars();
     }
     themeButton.addEventListener('click', () => {
         themePick = root.dataset.resolved === 'dark' ? 'light' : 'dark';
