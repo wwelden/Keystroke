@@ -7,8 +7,7 @@ import { MarkdownNode } from './Ast';
 import { Token, TokenType } from './Token';
 
 export function compile(markdown: string): string {
-    const parser = new Parser(new Lexer(markdown));
-    return new Renderer().render(parser.parse());
+    return render(parse(markdown));
 }
 
 // Returns the whole stream, through EOF. The Tokens view pages long streams
@@ -28,7 +27,7 @@ export function parse(markdown: string): MarkdownNode {
     return new Parser(new Lexer(markdown)).parse();
 }
 
-// render(parse(md)) is compile(md). The playground calls them separately so the
+// The playground calls parse and render separately (rather than compile) so the
 // Under the hood drawer can reuse the AST instead of parsing the text again.
 export function render(ast: MarkdownNode): string {
     return new Renderer().render(ast);
